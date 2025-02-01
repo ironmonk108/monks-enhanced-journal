@@ -14,6 +14,7 @@ export class EnhancedJournal extends Application {
         super(options);
 
         this.tabs = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'tabs') || [{ "id": makeid(), "text": i18n("MonksEnhancedJournal.NewTab"), "active": true, "history": [] }]);
+        this.removeDuplicateTab(object);
         this.tabs = this.tabs.map(t => { delete t.entity; return t; })
         this.tabs.active = (findone = true) => {
             let tab = this.tabs.find(t => t.active);
@@ -43,6 +44,14 @@ export class EnhancedJournal extends Application {
             for (let sound of Object.values(this._backgroundsound)) {
                 sound.volume = volume * getVolume()
             }
+        });
+    }
+
+    removeDuplicateTab(entity) {
+        const duplicateTab = this.tabs.filter(tab => tab.entityId?.includes(entity.id));
+
+        duplicateTab.forEach(tab => {
+            this.removeTab(tab.id)
         });
     }
 
@@ -1121,7 +1130,7 @@ export class EnhancedJournal extends Application {
             if (newtab === true) {
                 //the journal is getting created
                 //lets see if we can find  tab with this entity?
-                let tab = this.tabs.find(t => t.entityId?.endsWith(entity.id));
+                let tab = this.tabs.find(t => t.entityId?.includes(entity.id));
                 if (tab != undefined)
                     this.activateTab(tab, null, options);
                 else
@@ -1129,7 +1138,7 @@ export class EnhancedJournal extends Application {
             } else {
                 if (await this?.subsheet?.close() !== false) {
                     // Check to see if this entity already exists in the tab list
-                    let tab = this.tabs.find(t => t.entityId?.endsWith(entity.id));
+                    let tab = this.tabs.find(t => t.entityId?.includes(entity.id));
                     if (tab != undefined)
                         this.activateTab(tab, null, options);
                     else
