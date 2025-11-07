@@ -1,0 +1,24 @@
+<div class="details-section flexrow">
+    <div class="document-details">
+        <ul>
+            {{#each detailFields as |field|}}
+            {{#unless field.full}}
+            <li {{#if field.hidden}} style="display:none;" {{/if}}>
+                <label>{{localize field.name}}</label>
+                <input type="text" name="flags.monks-enhanced-journal.attributes.{{field.id}}" value="{{ field.value }}" />
+            </li>
+            {{/unless}}
+            {{/each}}
+        </ul>
+    </div>
+</div>
+<div class="details-section scrollable flexcol">
+    {{#each detailFields as |field|}}
+    {{#if field.full}}
+    <div class="form-group" {{#if field.hidden}} style="display:none;" {{/if}}>
+        <label>{{localize field.name}}</label>
+        <textarea name="flags.monks-enhanced-journal.attributes.{{field.id}}">{{field.value}}</textarea>
+    </div>
+    {{/if}}
+    {{/each}}
+</div>

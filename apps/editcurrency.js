@@ -1,38 +1,89 @@
 import { MonksEnhancedJournal, log, error, i18n, setting, makeid } from "../monks-enhanced-journal.js";
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class EditCurrency extends FormApplication {
-    constructor(object, options) {
-        super(object, options);
-
+export class EditCurrency extends HandlebarsApplicationMixin(ApplicationV2) {
+    constructor(options) {
+        super(options);
         this.currency = MonksEnhancedJournal.currencies;
     }
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "journal-editcurrency",
-            title: i18n("MonksEnhancedJournal.EditCurrency"),
-            classes: ["edit-currency"],
+    static DEFAULT_OPTIONS = {
+        id: "journal-editcurrency",
+        tag: "form",
+        classes: ["edit-currency"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            //icon: "fa-solid fa-align-justify",
+            title: "MonksEnhancedJournal.EditCurrency"
+        },
+        actions: {
+            reset: EditCurrency.resetCurrency,
+            addCurrency: EditCurrency.addCurrency,
+            removeCurrency: EditCurrency.removeCurrency,
+        },
+        position: { width: 500 },
+        form: {
+            handler: EditCurrency.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
+
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
             template: "./modules/monks-enhanced-journal/templates/edit-currency.html",
-            width: 500,
-            height: "auto",
-            closeOnSubmit: true,
-            popOut: true,
+            scrollable: [
+                ".item-list"
+            ]
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
+        }
+
+        return context;
+    }
+
+    _prepareBodyContext(context, options) {
+        return foundry.utils.mergeObject(context, {
+            currency: this.currency
         });
     }
 
-    getData(options) {
-        return {
-            currency: this.currency
-        };
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-save",
+                label: "MonksEnhancedJournal.SaveChanges",
+            },
+            {
+                type: "button",
+                icon: "fas fa-undo",
+                label: "MonksEnhancedJournal.ResetDefaults",
+                action: "reset"
+            },
+        ];
     }
 
-    _updateObject() {
+    static async onSubmitForm(event, form, formData) {
         let data = this.currency.filter(c => !!c.id && !!c.name);
         game.settings.set('monks-enhanced-journal', 'currency', data);
         this.submitting = true;
     }
 
-    addCurrency(event) {
+    static addCurrency(event, target) {
         this.currency.push({ id: "", name: "", convert: 1 });
         this.refresh();
     }
@@ -64,13 +115,13 @@ export class EditCurrency extends FormApplication {
         }
     }
 
-    removeCurrency(event) {
-        let currid = event.currentTarget.closest('li.item').dataset.id;
+    static removeCurrency(event, target) {
+        let currid = target.closest('li.item').dataset.id;
         this.currency.findSplice(s => s.id === currid);
         this.refresh();
     }
 
-    resetCurrency() {
+    static resetCurrency() {
         this.currency = MonksEnhancedJournal.defaultCurrencies;
         this.refresh();
     }
@@ -81,15 +132,9 @@ export class EditCurrency extends FormApplication {
         window.setTimeout(function () { that.setPosition(); }, 500);
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
+    async _onRender(context, options) {
+        super._onRender(context, options);
 
-        $('button[name="submit"]', html).click(this._onSubmit.bind(this));
-        $('button[name="reset"]', html).click(this.resetCurrency.bind(this));
-
-        $('input[name]', html).change(this.changeData.bind(this));
-
-        $('.item-delete', html).click(this.removeCurrency.bind(this));
-        $('.item-add', html).click(this.addCurrency.bind(this));
+        $('input[name]', this.element).change(this.changeData.bind(this));
     };
 }

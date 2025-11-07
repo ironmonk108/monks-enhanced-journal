@@ -1,0 +1,16 @@
+<form>
+    <div class="form-group">
+        <label>Convert From:</label>
+        <div class="form-fields">
+            {{ sheetType }}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="convertTo">To:</label>
+        <div class="form-fields">
+            <select name="convertTo">
+                {{selectOptions options valueAttr="id" labelAttr="name" localize=true }}
+            </select>
+        </div>
+    </div>
+</form>

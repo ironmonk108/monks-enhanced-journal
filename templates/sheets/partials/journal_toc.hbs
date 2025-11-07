@@ -1,0 +1,7 @@
+<ol class="headings">
+    {{#each headings}}
+    <li class="heading h{{ level }}" data-anchor="{{ slug }}">
+        <a class="heading-link ellipsis" data-action="goToHeading">{{ text }}</a>
+    </li>
+    {{/each}}
+</ol>

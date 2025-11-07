@@ -1,0 +1,13 @@
+<div class="flexcol editor-parent" data-editor-id="description">
+    {{#if @root.editable}}
+    <button type="button" class="unbutton control-button always-interactive editor-edit" data-action="editDescription" data-tooltip="Edit Description">
+        <i class="fas fa-feather" inert></i>
+    </button>
+    {{/if}}
+    <div class="editor editor-display wrapper scrollable{{#unless owner}} not-owner{{/unless}}" data-key="text.content">
+        {{{ enrichedText }}}
+    </div>
+    <div class="editor editor-control wrapper">
+        <prose-mirror name="text.content" value="{{ text.content }}" document-uuid="{{ document.uuid }}"></prose-mirror>
+    </div>
+</div>

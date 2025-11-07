@@ -185,6 +185,7 @@
     --mej-sidebar-folder-color-collapsed: rgb(var(--mej-light-2));
     --mej-sidebar-folder-color: rgb(var(--mej-light-2));
     --mej-sidebar-input-placeholder-color: rgb(var(--mej-light-6));
+    --mej-itemlist-control-color: rgb(var(--mej-dark-1))
 }
 
 /**
@@ -368,6 +369,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     --mej-sheet-header-search-background: rgb(var(--mej-dark-1));
     --mej-sheet-header-search-background-hover: rgba(var(--mej-dark-2));
     --mej-sheet-input-color: rgb(var(--mej-light-2));
+    --mej-slideshow-add-slide: rgb(var(--mej-light-2));
 }
 
 .monks-enhanced-journal[background-image='solidBlack'] .editor-edit {
@@ -377,6 +379,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 .monks-enhanced-journal[background-image='solidGrey'] {
     --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-grey.webp') repeat;
     --mej-instruction: rgb(var(--mej-light-2));
+    --mej-slideshow-add-slide: rgb(var(--mej-light-2));
 }
 
 .monks-enhanced-journal[background-image='solidWhite'] {
@@ -1233,7 +1236,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-ra-icon::before {
-    font-family: var(--apsj-font-awesome);
+    font-family: var(--font-awesome);
     font-weight: 900;
     font-size: xxx-large;
     color: var(--apsj-primary);

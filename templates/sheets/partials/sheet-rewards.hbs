@@ -1,0 +1,69 @@
+<div class="tab-bar flexrow reward-list">
+    <div class="tab-row flexrow">
+        {{#each rewards}}
+        <div class="journal-tab reward-tab flexrow {{#if (eq this.id @root.reward.id)}}active{{/if}}" data-reward-id="{{this.id}}" data-tooltip="{{this.name}}" data-action="changeReward">
+            <div class="tab-content">{{#if owner}}{{#if this.awarded}}<i class="fas fa-check"></i> {{/if}}{{#if this.visible}}<i class="fas fa-eye"></i> {{/if}}{{/if}}{{this.name}}</div>
+            <div class="close" data-action="deleteReward"><i class="fas fa-times"></i></div>
+        </div>
+        {{/each}}
+        {{#if owner}}
+        <div class="tab-button tab-add" data-action="createReward"><i class="fas fa-plus"></i></div>
+        {{/if}}
+    </div>
+</div>
+<div class="reward-container flexrow" data-id="{{reward.id}}">
+    {{#if reward}}
+    <div class="details-section flexcol">
+        <div class="form-group">
+            <label>{{localize 'MonksEnhancedJournal.Name'}}</label>
+            <div class="form-fields">
+                <input type="text" name="flags.monks-enhanced-journal.rewards.{{reward.id}}.name" value="{{reward.name}}" />
+            </div>
+        </div>
+
+        {{#if owner}}
+        <div class="form-group">
+            <label>{{localize 'MonksEnhancedJournal.Visible'}}</label>
+            <div class="form-fields">
+                <input type="checkbox" class="select-reward" name="flags.monks-enhanced-journal.rewards.{{reward.id}}.visible" {{checked reward.visible}} />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>{{localize 'MonksEnhancedJournal.Awardable'}}</label>
+            <div class="form-fields">
+                <input type="checkbox" class="award-reward" name="flags.monks-enhanced-journal.rewards.{{reward.id}}.awarded" {{checked reward.awarded}} />
+            </div>
+        </div>
+        {{/if}}
+
+        <div class="form-group">
+            <label>{{localize 'MonksEnhancedJournal.Experience'}}</label>
+            <div class="form-fields flexrow" style="align-items: flex-start; gap: 0px;">
+                {{#if canxp}}
+                <button type="button" class="assign-xp append" data-tooltip="{{localize 'MonksEnhancedJournal.AssignExperience'}}" tabindex="-1" data-action="assignXP">
+                    <i class="fas fa-book-medical fa-fw"></i>
+                </button>
+                {{/if}}
+                <input type="number" min="0" style="text-align: right;" name="flags.monks-enhanced-journal.rewards.{{reward.id}}.xp" placeholder="0" value="{{reward.xp}}" />
+            </div>
+        </div>
+
+        <div class="form-group" style="align-items: flex-start;">
+            <label>{{localize 'MonksEnhancedJournal.Additional'}}</label>
+            <div class="form-fields">
+                <textarea name="flags.monks-enhanced-journal.rewards.{{reward.id}}.additional" style="height: 80px;">{{reward.additional}}</textarea>
+            </div>
+        </div>
+    </div>
+    <div class="flexcol" style="align-self: flex-start; overflow: hidden; height: 100%;">
+        {{#if currency}}
+        {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-currency.hbs"}}
+        {{/if}}
+
+        {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-reward-items.hbs"}}
+    </div>
+    {{else}}
+    <div class="instruction">{{#if owner}}{{localize 'MonksEnhancedJournal.msg.NoRewardsPressAddButton'}}{{else}}{{localize 'MonksEnhancedJournal.msg.NoRewardsAtTheMoment'}}{{/if}}</div>
+    {{/if}}
+</div>

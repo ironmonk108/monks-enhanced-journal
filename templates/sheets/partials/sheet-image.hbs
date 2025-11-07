@@ -1,0 +1,9 @@
+<div class="picture-section">
+    <div class="picture-outer">
+        <div class="picture-img lightbox-image" name="src" src="{{src}}" style="background-image: url('{{src}}')" data-action="addImage" data-dblclick-action="showImage" data-contextmenu-action="contextImage" data-edit="src" onerror="$(this).css({ backgroundImage: 'url(icons/svg/mystery-man.svg)' }"></div>
+    </div>
+    {{#if owner}}
+    <div class="instruction" style="{{#if src}}display:none;{{/if}}">Click to add an Image</div>
+    {{/if}}
+    <button type="button" class="icon fas fa-eraser" data-tooltip="Clear scaling" data-action="resetScale"></button>
+</div>

@@ -1,0 +1,9 @@
+<li class="list-item document item flexrow{{#if item.checked}} checked{{/if}}" data-document-id="{{item.id}}" data-dblclick-action="editItem">
+    <div class="flexcol">
+        <div class="flexrow">
+            <input class="item-checked" type="checkbox" name="data.checked" {{checked item.checked}} data-action="itemChecked">
+            <div>{{item.title}}</div>
+        </div>
+        <div class="list-item-text">{{{item.text}}}</div>
+    </div>
+</li>

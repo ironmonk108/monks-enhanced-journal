@@ -1,0 +1,77 @@
+<div class="items-list reward-items" style="height: calc(100% - 65px);">
+    <header>
+        <div class="flexrow">
+            {{#if owner}}
+            <a class="item-control assign-items" data-tooltip="{{localize 'MonksEnhancedJournal.AssignItems'}}" data-action="assignItems"><i class="fas fa-suitcase"></i></a>
+            {{/if}}
+            {{localize 'MonksEnhancedJournal.Items'}}
+        </div>
+
+        <div class="item-name flexrow">{{localize 'MonksEnhancedJournal.Received'}}</div>
+
+        <div class="item-detail item-assigned">{{localize 'MonksEnhancedJournal.Assigned'}}</div>
+
+        <div class="item-detail item-quantity">{{localize 'MonksEnhancedJournal.Quantity'}}</div>
+
+        <div class="item-detail item-remaining">{{localize 'MonksEnhancedJournal.Remaining'}}</div>
+
+        <div class="item-controls flexrow">
+            <a class="item-control roll-table" data-tooltip="{{localize 'MonksEnhancedJournal.PopulateFromRollTable'}}" data-action="rollItems"><i class="fas fa-th-list"></i></a>
+            <a class="item-control refill-all" data-tooltip="{{localize 'MonksEnhancedJournal.RefillAllItems'}}" data-action="refillLoot"><i class="fas fa-cart-arrow-down"></i></a>
+            <a class="item-control clear-items" data-tooltip="{{localize 'MonksEnhancedJournal.ClearAllItems'}}" data-action="clearItems"><i class="fas fa-dumpster"></i></a>
+        </div>
+
+    </header>
+    {{#if has.items }}
+    <ol class="item-list" data-container="items">
+        {{#each groups}}
+        <li data-id="{{this.id}}">
+            <header class="collapsible {{#if this.collapsed}} collapsed{{/if}}">
+                <div class="item-name noborder flexrow">{{localize this.name}} <span class="collapse-text item-count">({{this.items.length}} {{localize 'MonksEnhancedJournal.items'}})</span></div>
+            </header>
+        </li>
+        <li {{#if this.collapsed}} style="display: none;" {{/if}}>
+            <ol>
+                {{#each this.items}}
+                <li class="item flexrow{{#if this.received}} received{{/if}}{{#if (eq this.remaining 0)}} empty{{/if}}" data-id="{{this._id}}" data-document="Item" draggable="false">
+                    <div class="item-name flexrow">
+                        <div class="item-image" style="background-image: url('{{this.img}}')"></div>
+                        <div class="name" data-action="itemSummary">
+                            {{this.name}}
+                            {{#if this.identifiedname}} <span class="identified-name" data-tooltip="{{this.identifiedname}}"><i class="fas fa-circle-question"></i></span>{{/if}}
+                            {{#if (gt this.qtyof 1)}} <span class="highlight-text groups-of">(in groups of {{this.qtyof}})</span>{{/if}}
+                        </div>
+                    </div>
+                    {{#if @root.owner}}
+                    <div class="item-name item-received">
+                        {{#if this.received}}{{localize 'MonksEnhancedJournal.ReceivedBy'}} {{this.received}}{{/if}}
+                    </div>
+
+                    <div class="item-detail item-assigned">
+                        <input type="checkbox" name="flags.monks-enhanced-journal.items.{{this._id}}.flags.monks-enhanced-journal.assigned" {{checked this.assigned}} style="text-align:center;" />
+                    </div>
+
+                    <div class="item-detail item-quantity">
+                        <input type="number" min="0" name="flags.monks-enhanced-journal.items.{{this._id}}.flags.monks-enhanced-journal.quantity" value="{{this.quantity}}" style="text-align:center;" />
+                    </div>
+
+                    <div class="item-detail item-remaining">
+                        <input type="number" name="flags.monks-enhanced-journal.items.{{this._id}}.flags.monks-enhanced-journal.remaining" value="{{this.remaining}}" style="text-align:center;" />
+                    </div>
+
+                    <div class="item-controls flexrow">
+                        <a class="item-control item-refill" data-tooltip="{{localize 'MonksEnhancedJournal.RefillItem'}}" data-action="refillItem"><i class="fas fa-cart-arrow-down"></i></a>
+                        <a class="item-control item-edit" data-tooltip="{{localize 'MonksEnhancedJournal.EditItem'}}" data-action="editItem"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" data-tooltip="{{localize 'MonksEnhancedJournal.DeleteItem'}}" data-action="deleteItem"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/if}}
+                </li>
+                {{/each}}
+            </ol>
+        </li>
+        {{/each}}
+    </ol>
+    {{else}}
+    <div class="instruction">{{#if owner}}{{localize 'MonksEnhancedJournal.msg.DragItemsToAddToLoot'}}{{else}}{{localize 'MonksEnhancedJournal.msg.NoRewardsAtTheMoment'}}{{/if}}</div>
+    {{/if}}
+</div>

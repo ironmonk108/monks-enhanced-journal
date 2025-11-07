@@ -1,18 +1,75 @@
 import { DCConfig } from "../apps/dc-config.js";
-import { TrapConfig } from "../apps/trap-config.js";
 import { setting, i18n, format, log, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname } from "../monks-enhanced-journal.js";
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
-import { EncounterTemplate } from "../apps/encounter-template.js";
+import { EncounterTemplate } from "../classes/encounter-template.js";
 import { getValue, setValue, MEJHelpers } from "../helpers.js";
 
 export class EncounterSheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
-    }
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.encounter",
+            icon: "fa-solid fa-toolbox",
+        },
+        actions: {
+            createCombat: EncounterSheet.onCreateCombat,
+            createEncounter: EncounterSheet.onCreateEncounter,
+            selectEncounter: EncounterSheet.onSelectEncounter,
+            clickMonster: EncounterSheet.onClickMonster,
+            deleteMonster: EncounterSheet.onDeleteMonster,
+            rollMonster: EncounterSheet.onRollMonster,
+            refillEncounterLoot: EncounterSheet.onRefillItems,
+            refillItem: EncounterSheet.onRefillItem,
+            rollItems: EncounterSheet.onRollLoot,
+            assignEncounterLoot: EncounterSheet.onAssignItems,
+            createDC: EncounterSheet.onCreateDC,
+            editDC: EncounterSheet.onEditDC,
+            deleteDC: EncounterSheet.onDeleteItem,
+            rollDC: EncounterSheet.onRollDC,
+        },
+    };
 
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/sheets/encounter.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-monsters.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-encounter-items.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-dcs.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-notes.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-currency.hbs",
+                "templates/generic/tab-navigation.hbs",
+            ],
+            scrollable: [
+                ".editor-display",
+                ".editor-content",
+                ".monsters .items-list .item-list",
+                ".items-list.encounter-items .item-list",
+                ".items-list.encounter-dcs .item-list"
+            ]
+        }
+    };
+
+    static TABS = {
+        primary: {
+            tabs: [
+                { id: "description", icon: "fa-solid fa-file-signature" },
+                { id: "monsters", icon: "fa-solid fa-skull" },
+                { id: "loot", icon: "fa-solid fa-cart-flatbed" },
+                { id: "dcs", icon: "fa-solid fa-scroll" },
+                { id: "notes", icon: "fa-solid fa-paperclip" },
+            ],
+            initial: "description",
+            labelPrefix: "MonksEnhancedJournal.tabs"
+        }
+    };
+
+    /*
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.encounter"),
+            title: i18n("MonksEnhancedJournal.sheettype.encounter"),
             template: "modules/monks-enhanced-journal/templates/sheets/encounter.html",
             tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
             dragDrop: [
@@ -26,196 +83,211 @@ export class EncounterSheet extends EnhancedJournalSheet {
             ],
             scrollY: [".tab.description .tab-inner", ".encounter-content", ".encounter-items", ".encounter-dcs"]
         });
-    }
+    }*/
 
     static get type() {
         return 'encounter';
     }
 
     static get defaultObject() {
-        return { items: [], actors: [], dcs: [], traps: [] };
+        return { items: {}, actors: {}, dcs: {} };
     }
 
-    async getData() {
-        let data = await super.getData();
+    _prepareTabs(group) {
+        let tabs = super._prepareTabs(group);
 
-        if (data.data.flags["monks-enhanced-journal"].monsters) {
-            data.data.flags["monks-enhanced-journal"].actors = data.data.flags["monks-enhanced-journal"].monsters;
-            this.object.setFlag("monks-enhanced-journal", "actors", data.data.flags["monks-enhanced-journal"].actors);
-            this.object.unsetFlag("monks-enhanced-journal", "monsters");
+        // Check if this system can use DCs
+        if (!Object.keys(DCConfig.optionList()).length) {
+            delete tabs.dcs;
         }
 
-        data.actors = await Promise.all((data.data.flags["monks-enhanced-journal"].actors || []).map(async (ea) => {
-            let result = foundry.utils.duplicate(ea);
-            let actor = await EnhancedJournalSheet.getDocument(ea);
-
-            if (actor) {
-                result.name = actor.name;
-                result.img = actor.img;
-            } else {
-                result.failed = true
-            }
-
-            return result;
-        }));
-
-        let safeGet = function (container, value) {
-            if (config == undefined) return;
-            if (config[container] == undefined) return;
-            let label = config[container][value];
-            return label?.label || label;
+        if (!game.user.isGM) {
+            // Remove tabs that the players shouldn't see
+            delete tabs.monsters;
+            delete tabs.loot;
+            delete tabs.dcs;
         }
 
-        let config = MonksEnhancedJournal.system;
+        return tabs;
+    }
 
-        let dcs = foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.dcs");
-        if (dcs) {
-            data.dcs = dcs.map(dc => {
-                let data = foundry.utils.duplicate(dc);
-                if (!data.label) {
-                    if (data.attribute == undefined || data.attribute.indexOf(':') < 0)
-                        data.label = 'Invalid';
-                    else {
-                        let [type, value] = dc.attribute.split(':');
-                        data.label = safeGet('attributes', value) ||safeGet('abilities', value) || safeGet('skills', value) || safeGet('scores', value) || safeGet('atributos', value) || safeGet('pericias', value) || value;
-                        data.label = i18n(data.label);
-                    }
-                }
-                data.img = (data.img == '' ? false : data.img);
-                return data;
-            });
-        }
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
 
-        data.groups = this.getItemGroups(
-            foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.items"),
-            foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.type"));
+        context.actors = await this.getActors();
 
-        data.showLocation = game.modules.get("tagger")?.active && game.modules.get("monks-active-tiles")?.active;
+        context.dcs = await this.getDCs();
 
-        let currency = (data.data.flags['monks-enhanced-journal'].currency || []);
-        data.currency = MonksEnhancedJournal.currencies.map(c => {
+        context.groups = await this.getItemGroups();
+
+        context.showLocation = game.modules.get("tagger")?.active && game.modules.get("monks-active-tiles")?.active;
+
+        let currency = (context.data.flags['monks-enhanced-journal'].currency || []);
+        context.currency = MonksEnhancedJournal.currencies.map(c => {
             return { id: c.id, name: c.name, value: currency[c.id] ?? 0 };
         });
 
-        data.has = {
-            monsters: foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.actors")?.length,
-            items: foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.items")?.length,
-            dcs: foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.dcs")?.length
+        context.has = {
+            monsters: Object.keys(context.actors || {})?.length > 0,
+            items: Object.keys(context.groups || {})?.length > 0,
+            dcs: foundry.utils.getProperty(context, "data.flags.monks-enhanced-journal.dcs")?.length > 0
         }
 
-        data.canShow = {
+        context.canShow = {
             dcs: !!Object.keys(DCConfig.optionList()).length
         }
 
-        return data;
+        context.placeholder = "MonksEnhancedJournal.Encounter";
+
+        return context;
     }
 
     _documentControls() {
         let ctrls = [
-            { text: '<i class="fas fa-search"></i>', type: 'text' },
-            { id: 'search', type: 'input', text: i18n("MonksEnhancedJournal.SearchDescription"), callback: this.enhancedjournal.searchText },
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers },
-            { id: 'edit', text: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fa-pencil-alt', conditional: this.isEditable, callback: () => { this.onEditDescription(); } },
-            { id: 'sound', text: i18n("MonksEnhancedJournal.AddSound"), icon: 'fa-music', conditional: this.isEditable, callback: () => { this.onAddSound(); } },
-            { id: 'convert', text: i18n("MonksEnhancedJournal.Convert"), icon: 'fa-clipboard-list', conditional: (game.user.isGM && this.isEditable), callback: () => { } }
+            { label: '<i class="fas fa-search"></i>', type: 'text' },
+            { id: 'search', type: 'input', label: i18n("MonksEnhancedJournal.SearchDescription"), visible: !!this.enhancedjournal, callback: this.searchText },
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'edit', label: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fas fa-pencil-alt', visible: this.isEditable, action: "editDescription" },
+            { id: 'sound', label: i18n("MonksEnhancedJournal.AddSound"), icon: 'fas fa-music', visible: this.isEditable, action: "addSound" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" }
         ];
         //this.addPolyglotButton(ctrls);
         return ctrls.concat(super._documentControls());
     }
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-
-        //monster
-        $('.monster-icon', html).click(this.clickItem.bind(this));
-        $('.monster-delete', html).on('click', $.proxy(this._deleteItem, this));
-        html.on('dragstart', ".monster-icon", TextEditor._onDragContentLink);
-        $('.select-encounter', html).click(this.constructor.selectEncounter.bind(this.object));
-        $('.create-encounter', html).click(this.constructor.startEncounter.bind(this.object, false));
-        $('.create-combat', html).click(this.constructor.startEncounter.bind(this.object, true));
-
-        //item
-        $('.item-icon', html).click(this.clickItem.bind(this));
-        $('.item-delete', html).on('click', $.proxy(this._deleteItem, this));
-        $('.item-edit', html).on('click', this.editItem.bind(this));
-        $('.assign-items', html).click(this.constructor.assignItems.bind(this.object));
-
-        //DCs
-        $('.dc-create', html).on('click', $.proxy(this.createDC, this));
-        $('.dc-edit', html).on('click', $.proxy(this.editDC, this));
-        $('.dc-delete', html).on('click', $.proxy(this._deleteItem, this));
-        $('.encounter-dcs .item-name', html).on('click', $.proxy(this.rollDC, this));
-
-        //Traps
-        $('.trap-create', html).on('click', $.proxy(this.createTrap, this));
-        $('.trap-edit', html).on('click', $.proxy(this.editTrap, this));
-        $('.trap-delete', html).on('click', $.proxy(this._deleteItem, this));
-        $('.encounter-traps .item-name', html).on('click', $.proxy(this.rollTrap, this));
-
-        $('.item-refill', html).click(this.refillItems.bind(this));
-        $('.roll-table', html).click(this.rollTable.bind(this, "actors", false));
-        $('.item-name h4', html).click(this._onItemSummary.bind(this));
-
-        $('.refill-all', html).click(this.refillItems.bind(this, 'all'));
-    }
-
-    _getSubmitData(updateData = {}) {
-        let data = foundry.utils.expandObject(super._getSubmitData(updateData));
-
-        if (data.items) {
-            data.flags['monks-enhanced-journal'].items = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "items") || []);
-            for (let item of data.flags['monks-enhanced-journal'].items) {
-                let dataItem = data.items[item._id];
-                if (dataItem)
-                    item = foundry.utils.mergeObject(item, dataItem);
-                if (!item.assigned && item.received)
-                    delete item.received;
-            }
-            delete data.items;
+    async getActors() {
+        if (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.monsters")) {
+            await this.document.setFlag("monks-enhanced-journal", "actors", foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.monsters"));
+            await this.document.unsetFlag("monks-enhanced-journal", "monsters");
         }
 
-        if (data.actors) {
-            data.flags['monks-enhanced-journal'].actors = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "actors") || []);
-            for (let actor of data.flags['monks-enhanced-journal'].actors) {
-                let dataActor = data.actors[actor.id];
-                if (dataActor)
-                    actor = foundry.utils.mergeObject(actor, dataActor);
+        let actors = this.document.flags["monks-enhanced-journal"].actors || {};
+        if (actors instanceof Array) {
+            let newActors = {};
+            for (let actor of actors) {
+                newActors[actor.id] = actor;
             }
-            delete data.actors;
+
+            actors = newActors;
+            await this.document.setFlag("monks-enhanced-journal", "actors", actors);
         }
 
-        return foundry.utils.flattenObject(data);
+        let results = [];
+        for (let [itemId, item] of Object.entries(actors)) {
+            let result = foundry.utils.duplicate(item);
+            result.id = result.id || result._id || itemId;
+            let actor = await EnhancedJournalSheet.getDocument(item);
+
+            if (actor) {
+                result.name = actor.name;
+                result.img = actor.img;
+            } else {
+                result.failed = true;
+                result.name = i18n("MonksEnhancedJournal.msg.CouldNotFindActor");
+                result.img = "icons/svg/mystery-man.svg";
+            }
+
+            results.push(result);
+        }
+
+        // Sort the actors by failed last and then by name
+        results = results.sort((a, b) => {
+            if (a.failed && !b.failed) return 1;
+            if (!a.failed && b.failed) return -1;
+            return a.name.localeCompare(b.name);
+        });
+        return results;
     }
 
-    _canDragDrop(selector) {
-        return game.user.isGM || this.object.isOwner;
+    _prepareSubmitData(event, form, formData, updateData) {
+        let submitData = super._prepareSubmitData(event, form, formData, updateData);
+
+        // Make sure to include all the actor data if you're updating data
+        let actors = foundry.utils.mergeObject(foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.actors") || {}, foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.actors") || {}, { overwrite: false });
+        foundry.utils.setProperty(submitData, "flags.monks-enhanced-journal.actors", actors);
+
+        // Make sure to include all the dc data if you're updating data
+        let dcs = foundry.utils.mergeObject(foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.dcs") || {}, foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.dcs") || {}, { overwrite: false });
+        foundry.utils.setProperty(submitData, "flags.monks-enhanced-journal.dcs", dcs);
+
+        return submitData;
     }
 
-    _onDragStart(event) {
-        if ($(event.currentTarget).hasClass("sheet-icon"))
-            return super._onDragStart(event);
+    _dragDrop(html) {
+        super._dragDrop(html);
 
-        const target = event.currentTarget;
+        new foundry.applications.ux.DragDrop.implementation({
+            dragSelector: ".monster-icon",
+            dropSelector: "#board",
+            permissions: {
+                dragstart: this.document.isOwner
+            },
+            callbacks: {
+                dragstart: this._onDragMonsterStart.bind(this)
+            }
+        }).bind(html);
 
-        const dragData = { from: this.object.uuid };
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".monsters .items-list",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropMonster.bind(this)
+            }
+        }).bind(html);
 
-        let li = $(event.currentTarget).closest('li')[0];
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".encounter-items.items-list",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropEncounterItem.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dragSelector: ".item-list .item-name",
+            permissions: {
+                dragstart: this._canDragItemStart.bind(this)
+            },
+            callbacks: {
+                dragstart: this._onDragItemsStart.bind(this)
+            }
+        }).bind(html);
+
+        //{ dragSelector: ".document.actor", dropSelector: ".encounter-container" }
+    }
+
+    _canDragItemStart(selector) {
+        return game.user.isGM || this.document.isOwner;
+    }
+
+    _onDragItemsStart(event) {
+        let li = event.target.closest('li');
+
+        const dragData = { from: this.document.uuid };
+        
         let type = li.dataset.document || li.dataset.type;
         let id = li.dataset.id;
         dragData.type = type;
         if (type == "Item") {
-            let item = this.object.flags["monks-enhanced-journal"]?.items.find(i => i._id == id || i.id == id);
-            if (!game.user.isGM && (this.object.flags["monks-enhanced-journal"].purchasing == 'locked' || item?.lock === true)) {
+            let items = this.document.flags["monks-enhanced-journal"]?.items || {};
+            let item = items[id];
+
+            if (!game.user.isGM && (this.document.flags["monks-enhanced-journal"].purchasing == 'locked' || item?.lock === true)) {
                 event.preventDefault();
                 return;
             }
             dragData.itemId = id;
-            dragData.uuid = this.object.uuid;
+            dragData.uuid = this.document.uuid;
             dragData.data = foundry.utils.duplicate(item);
 
             MonksEnhancedJournal._dragItem = id;
         } else if (type == "Actor") {
-            let actor = this.object.flags["monks-enhanced-journal"]?.actors.find(i => i._id == id || i.id == id);
+            let actors = this.document.flags["monks-enhanced-journal"]?.actors || {};
+            let actor = actors[id];
             dragData.uuid = actor.uuid;
         }
 
@@ -223,26 +295,10 @@ export class EncounterSheet extends EnhancedJournalSheet {
     }
 
     async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
-        if (data.type == 'Actor') {
-            if (data.groupSelect) {
-                for (let actor of data.groupSelect) {
-                    await this.addActor({ type: "Actor", uuid: `Actor.${actor}` });
-                }
-                if (game.MultipleDocumentSelection)
-                    game.MultipleDocumentSelection.clearAllTabs();
-            } else
-                await this.addActor(data);
-        }
-        else if (data.type == 'Folder') {
-            if (!this.object.isOwner)
+        if (data.type == 'Folder') {
+            if (!this.document.isOwner)
                 return false;
             // Import items from the folder
             let folder = await fromUuid(data.uuid);
@@ -256,7 +312,7 @@ export class EncounterSheet extends EnhancedJournalSheet {
             }
         }
         else if (data.type == 'Item') {
-            if (data.from == this.object.uuid)  //don't drop on yourself
+            if (data.from == this.document.uuid)  //don't drop on yourself
                 return;
             if (data.groupSelect) {
                 // remove the last 16 characters from the uuid to get the item uuid
@@ -273,110 +329,96 @@ export class EncounterSheet extends EnhancedJournalSheet {
         log('drop data', event, data);
     }
 
+    /* Monsters ---------------------------------------------------*/
+
+    async _onDragMonsterStart(event) {
+        const target = event.currentTarget;
+
+        const dragData = {
+            uuid: target.closest("li.item").dataset.uuid,
+            type: "Actor"
+        };
+
+        event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    }
+
+    async _onDropMonster(event) {
+        const dragData = JSON.parse(event.dataTransfer.getData("text/plain"));
+        if (dragData.type === "Actor") {
+            if (dragData.groupSelect) {
+                for (let actor of dragData.groupSelect) {
+                    await this.addActor({ type: "Actor", uuid: `Actor.${actor}` });
+                }
+                if (game.MultipleDocumentSelection)
+                    game.MultipleDocumentSelection.clearAllTabs();
+            } else
+                await this.addActor(dragData);
+        }
+        else if (data.type == 'Folder') {
+            if (!this.document.isOwner)
+                return false;
+            // Import items from the folder
+            let folder = await fromUuid(data.uuid);
+            if (folder) {
+                for (let actor of folder.contents) {
+                    if (actor instanceof Actor) {
+                        let actorData = actor.toObject();
+                        await this.addActor({ data: actorData });
+                    }
+                }
+            }
+        }
+    }
+
     async addActor(data) {
         let actor = await this.getItemData(data);
 
         if (actor) {
-            let actors = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "actors") || []);
-            if (!actors.find(a => a.uuid == actor.uuid)) {
-                actors.push(actor);
-                await this.object.setFlag("monks-enhanced-journal", "actors", actors);
+            let actors = foundry.utils.duplicate(this.document.getFlag("monks-enhanced-journal", "actors") || {});
+            if (!Object.values(actors).find(a => a.uuid == actor.uuid)) {
+                actors[actor.id || actor._id] = actor;
+                await this.document.setFlag("monks-enhanced-journal", "actors", actors);
             } else {
                 ui.notifications.warn(i18n("MonksEnhancedJournal.msg.ActorAlreadyInEncounter"));
             }
         }
     }
 
-    async addItem(data) {
-        let item;
-        if (data.from) {
-            item = await EnhancedJournalSheet.getDocument(data);
-        } else
-            item = await fromUuid(data.uuid);
-
-        if (item) {
-            if (getValue(item.system, quantityname()) || (item.type == "spell" && game.system.id == 'dnd5e')) {
-                let items = foundry.utils.duplicate(this.object.flags["monks-enhanced-journal"].items || []);
-
-                let itemData = item.toObject();
-                if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
-                    itemData = await EncounterSheet.createScrollFromSpell(itemData);
-                }
-
-                let sysPrice = MEJHelpers.getSystemPrice(item, pricename()); //MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
-                let price = MEJHelpers.getPrice(sysPrice);
-                let update = {
-                    _id: makeid(),
-                    flags: {
-                        'monks-enhanced-journal': {
-                            parentId: item.uuid,
-                            quantity: 1,
-                            remaining: 1,
-                            price: `${price.value} ${price.currency}`
-                        }
-                    }
-                };
-                if (game.system.id == "dnd5e") {
-                    foundry.utils.setProperty(update, "system.equipped", false);
-                }
-
-                items.push(foundry.utils.mergeObject(itemData, update));
-                await this.object.setFlag('monks-enhanced-journal', 'items', items);
-            } else {
-                ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotAddItemType"));
-            }
+    static async onClickMonster(event, target) {
+        let li = target.closest('.item');
+        let uuid = li.dataset.uuid;
+        let actor;
+        if (uuid)
+            actor = await fromUuid(uuid);
+        else {
+            let id = li.dataset.id;
+            actor = game.actors.find(a => a.id == id);
         }
+        if (!actor)
+            return;
+
+        actor.sheet.render(true);
     }
 
-    createDC() {
-        let dc = { dc: 10 };
-        new DCConfig(dc, this).render(true);
+    static onDeleteMonster(event, target) {
+        let li = target.closest('.item');
+        let id = li.dataset.id;
+        this.deleteItem(id, "actors");
     }
 
-    editDC(event) {
-        let item = event.currentTarget.closest('.item');
-        let dc = this.object.flags["monks-enhanced-journal"].dcs.find(dc => dc.id == item.dataset.id);
-        if (dc != undefined)
-            new DCConfig(dc, this).render(true);
-    }
-
-    rollDC(event) {
-        let item = event.currentTarget.closest('.item');
-        let dc = this.object.flags["monks-enhanced-journal"].dcs.find(dc => dc.id == item.dataset.id);
-
-        /*
-        let config = (game.system.id == "tormenta20" ? CONFIG.T20 : CONFIG[game.system.id.toUpperCase()]);
-        let dctype = 'ability';
-        //if (config?.skills[dc.attribute] || config?.pericias[dc.attribute] != undefined)
-        //    dctype = 'skill';
-        */
-
-        if (game.modules.get("monks-tokenbar")?.active && setting('rolling-module') == 'monks-tokenbar') {
-            game.MonksTokenBar.requestRoll(canvas.tokens.controlled, { request: `${dc.attribute}`, dc: dc.dc });
-        }
-    }
-
-    createTrap() {
-        let trap = {};
-        new TrapConfig(trap, this).render(true);
-    }
-
-    editTrap(event) {
-        let item = event.currentTarget.closest('.item');
-        let trap = this.object.flags["monks-enhanced-journal"].traps.find(dc => dc.id == item.dataset.id);
-        if (trap != undefined)
-            new TrapConfig(trap, this).render(true);
-    }
-
-    rollTrap(event) {
-
+    static onSelectEncounter(event, target) {
+        this.constructor.selectEncounter.call(this.document);
     }
 
     static selectEncounter() {
         let tokens = (this.flags['monks-enhanced-journal']?.tokens || []);
 
+        if (tokens.length == 0) {
+            return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.NoMonstersToSelect"));
+        }
+
         canvas.tokens.activate();
-        canvas.hud.note.clear();
+        canvas.hud.note.close();
         canvas.tokens.releaseAll();
         for (let tokenid of tokens) {
             let token = canvas.tokens.get(tokenid);
@@ -385,10 +427,21 @@ export class EncounterSheet extends EnhancedJournalSheet {
         }
     }
 
-   static async startEncounter(combat) {
+    static onCreateEncounter(event, target) {
+        this.constructor.startEncounter.call(this, false);
+    }
+
+    static onCreateCombat(event, target) {
+        this.constructor.startEncounter.call(this, true);
+    }
+
+    static async startEncounter(combat) {
+        if (Object.keys(foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.actors") || {}).length == 0) {
+            return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.NoMonstersInEncounter"));
+        }
         let template = await (EncounterTemplate.fromEncounter(this))?.drawPreview();
         if (template) {
-            EncounterSheet.createEncounter.call(this, template, { combat });
+            EncounterSheet.createEncounter.call(this.document, template, { combat });
         }
     }
 
@@ -407,7 +460,7 @@ export class EncounterSheet extends EnhancedJournalSheet {
         }
 
         let tokens = [];
-        for (let ea of (this.flags['monks-enhanced-journal']?.actors || [])) {
+        for (let ea of Object.values(foundry.utils.getProperty(this, "flags.monks-enhanced-journal.actors") || {})) {
             let actor = await EnhancedJournalSheet.getDocument(ea);//Actor.implementation.fromDropData(ea);
             if (actor) {
                 if (!actor.isOwner) {
@@ -435,10 +488,10 @@ export class EncounterSheet extends EnhancedJournalSheet {
                     if (templates instanceof Array) data = templates[parseInt(Math.random() * templates.length)];
                     let template = foundry.utils.duplicate(data);
 
-                    if (!(template instanceof MeasuredTemplate)) {
+                    if (!(template instanceof foundry.canvas.placeables.MeasuredTemplate)) {
                         const cls = CONFIG.MeasuredTemplate.documentClass;
                         const doc = new cls(template, { parent: canvas.scene });
-                        template = new MeasuredTemplate(doc);
+                        template = new foundry.canvas.placeables.MeasuredTemplate(doc);
 
                         let { x, y, direction, distance, angle, width } = template.document;
                         let d = canvas.dimensions;
@@ -449,7 +502,7 @@ export class EncounterSheet extends EnhancedJournalSheet {
                         template.position.set(x, y);
 
                         // Create ray and bounding rectangle
-                        template.ray = Ray.fromAngle(x, y, direction, distance);
+                        template.ray = foundry.canvas.geometry.Ray.fromAngle(x, y, direction, distance);
 
                         switch (template.document.t) {
                             case "circle":
@@ -493,8 +546,9 @@ export class EncounterSheet extends EnhancedJournalSheet {
             window.setTimeout(async function () {
                 EncounterSheet.selectEncounter.call(that);
                 if (options.combat) {
-                    let combatants = await canvas.tokens.toggleCombat();
-                    ui.sidebar.activateTab("combat");
+                    const combatTokens = canvas.tokens.controlled.map(t => t.document);
+                    let combatants = await TokenDocument.implementation.createCombatants(combatTokens);
+                    ui.sidebar.changeTab("combat", "primary");
                     if (combatants.length) {
                         combatants[0].combat.setFlag("monks-enhanced-journal", "encounterid", that.id);
                     }
@@ -503,8 +557,27 @@ export class EncounterSheet extends EnhancedJournalSheet {
         }
     }
 
-    static async assignItems() {
-        let items = foundry.utils.duplicate(this.flags["monks-enhanced-journal"].items || []);
+    static onRollMonster(event, target) {
+        this.rollTable("actors", false, event, target);
+    }
+
+    /* Items ---------------------------------------------------*/
+
+    _onDropEncounterItem(event, target) {
+        // Handle the drop event for encounter items
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+
+        if (data.type == 'Item') {
+            this.addItem(data);
+        }
+    }
+
+    static async onAssignItems(event, target) {
+        this.constructor.assignItemsFromDocument.call(this.document);
+    }
+
+    static async assignItemsFromDocument() {
+        let items = foundry.utils.duplicate(this.flags["monks-enhanced-journal"].items || {});
         let currency = this.flags["monks-enhanced-journal"].currency || {};
         items = await super.assignItems(items, currency);
         await this.setFlag('monks-enhanced-journal', 'items', items);
@@ -516,7 +589,7 @@ export class EncounterSheet extends EnhancedJournalSheet {
     }
 
     static async itemDropped(id, actor, entry) {
-        let item = (entry.getFlag('monks-enhanced-journal', 'items') || []).find(i => i._id == id);
+        let item = (entry.getFlag('monks-enhanced-journal', 'items') || {})[id];
         if (item) {
             let max = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.remaining");
             let result = await EncounterSheet.confirmQuantity(item, max, "transfer", false);
@@ -534,21 +607,87 @@ export class EncounterSheet extends EnhancedJournalSheet {
         return false;
     }
 
-    refillItems(event) {
-        let items = foundry.utils.duplicate(this.object.flags["monks-enhanced-journal"].items || []);
+    static onRefillItems(event, target) {
+        this.refillItems("all");
+    }
 
-        if (event == 'all') {
-            for (let item of items) {
-                foundry.utils.setProperty(item, "flags.monks-enhanced-journal.remaining", foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity"));
+    static onRefillItem(event, target) {
+        let li = target.closest('.item');
+        let id = li.dataset.id;
+        this.refillItems(id);
+    }
+
+    static onRollLoot(event, target) {
+        this.rollTable("items", false, event, target);
+    }
+
+    /* DCs ---------------------------------------------------*/
+    async getDCs() {
+        let config = MonksEnhancedJournal.system;
+
+        let safeGet = function (container, value) {
+            if (config == undefined) return;
+            if (config[container] == undefined) return;
+            let label = config[container][value];
+            return label?.label || label;
+        }
+
+        let dcs = this.document.getFlag("monks-enhanced-journal", "dcs");
+        if (!dcs)
+            return [];
+
+        if (dcs instanceof Array) {
+            let newDCs = {};
+            for (let dc of dcs) {
+                newDCs[dc.id] = dc;
             }
-            this.object.setFlag('monks-enhanced-journal', 'items', items);
-        } else {
-            let li = $(event.currentTarget).closest('li')[0];
-            let item = items.find(i => i._id == li.dataset.id);
-            if (item) {
-                foundry.utils.setProperty(item, "flags.monks-enhanced-journal.remaining", foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity"));
-                this.object.setFlag('monks-enhanced-journal', 'items', items);
+
+            dcs = newDCs;
+            await this.document.setFlag("monks-enhanced-journal", "dcs", dcs);
+        }
+
+        let results = [];
+        for (let [itemId, item] of Object.entries(dcs)) {
+            let result = foundry.utils.duplicate(item);
+            if (!result.label) {
+                if (result.attribute == undefined || result.attribute.indexOf(':') < 0)
+                    result.label = 'Invalid';
+                else {
+                    let [type, value] = result.attribute.split(':');
+                    result.label = safeGet('attributes', value) || safeGet('abilities', value) || safeGet('skills', value) || safeGet('scores', value) || safeGet('atributos', value) || safeGet('pericias', value) || value;
+                    result.label = i18n(result.label);
+                }
             }
+            result.img = (result.img == '' ? false : result.img);
+            results.push(result);
+        }
+        return results;
+    }
+
+    static onCreateDC() {
+        new DCConfig({ document: { dc: 10 }, journalentry: this }).render(true);
+    }
+
+    static onEditDC(event, target) {
+        let item = target.closest('.item');
+        let dc = (this.document.flags["monks-enhanced-journal"].dcs || {})[item.dataset.id];
+        if (dc != undefined)
+            new DCConfig({ document: dc, journalentry: this }).render(true);
+    }
+
+    static onRollDC(event, target) {
+        let item = target.closest('.item');
+        let dc = (this.document.flags["monks-enhanced-journal"].dcs || {})[item.dataset.id];
+
+        /*
+        let config = (game.system.id == "tormenta20" ? CONFIG.T20 : CONFIG[game.system.id.toUpperCase()]);
+        let dctype = 'ability';
+        //if (config?.skills[dc.attribute] || config?.pericias[dc.attribute] != undefined)
+        //    dctype = 'skill';
+        */
+
+        if (game.modules.get("monks-tokenbar")?.active && setting('rolling-module') == 'monks-tokenbar') {
+            game.MonksTokenBar.requestRoll(canvas.tokens.controlled, { request: `${dc.attribute}`, dc: dc.dc });
         }
     }
 }

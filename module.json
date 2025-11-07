@@ -1,13 +1,13 @@
 {
   "title": "Monk's Enhanced Journal",
   "description": "Treat the journal like it's going to be popped out and used as a digital guide book.  Add extra information to summarize an encounter.  Show summaries of people and places.  Allow for bookmarking of commonly used pages",
-  "version": "12.02",
+  "version": "13.01",
   "authors": [
     {
 		"name": "IronMonk",
-		"discord": "ironmonk88#4075",
+		"discord": "ironmonk108",
 		"flags": {
-		  "github": "ironmonk88",
+		  "github": "ironmonk108",
 		  "patreon": "ironmonk",
 		  "ko-fi": "ironmonk88"
 	  }
@@ -56,9 +56,9 @@
       "path": "lang/de.json"
     },
     {
-		"lang": "pt-BR",
-		"name": "Português",
-		"path": "lang/pt-BR.json"
+      "lang": "pt-BR",
+      "name": "Português",
+      "path": "lang/pt-BR.json"
     }
   ],
   "packs": [
@@ -94,17 +94,114 @@
     "css/system.css",
     "css/apsjournal.css"
   ],
-  "url": "https://github.com/ironmonk88/monks-enhanced-journal",
-  "download": "https://github.com/ironmonk88/monks-enhanced-journal/archive/12.02.zip",
-  "manifest": "https://github.com/ironmonk88/monks-enhanced-journal/releases/latest/download/module.json",
-  "bugs": "https://github.com/ironmonk88/monks-enhanced-journal/issues",
+  "documentTypes": {
+    "JournalEntryPage": {
+      "encounter": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "event": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "list": {
+      },
+      "loot": {
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "organization": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "person": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "picture": {
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "place": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "poi": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "quest": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "shop": {
+        "htmlFields": [
+          "description"
+        ],
+        "filePathFields": {
+          "img": [
+            "IMAGE"
+          ]
+        }
+      },
+      "slideshow": {
+      }
+    }
+  },
+  "url": "https://github.com/ironmonk108/monks-enhanced-journal",
+  "download": "https://github.com/ironmonk108/monks-enhanced-journal/archive/13.01.zip",
+  "manifest": "https://github.com/ironmonk108/monks-enhanced-journal/releases/latest/download/module.json",
+  "bugs": "https://github.com/ironmonk108/monks-enhanced-journal/issues",
   "id": "monks-enhanced-journal",
   "compatibility": {
-    "minimum": "12",
-    "verified": "12"
+    "minimum": "13",
+    "verified": "13"
   },
-  "minimumCoreVersion": "12",
-  "compatibleCoreVersion": "12",
+  "minimumCoreVersion": "13",
+  "compatibleCoreVersion": "13",
   "flags": {
     "allowBugReporter": true
   }

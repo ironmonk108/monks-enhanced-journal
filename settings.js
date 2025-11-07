@@ -489,7 +489,7 @@ export const registerSettings = function () {
 				tabs: {
 					'description': { name: 'MonksEnhancedJournal.Description', shown: true },
 					'monsters': { name: 'MonksEnhancedJournal.Monsters', shown: true },
-					'items': { name: 'MonksEnhancedJournal.Loot', shown: true },
+					'loot': { name: 'MonksEnhancedJournal.Loot', shown: true },
 					'dcs': { name: 'MonksEnhancedJournal.DCs', shown: true },
 					'notes': { name: 'MonksEnhancedJournal.Notes', shown: true },
 				}

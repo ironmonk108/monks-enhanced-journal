@@ -1,0 +1,40 @@
+<div class="items-list encounter-dcs">
+    <header>
+        <div class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.DCs'}}</div>
+
+        <div class="item-detail item-attribute">{{localize 'MonksEnhancedJournal.Attribute'}}</div>
+        <div class="item-detail item-dc">{{localize 'MonksEnhancedJournal.DC'}}</div>
+
+        <div class="item-controls flexrow">
+            <a class="item-control text dc-create" data-tooltip="{{localize 'MonksEnhancedJournal.CreateDC'}}" data-type="dc" data-action="createDC">
+                <i class="fas fa-square-plus"></i>
+            </a>
+        </div>
+    </header>
+    {{#if (gt dcs.length 0)}}
+    <ol class="item-list" data-container="dcs">
+        {{#each dcs}}
+        <li class="item flexrow " data-id="{{this.id}}" draggable="false">
+            <div class="item-name flexrow rollable clickable" data-action="rollDC">
+                <div class="item-image" {{#if this.img}} style="background-image: url('{{this.img}}')" {{/if}}></div>
+                <div class="dc-name">{{this.name}}</div>
+            </div>
+
+            <div class="item-detail item-attribute">
+                {{this.label}}
+            </div>
+            <div class="item-detail item-dc">
+                DC {{this.dc}}
+            </div>
+
+            <div class="item-controls flexrow">
+                <a class="item-control dc-edit" data-tooltip="{{localize 'MonksEnhancedJournal.EditDC'}}" data-action="editDC"><i class="fas fa-edit"></i></a>
+                <a class="item-control dc-delete" data-tooltip="{{localize 'MonksEnhancedJournal.DeleteDC'}}" data-action="deleteDC"><i class="fas fa-trash"></i></a>
+            </div>
+        </li>
+        {{/each}}
+    </ol>
+    {{else}}
+    <div class="instruction">{{#if owner}}{{localize 'MonksEnhancedJournal.msg.NoDCsAddedPressAddButton'}}{{else}}{{localize 'MonksEnhancedJournal.msg.NoDCsAtTheMoment'}}{{/if}}</div>
+    {{/if}}
+</div>

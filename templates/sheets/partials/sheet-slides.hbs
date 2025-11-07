@@ -1,0 +1,23 @@
+<div class="slide-showing">
+    <div class="duration"></div>
+</div>
+<div class="slideshow-body-outer">
+    <div class="slideshow-body">
+        {{#each slides}}
+        <div class="slide{{#if this.active}} active{{/if}}" data-slide-id="{{this.id}}">
+            <div class="slide-inner">
+                <div class="slide-background"><div style="{{this.background}}"></div></div>
+                <img class="slide-image" src="{{this.thumbnail}}" style="object-fit:{{this.sizing}};{{#unless this.thumbnail}}display:none;{{/unless}}" />
+                <div class="slide-textarea flexcol">
+                    {{#each this.texts}}
+                    <div class="slide-text" data-id="{{this.id}}" style="{{this.style}}">{{this.text}}</div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        {{/each}}
+        <div class="add-slide">
+            <i class="fas fa-plus"></i>
+        </div>
+    </div>
+</div>

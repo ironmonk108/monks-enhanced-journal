@@ -1,0 +1,55 @@
+<div class="relationships flexrow">
+    <div class="items-list scrollable">
+        {{#if hasRelationship}}
+        <ol class="item-list{{#if additionalField}} additional-field{{/if}}" data-container="relationships">
+            {{#each groups as |group|}}
+            <li>
+                <header>
+                    <div class="name">{{group.name}}</div>
+                    {{#if ../additionalField}}
+                    <div class="additional">{{localize ../additionalField.label}}</div>
+                    {{/if}}
+                    <div class="relationship">{{localize 'MonksEnhancedJournal.Relationship'}}</div>
+                </header>
+            </li>
+            {{#each group.documents as |document|}}
+            <li class="item flexrow" data-id="{{document.id}}" data-uuid="{{document.uuid}}" data-document="JournalEntry" draggable="false">
+                <div class="item-name clickable">
+                    <img class="item-image large actor-icon" src="{{document.img}}" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/{{document.type}}.png' }" />
+                    <div><a data-action="openRelationship">{{#if document.pack}}<i class="fas fa-atlas" data-tooltip="{{localize 'MonksEnhancedJournal.FromCompendium'}}"></i> {{/if}}{{document.name}}</a></div>
+                </div>
+
+                {{#if ../../additionalField}}
+                <div class="item-relationship flexcol">
+                    <input type="text" class="item-field" name="flags.monks-enhanced-journal.relationships.{{document.id}}.{{../../additionalField.id}}" value="{{lookup document ../../additionalField.id}}" disabled />
+                </div>
+                {{/if}}
+
+                <div class="item-relationship flexcol">
+                    <input type="text" class="item-field" name="flags.monks-enhanced-journal.relationships.{{document.id}}.relationship" value="{{document.relationship}}" />
+                    {{#if (or document.revealed @root.owner)}}
+                    <div class="flexrow">
+                        <input type="text" class="item-field" name="flags.monks-enhanced-journal.relationships.{{document.id}}.secret" placeholder="Secret Relationship" value="{{document.secret}}" />
+                        {{#if @root.owner}}
+                        <button type="button" class="item-reveal" style="flex: 0 0 100px;" data-tooltip="Reveal Secret relationship" data-action="revealRelationship"><i class="fas {{#if document.revealed}}fa-eye-slash{{else}}fa-eye{{/if}}"></i> {{#if document.revealed}}Hide{{else}}Reveal{{/if}}</button>
+                        {{/if}}
+                    </div>
+                    {{/if}}
+                </div>
+
+                <div class="item-controls owner">
+                    {{#if @root.owner}}
+                    <input type="checkbox" name="flags.monks-enhanced-journal.relationships.{{document.id}}.hidden" {{checked document.hidden}} style="display:none;" />
+                    <a class="item-hide" data-tooltip="{{#if document.hidden}}{{localize 'MonksEnhancedJournal.ShowRelationship'}}{{else}}{{localize 'MonksEnhancedJournal.HideRelationship'}}{{/if}}" data-action="toggleRelationship"><i class="fas fa-eye{{#if document.hidden}}-slash{{/if}}"></i></a>
+                    <a class="item-delete" data-tooltip="{{localize 'MonksEnhancedJournal.RemoveRelationship'}}" data-action="deleteRelationship"><i class="fas fa-trash"></i></a>
+                    {{/if}}
+                </div>
+            </li>
+            {{/each}}
+            {{/each}}
+        </ol>
+        {{else}}
+        <div class="instruction">{{#if owner}}{{localize 'MonksEnhancedJournal.msg.DragToMakeRelationship'}}{{else}}{{localize 'MonksEnhancedJournal.msg.NoRelationshipsAtTheMoment'}}{{/if}}</div>
+        {{/if}}
+    </div>
+</div>

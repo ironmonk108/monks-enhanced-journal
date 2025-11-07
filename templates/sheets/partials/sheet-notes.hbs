@@ -1,0 +1,15 @@
+<div class="notes-information">{{localize 'MonksEnhancedJournal.OnlyViewable'}}{{#unless hasGM}}<span style="color:darkred;font-weight:bold;"> {{localize 'MonksEnhancedJournal.msg.CannotEditNotesWithoutGM'}}</span>{{/unless}}</div>
+<div class="notes-container">
+    <div class="flexcol editor-parent" data-editor-id="notes">
+        <button type="button" class="unbutton control-button always-interactive editor-edit" data-action="editNotes" data-tooltip="Edit Notes">
+            <i class="fas fa-feather" inert></i>
+        </button>
+        <div class="editor editor-display wrapper scrollable" data-key="flags.monks-enhanced-journal.{{user.id}}.notes">
+            {{{ userdata.enrichedText }}}
+        </div>
+        <div class="editor editor-control wrapper">
+            <prose-mirror name="flags.monks-enhanced-journal.{{user.id}}.notes" value="{{ userdata.notes }}"></prose-mirror>
+        </div>
+    </div>
+</div>
+

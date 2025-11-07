@@ -3,92 +3,146 @@ import { CustomisePage } from "../apps/customise-page.js";
 import { EditSound } from "../apps/editsound.js";
 import { MakeOffering } from "../apps/make-offering.js";
 import { getValue, setValue, setPrice, MEJHelpers } from "../helpers.js";
+const { HandlebarsApplicationMixin } = foundry.applications.api
 
-export class EnhancedJournalContextMenu extends ContextMenu {
-    constructor(...args) {
-        super(...args);
-    }
+export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.applications.sheets.journal.JournalEntryPageSheet) {
+    constructor(options = {}) {
+        super(options);
 
-    bind() {
-        this.element.on(this.eventName, this.selector, event => {
-            event.preventDefault();
-            const parent = $(event.currentTarget);
-            const menu = this.menu;
-
-            // Remove existing context UI
-            $('.context').removeClass("context");
-            if ($.contains(parent[0], menu[0])) return this.close();
-
-            // Render a new context menu
-            event.stopPropagation();
-            ui.context = this;
-            this._event = event;
-            return this.render(parent);
-        });
-    }
-
-    _setPosition(html, target) {
-        super._setPosition(html, target);
-
-        let bounds = target[0].getBoundingClientRect();
-        let x = this._event.clientX - bounds.left;
-        let y = this._event.clientY - bounds.top + target.scrollTop();
-
-        log("Set Position", x, y);
-
-        html.css({ "left": `${Math.max(Math.min(x, bounds.width - html.width() - 10), 0)}px`, "top": `${Math.max(Math.min(y, bounds.height + target.scrollTop() - html.height() - 10), 0)}px` })
-    }
-}
-
-export class EnhancedJournalSheet extends JournalPageSheet {
-    constructor(object, options = {}) {
-        super(object, options);
-
-        if (this.options.tabs.length) {
-            let lasttab = this.object.getFlag('monks-enhanced-journal', '_lasttab') || this.options.tabs[0].initial;
-            this.options.tabs[0].initial = lasttab;
-            this._tabs[0].active = lasttab;
-        }
-
-        this.object._itemList = this.object._itemList || {};
+        this.document._itemList = this.document._itemList || {};
         this.enhancedjournal = options.enhancedjournal;
 
         try {
-            this._scrollPositions = JSON.parse(this.object.flags['monks-enhanced-journal']?.scrollPos || {});
+            this._scrollPositions = JSON.parse(this.document.flags['monks-enhanced-journal']?.scrollPos || {});
         } catch (e) { }
     }
 
-    static get defaultOptions() {
-        let defOptions = super.defaultOptions;
-        let classes = defOptions.classes.concat(['monks-journal-sheet', 'monks-enhanced-journal', `${game.system.id}`]);
-        if (game.modules.get("rippers-ui")?.active)
-            classes.push('rippers-ui');
-        if (game.modules.get("rpg-styled-ui")?.active)
-            classes.push('rpg-styled-ui');
-
-        return foundry.utils.mergeObject(defOptions, {
-            id: "enhanced-journal-sheet",
-            title: i18n("MonksEnhancedJournal.NewTab"),
-            template: "modules/monks-enhanced-journal/templates/sheets/blank.html",
-            classes: classes,
-            dragDrop: [ { dragSelector: "null", dropSelector: ".blank-body" } ],
-            popOut: true,
-            width: 1025,
-            height: 700,
+    static DEFAULT_OPTIONS = {
+        tag: "form",
+        classes: ['monks-enhanced-journal'],
+        window: {
+            contentClasses: ['monks-journal-sheet', "sheet", "standard-form"],
+            icon: "fa-solid fa-book-open",
             resizable: true,
-            secrets: [{ parentSelector: ".editor" }],
+            /*
+            controls: [{
+                icon: "fa-solid fa-gear",
+                label: "SHEETS.ConfigureSheet",
+                action: "configureSheet",
+                visible: true
+            }]
+            */
+        },
+        actions: {
+            configureSheet: EnhancedJournalSheet.onConfigureSheet,
+            convertSheet: EnhancedJournalSheet.convertSheet,
+            showPlayers: EnhancedJournalSheet._onShowPlayers,
+            resetScale: EnhancedJournalSheet.clearScale,
+            playSound: EnhancedJournalSheet.toggleSound,
+            addSound: EnhancedJournalSheet.onAddSound,
+            editDescription: EnhancedJournalSheet.onEditDescription,
+            editNotes: EnhancedJournalSheet.onEditNotes,
+            splitJournal: EnhancedJournalSheet.splitJournal,
+            findMapEntry: EnhancedJournalSheet.findMapEntry,
+            editFields: EnhancedJournalSheet.onEditFields,
+            addImage: EnhancedJournalSheet.onAddImage,
+            showImage: EnhancedJournalSheet.onImageDblClick,
+            contextImage: EnhancedJournalSheet.onImageContext,
+            openRelationship: EnhancedJournalSheet.onOpenRelationship,
+            revealRelationship: EnhancedJournalSheet.onRevealRelationship,
+            toggleRelationship: EnhancedJournalSheet.onHideItem,
+            deleteRelationship: EnhancedJournalSheet.onDeleteItem,
+            openOfferingActor: EnhancedJournalSheet.onOpenOfferingActor,
+            makeOffering: EnhancedJournalSheet.onMakeOffering,
+            cancelOffer: EnhancedJournalSheet.onCancelOffer,
+            acceptOffer: EnhancedJournalSheet.onAcceptOffer,
+            rejectOffer: EnhancedJournalSheet.onRejectOffer,
+            editItem: EnhancedJournalSheet.editItem,
+            clearItems: EnhancedJournalSheet.clearAllItems,
+            hideItem: EnhancedJournalSheet.onHideItem,
+            lockItem: EnhancedJournalSheet.onLockItem,
+            deleteItem: EnhancedJournalSheet.onDeleteItem,
+            itemSummary: EnhancedJournalSheet.onItemSummary,
+            changePlayerOwnership: EnhancedJournalSheet.onChangePlayerPermissions,
+            copyUuid: EnhancedJournalSheet.onCopyUuid,
+            copyImage: EnhancedJournalSheet.onCopyImage,
+            openActor: EnhancedJournalSheet.onOpenActor,
+            generateName: EnhancedJournalSheet.onGenerateName,
+        },
+        form: {
             closeOnSubmit: false,
             submitOnClose: true,
-            submitOnChange: true
-        });
+            submitOnChange: true,
+            handler: EnhancedJournalSheet.onSubmit
+        },
+        position: {
+            width: 1025,
+            height: 700,
+        }
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/sheets/blank.html"
+        }
+    };
+
+    _initializeApplicationOptions(options) {
+        options = super._initializeApplicationOptions(options);
+
+        const { colorScheme } = game.settings.get("core", "uiConfig");
+        const theme = foundry.applications.apps.DocumentSheetConfig.getSheetThemeForDocument(options.document);
+        options.classes.push("themed", `theme-${theme || colorScheme.applications || "dark"}`);
+
+        options.window.contentClasses.push(this.constructor.type);
+
+        if (game.modules.get("rippers-ui")?.active)
+            options.classes.push('rippers-ui');
+        if (game.modules.get("rpg-styled-ui")?.active)
+            options.classes.push('rpg-styled-ui');
+        if (!setting("show-bookmarkbar"))
+            options.classes.push('hide-bookmark');
+
+        return options;
     }
 
-    get template() {
-        return this.options.template;
+    get title() {
+        return this.document?.name || i18n("MonksEnhancedJournal.NewTab");
+    }
+
+    get classes() {
+        let classes = [this.constructor.type];
+        for (const cls of this.constructor.inheritanceChain()) {
+            if (cls.hasOwnProperty("DEFAULT_OPTIONS")) classes = classes.concat(cls.DEFAULT_OPTIONS.window?.contentClasses || []);
+        }
+        return classes;
+    }
+
+    get actions() {
+        let actions = {};
+        for (const cls of this.constructor.inheritanceChain()) {
+            if (cls.hasOwnProperty("DEFAULT_OPTIONS") && cls.DEFAULT_OPTIONS.actions) {
+                actions = foundry.utils.mergeObject(actions, cls.DEFAULT_OPTIONS.actions, { overwrite:false });
+            }
+        }
+        return actions;
     }
 
     static get type() {
         return 'blank';
+    }
+
+    get form() {
+        if (this.enhancedjournal)
+            return $("form", this.enhancedjournal.form).get(0);
+        return super.form;
+    }
+
+    get trueElement() {
+        if (this.enhancedjournal)
+            return this.enhancedjournal.subsheetElement;
+        return this.element;
     }
 
     static sheetSettings() {
@@ -99,7 +153,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
     sheetSettings() {
         let sheetSettings = this.constructor.sheetSettings();
-        let settings = foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.sheet-settings") || {};
+        let settings = foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.sheet-settings") || {};
         return foundry.utils.mergeObject(sheetSettings, foundry.utils.duplicate(settings));
     }
 
@@ -108,19 +162,12 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     }
 
     _canUserView(user) {
-        if (this.object.compendium) return user.isGM || this.object.compendium.visible;
-        return this.object.parent.testUserPermission(user, this.options.viewPermission);
-    }
-
-    _inferDefaultMode() {
-        const hasImage = !!this.object.img;
-        if (this.object.limited) return hasImage ? "image" : null;
-
-        return "text";
+        if (this.document.compendium) return user.isGM || this.document.compendium.visible;
+        return this.document.parent.testUserPermission(user, this.options.viewPermission);
     }
 
     _getHeaderButtons() {
-        let buttons = super._getHeaderButtons();
+        let buttons = [];
 
         let canConfigure = this.isEditable && game.user.isGM;
         if (!canConfigure)
@@ -132,9 +179,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return buttons;
     }
 
-    _onChangeTab(event) {
-        if(this.object.isOwner && this.isEditable)
-            this.object.setFlag('monks-enhanced-journal', '_lasttab', this._tabs[0].active);
+    _getHeaderControls() {
+        if (this.enhancedjournal)
+            return [];
+        return this._documentControls().filter(c => !c.type || c.type == "button");
     }
 
     static get defaultObject() {
@@ -145,67 +193,148 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return true;
     }
 
-    async getData() {
-        let data = (this.object.id ? await super.getData() : {
-            cssClass: this.isEditable ? "editable" : "locked",
-            editable: this.isEditable,
-            data: (this.object?.toObject ? this.object?.toObject(false) : {}),
-            content: this.object?.content,
-            options: this.options,
-            owner: false,
-            title: i18n("MonksEnhancedJournal.NewTab"),
-            recent: (game.user.getFlag("monks-enhanced-journal", "_recentlyViewed") || []).map(r => {
-                return foundry.utils.mergeObject(r, { img: MonksEnhancedJournal.getIcon(r.type) });
-            })
-        });
+    _prepareTabs(group) {
+        let tabs = super._prepareTabs(group);
 
-        data.editor = {
-            engine: setting("editor-engine"),
-            collaborate: setting("editor-engine") == "prosemirror"
+        // Remove any tabs that are set to not shown in the settings
+        let sheetTabs = this.sheetSettings().tabs;
+        if (!!sheetTabs) {
+            for (let [key, value] of Object.entries(this.sheetSettings().tabs)) {
+                if (value.shown === false) {
+                    delete tabs[key];
+                }
+            }
         }
+
+        if (!game.user.isGM) {
+            // Remove any tabs that don't have content if the user isn't a GM
+            if (Object.keys(foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.relationships") || {}).length === 0) {
+                delete tabs.relationships;
+            }
+        }
+
+        return tabs;
+    }
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "main":
+                await this._prepareBodyContext(context, options);
+                context.subtabs = this._prepareTabs("primary");
+                break;
+        }
+
+        return context;
+    }
+
+    async _prepareBodyContext(context, options) {
+        context = foundry.utils.mergeObject(context, {
+            type: this.constructor.type,
+            cssClass: this.isEditable ? "editable" : "locked",
+            //editable: this.isEditable,
+            data: (this.document?.toObject ? this.document?.toObject(false) : {}),
+            //content: this.document?.content,
+            //options: this.options,
+            owner: this.document.isOwner,
+            //userid: game.user.id,
+            icon: MonksEnhancedJournal.getIcon(this.constructor.type),
+            notesTarget: `flags.monks-enhanced-journal.${game.user.id}.notes`,
+
+            name: this.document.name,
+            src: this.document.src,
+            text: this.document.text,
+
+            entrytype: this.constructor.type,
+            isGM: game.user.isGM,
+            hasGM: (game.users.find(u => u.isGM && u.active) != undefined),
+
+            sheetSettings: this.sheetSettings() || {}
+        });
 
         //this._convertFormats(data);
-        data.enrichedText = await TextEditor.enrichHTML(data.document?.text?.content, {
-            relativeTo: this.object,
-            secrets: this.object.isOwner,
+        const enrichmentOptions = {
+            secrets: this.document.isOwner,
+            relativeTo: this.document,
             async: true
-        });
+        };
+        context.enrichedText = await foundry.applications.ux.TextEditor.implementation.enrichHTML(context.text?.content, enrichmentOptions);
 
+        /*
         if (game.system.id == "pf2e") {
-            data.data.content = await game.pf2e.TextEditor.enrichHTML(data.data.content, { secrets: game.user.isGM, async: true });
+            context.data.content = await game.pf2e.TextEditor.enrichHTML(context.data.content, { secrets: game.user.isGM, async: true });
         }
+        */
 
-        data.userid = game.user.id;
-
-        data.userdata = {};
-        if (data.data.flags && data.data.flags["monks-enhanced-journal"] && data.data.flags["monks-enhanced-journal"][game.user.id]) {
-            data.userdata = data.data.flags["monks-enhanced-journal"][game.user.id];
-            data.userdata.enrichedText = await TextEditor.enrichHTML((data.userdata.notes || ""), {
-                relativeTo: this.object,
-                secrets: this.object.isOwner,
+        context.userdata = foundry.utils.getProperty(context.source, `flags.monks-enhanced-journal.${context.user.id}`);
+        if (context.userdata) {
+            context.userdata.enrichedText = await foundry.applications.ux.TextEditor.implementation.enrichHTML((context.userdata.notes || ""), {
+                relativeTo: this.document,
+                secrets: true,
                 async: true
             });
         }
-        data.notesTarget = `flags.monks-enhanced-journal.${game.user.id}.notes`;
-
-        data.entrytype = this.constructor.type;
-        data.isGM = game.user.isGM;
-        data.hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
-
-        data.sheetSettings = this.sheetSettings() || {};
 
         if (this.canPlaySound) {
-            data.sound = (foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.sound") || {});
+            context.sound = (foundry.utils.getProperty(context.source, "flags.monks-enhanced-journal.sound") || {});
             if (this.enhancedjournal)
-                data.sound.playing = (this.enhancedjournal._backgroundsound || {})[this.object.id]?.playing;
+                context.sound.playing = (this.enhancedjournal._backgroundsound || {})[this.document.id]?.playing;
             else
-                data.sound.playing = this._backgroundsound?.playing;
+                context.sound.playing = this._backgroundsound?.playing;
         }
 
-        data.data.icon = MonksEnhancedJournal.getIcon(this.constructor.type);
-
-        return data;
+        return context;
     }
+
+    static async convertSheet(event, target) {
+        let context = {
+            options: [
+                { id: "encounter", name: "MonksEnhancedJournal.sheettype.encounter", disabled: this.constructor.type == "encounter" },
+                { id: "event", name: "MonksEnhancedJournal.sheettype.event", disabled: this.constructor.type == "event" },
+                { id: "loot", name: "MonksEnhancedJournal.sheettype.loot", disabled: this.constructor.type == "loot" },
+                { id: "organization", name: "MonksEnhancedJournal.sheettype.organization", disabled: this.constructor.type == "organization" },
+                { id: "person", name: "MonksEnhancedJournal.sheettype.person", disabled: this.constructor.type == "person" },
+                { id: "place", name: "MonksEnhancedJournal.sheettype.place", disabled: this.constructor.type == "place" },
+                { id: "poi", name: "MonksEnhancedJournal.sheettype.poi", disabled: this.constructor.type == "poi" },
+                { id: "quest", name: "MonksEnhancedJournal.sheettype.quest", disabled: this.constructor.type == "quest" },
+                { id: "shop", name: "MonksEnhancedJournal.sheettype.shop", disabled: this.constructor.type == "shop" },
+                { id: "picture", name: "MonksEnhancedJournal.sheettype.picture", disabled: this.constructor.type == "picture" },
+                { id: "text", name: "MonksEnhancedJournal.sheettype.journalentry", disabled: this.constructor.type == "text" },
+            ],
+            sheetType: i18n(`MonksEnhancedJournal.sheettype.${this.constructor.type}`)
+        };
+        let html = await foundry.applications.handlebars.renderTemplate("modules/monks-enhanced-journal/templates/convert.html", context);
+        let that = this;
+        foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: `Convert Sheet`,
+            },
+            content: html,
+            yes: {
+                callback: (event, button) => {
+                    const form = button.form;
+                    const fd = new foundry.applications.ux.FormDataExtended(form).object;
+
+                    that.document.setFlag('monks-enhanced-journal', 'type', fd.convertTo);
+                }
+            }
+        });
+    }
+
+    /*
+    static onConfigureSheet(event) {
+        event.stopPropagation(); // Don't trigger other events
+        if (event.detail > 1) return; // Ignore repeated clicks
+
+        new ApplicationSheetConfig({
+            type: "enhancedjournal",
+            position: {
+                top: this.position.top + 40,
+                left: this.position.left + ((this.position.width - 500) / 2)
+            }
+        }).render({ force: true });
+    }
+    */
 
     refresh() { }
 
@@ -213,24 +342,29 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         if (this.enhancedjournal && !this.enhancedjournal.isEditable)
             return false;
 
-        return this.object.permission == CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER && this.object?.compendium?.locked !== true;
+        return this.document.permission == CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER && this.document?.compendium?.locked !== true;
     }
 
     fieldlist() {
         return null;
     }
 
-    render(force, options) {
-        force = force || this.tempOwnership;
-        if (force && (!this.object.testUserPermission(game.user, "OBSERVER") || (this.object.parent && !this.object.parent.testUserPermission(game.user, "OBSERVER")))) {
-            this.object.ownership[game.user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
-            if (this.object.parent)
-                this.object.parent.ownership[game.user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
+    render(options) {
+        let { force = this.tempOwnership } = options || {};
+        if (force && (!this.document.testUserPermission(game.user, "OBSERVER") || (this.document.parent && !this.document.parent.testUserPermission(game.user, "OBSERVER")))) {
+            this.document.ownership[game.user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
+            if (this.document.parent)
+                this.document.parent.ownership[game.user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
             this.tempOwnership = true;
         }
-        super.render(force, options);
+        if (this.enhancedjournal)
+            this.enhancedjournal.render(options);
+        else {
+            super.render(options);
+        }
     }
 
+    /*
     async _render(force, options = {}) {
         //Foundry is going to try and reposition the window, but since it's a subsheet, we don't want that to happen
         //So fake it by telling it that the window is minimized
@@ -244,26 +378,26 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         await super._render(force, Object.assign({ enhancedjournal: true }, options));
 
         if (setting('background-image') != 'none') {
-            $(this.element).attr("background-image", setting('background-image'));
+            $(this.trueElement).attr("background-image", setting('background-image'));
         } else {
-            $(this.element).removeAttr("background-image");
+            $(this.trueElement).removeAttr("background-image");
         }
 
         if (setting('sidebar-image') != 'none') {
-            $(this.element).attr("sidebar-image", setting('sidebar-image'));
+            $(this.trueElement).attr("sidebar-image", setting('sidebar-image'));
         } else {
-            $(this.element).removeAttr("sidebar-image");
+            $(this.trueElement).removeAttr("sidebar-image");
         }
 
         if (this.enhancedjournal)
             this._minimized = oldMinimize;
-        else if (!this.object.isOwner && ["base", "journalentry"].includes(this.type) && (this.options.sheetMode || this._sheetMode) === "image" && this.object.img) {
-            $(this.element).removeClass('monks-journal-sheet monks-enhanced-journal dnd5e');
+        else if (!this.document.isOwner && ["base", "journalentry"].includes(this.type) && (this.options.sheetMode || this._sheetMode) === "image" && this.document.img) {
+            $(this.trueElement).removeClass('monks-journal-sheet monks-enhanced-journal dnd5e');
         }
 
         if (!this.enhancedjournal && !this._backgroundsound?.playing) {
             // check to see if this object has a sound, and that sound sets an autoplay.
-            let sound = this.object.getFlag("monks-enhanced-journal", "sound");
+            let sound = this.document.getFlag("monks-enhanced-journal", "sound");
             if (sound?.audiofile && sound?.autoplay) {
                 this._playSound(sound).then((sound) => {
                     this._backgroundsound = sound;
@@ -276,23 +410,35 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         }
 
         if (options?.anchor) {
-            const anchor = $(`#${options?.anchor}`, this.element);
+            const anchor = $(`#${options?.anchor}`, this.trueElement);
             if (anchor.length) {
                 anchor[0].scrollIntoView();
             }
         }
 
         if (game.modules.get("polyglot")?.active) {
-            this.renderPolyglot(this.element);
+            this.renderPolyglot(this.trueElement);
         }
 
-        log('Subsheet rendering');
+        this.constructor.updateStyle.call(this);
+    }*/
 
-        this.updateStyle();
+    static #onAction(eventType, event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const target = event.target.closest(`[data-${eventType}-action]`);
+        const action = target.dataset[`${eventType}Action`];
+
+        let handler = this.options.actions[action];
+        handler?.call(this, event, target);
     }
 
     _canDragStart(selector) {
-        if (selector == ".sheet-icon") return game.user.isGM;
+        return game.user.isGM;
+    }
+
+    _canDragSheetIconStart(selector) {
         return game.user.isGM;
     }
 
@@ -300,14 +446,21 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return game.user.isGM;
     }
 
-    async _onDragStart(event) {
+    async _onDragSheetIconStart(event) {
         const target = event.currentTarget;
 
         if ($(target).hasClass("sheet-icon")) {
             const dragData = {
-                uuid: this.object.uuid,
-                type: this.object.documentName,
+                uuid: this.document.uuid,
+                type: this.document.documentName,
                 QEBypass: true
+            };
+
+            event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        } else if (target.dataset.document == "Actor") {
+            const dragData = {
+                uuid: target.dataset.uuid,
+                type: target.dataset.document
             };
 
             event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
@@ -315,50 +468,112 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     }
 
     async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
-        if ((data.type == 'JournalEntry' || data.type == 'JournalEntryPage' || data.type == 'Actor') && this.enhancedjournal) {
+        if (data.type == 'Actor') {
+            this.addActor(data);
+        } else if ((data.type == 'JournalEntry' || data.type == 'JournalEntryPage' || data.type == 'Actor') && this.enhancedjournal) {
             let document = await fromUuid(data.uuid);
             this.enhancedjournal.open(document);
+        } else if (data.type == 'Item') {
+            this.addItems(data);
         } else
             return false;
     }
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html);
-        this._contextMenu(html);
+    async _onDropLinkedActor(event) {
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
-        new EnhancedJournalContextMenu($(html), (this.constructor.type == "text" ? ".editor-parent" : ".tab.description .tab-inner"), this._getDescriptionContextOptions());
-
-        if (!this.isEditable) {
-            html.find(".tab.notes .editor-content[data-edit]").each((i, div) => this._activateEditor(div));
+        if (data.type == 'Actor') {
+            this.addActor(data);
         }
+    }
+
+    async _onDropRelationship(event) {
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+
+        if (data.type == 'JournalEntry') {
+            this.addRelationship(data);
+        } else if (data.type == 'JournalEntryPage') {
+            let doc = await fromUuid(data.uuid);
+            data.id = doc?.parent.id;
+            data.uuid = doc?.parent.uuid;
+            data.type = "JournalEntry";
+            this.addRelationship(data);
+        }
+    }
+
+    async _onRender(context, options) {
+        super._onRender(context, options);
+
+        if (!this.enhancedjournal) {
+            $(this.trueElement)
+                .attr('entity-type', this.document.type)
+                .attr('entity-id', this.document.id)
+                .attr('entity-uuid', this.document.uuid)
+                .removeClass('dnd5e2 dnd5e2-journal');
+
+            if (setting('background-image') != 'none') {
+                $(this.trueElement).attr("background-image", setting('background-image'));
+            } else {
+                $(this.trueElement).removeAttr("background-image");
+            }
+
+            if (setting('sidebar-image') != 'none') {
+                $(this.trueElement).attr("sidebar-image", setting('sidebar-image'));
+            } else {
+                $(this.trueElement).removeAttr("sidebar-image");
+            }
+
+            if (!this._backgroundsound?.playing) {
+                // check to see if this object has a sound, and that sound sets an autoplay.
+                let sound = this.document.getFlag("monks-enhanced-journal", "sound");
+                if (sound?.audiofile && sound?.autoplay) {
+                    this._playSound(sound).then((sound) => {
+                        this._backgroundsound = sound;
+                    });
+                }
+
+                this._soundHook = Hooks.on(game.modules.get("monks-sound-enhancements")?.active ? "globalSoundEffectVolumeChanged" : "globalInterfaceVolumeChanged", (volume) => {
+                    this._backgroundsound.volume = volume * getVolume();
+                });
+            }
+
+            this.constructor.updateStyle.call(this);
+        }
+
+        await this.activateListeners(this.trueElement);
+        await this.subRender(context, options);
+    }
+
+    async subRender(context, options) {
+        // Allow the notes to be editable by players even if they can't edit the journal entry
+        let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
+        if (hasGM) {
+            $('.tab.notes .editor-edit', this.trueElement).removeAttr('disabled');
+            let editor = $(".notes-container prose-mirror.editor").on("open", (ev) => {
+                editor.get(0).disabled = false;
+            });
+        }
+    }
+
+    async activateListeners(html) {
+        $("[data-blur-action]", html).on('blur', EnhancedJournalSheet.#onAction.bind(this, 'blur'));
+        $("[data-keypress-action]", html).on('keypress', EnhancedJournalSheet.#onAction.bind(this, 'keypress'));
+        $("[data-change-action],[data-change-action] > input[type='text']", html).on('change', EnhancedJournalSheet.#onAction.bind(this, 'change'));
+        $("[data-click-action]", html).on('click', EnhancedJournalSheet.#onAction.bind(this, 'click'));
+        $("[data-dblclick-action]", html).on('dblclick', EnhancedJournalSheet.#onAction.bind(this, 'dblclick'));
+        $("[data-contextmenu-action]", html).on('contextmenu', EnhancedJournalSheet.#onAction.bind(this, 'contextmenu'));
+
+        $(".actor-img img", html).on("dragstart", foundry.applications.ux.TextEditor.implementation._onDragContentLink);
+
+        this._dragDrop(html);
+        this._contextMenu(html);
 
         $("a.picture-link", html).click(MonksEnhancedJournal._onClickPictureLink.bind(this));
         $("img:not(.nopopout)", html).click(this._onClickImage.bind(this));
 
         $('a[href^="#"]', html).click(this._onClickAnchor.bind(this));
-
-        if (this.object.isOwner && this.object.src) {
-            new EnhancedJournalContextMenu($(html), '.sheet-image,div.picture-img', this._getImageContextOptions());
-        } else {
-            if (!this.object.src) {
-                $('img[data-edit],div.picture-img', html).contextmenu(this._onEditImage.bind(this));
-            } else {
-                $('.sheet-image,div.picture-img', html).contextmenu(this._onShowImage.bind(this));
-            }
-        }
-
-        if (this.object.isOwner && !this.object.src)
-            html.find('img[data-edit],div.picture-img').click(this._onEditImage.bind(this));
-        else
-            html.find('img[data-edit],div.picture-img').click(this._onShowImage.bind(this));
 
         $('div.picture-outer', html)
             .on('keydown', this.checkScale.bind(this))
@@ -367,37 +582,15 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             .on("pointerdown", this.checkScale.bind(this))
             .on("pointermove", this.moveScale.bind(this))
             .on("pointerup", this.releaseScale.bind(this));
-        $('.reset-scale', html).click(this.clearScale.bind(this));
-
         
+        $('.play-journal-sound', html).prop("disabled", false);
+        $('header.collapsible', html).on("click", this.collapseItemSection.bind(this));
 
-        $('.play-journal-sound', html).prop("disabled", false).click(this.toggleSound.bind(this));
-        $('.item-header.collapsible', html).on("click", this.collapseItemSection.bind(this));
+        $("div[data-tab='description'] prose-mirror.editor", html).on("save", (ev) => {
 
-        if (enhancedjournal) {
-            html.find('.new-link').click(async (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const options = { width: 320 };
-                const cls = getDocumentClass("JournalEntry");
-                return cls.createDialog({}, options);
-            });
+        });
 
-            html.find('.recent-link').click(async (ev) => {
-                let uuid = ev.currentTarget.dataset.documentUuid;
-                let id = ev.currentTarget.dataset.documentId;
-                let document;
-                if (uuid)
-                    document = await fromUuid(uuid);
-                else
-                    document = game.journal.find(j => j.id == id);
-                if (document)
-                    enhancedjournal.open(document);
-            });
-
-            for (let dragdrop of enhancedjournal._dragDrop)
-                dragdrop.bind(html[0]);
-
+        if (this.enhancedjournal) {
             /*
             if (enhancedjournal.subsheet.editors["text.content"]) {
                 let oldSaveCallback = enhancedjournal.subsheet.editors["text.content"].options.save_onsavecallback;
@@ -410,7 +603,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             /*
             if (game.system.id == "pf2e") {
                 let cls = CONFIG.JournalEntry.sheetClasses.base["pf2e.JournalSheetPF2e"].cls;
-                let object = this.object;
+                let object = this.document;
                 if (object instanceof JournalEntryPage)
                     object = object.parent;
                 let sheet = new cls(object);
@@ -422,26 +615,15 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     }
 
     activateEditor(name, options = {}, initialContent = "") {
-        $('.editor .editor-content', this.element).unmark();
+        $('.editor .editor-display', this.trueElement).unmark();
 
         if (this.editors[name] != undefined) {
             if (game.modules.get("polyglot")?.active && game.polyglot) {
                 game.polyglot.activeEditorLogic(options);
             }
 
-            if (this.editors[name].options.engine == "tinymce") {
-                options = foundry.utils.mergeObject(options, {
-                    contextmenu: 'link createlink',
-                    plugins: CONFIG.TinyMCE.plugins + ' createlink background dcconfig soundeffect template anchor',
-                    toolbar: CONFIG.TinyMCE.toolbar + ' background dcconfig soundeffect template anchor',
-                    templates: CONFIG.TinyMCE.templates,
-                    font_formats: CONFIG.TinyMCE.font_formats //"Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Oswald=oswald; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats;Anglo Text=anglo_textregular;Lovers Quarrel=lovers_quarrelregular;Play=Play-Regular"
-                });
-            } else if (this.editors[name].options.engine == "prosemirror") {
-            }
-
-            MonksEnhancedJournal.fixType(this.object);
-            if (this.object.type == 'text' || this.object.type == 'journalentry' || this.object.type == 'oldentry' || setting("show-menubar")) {
+            MonksEnhancedJournal.fixType(this.document);
+            if (this.document.type == 'text' || this.document.type == 'journalentry' || this.document.type == 'oldentry' || setting("show-menubar")) {
                 options = foundry.utils.mergeObject(options, { menubar: true });
             }
             if (this.pf2eActivateEditor)
@@ -449,10 +631,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             else
                 super.activateEditor(name, options, initialContent);
             //need this because foundry doesn't allow access to the init of the editor
-            //if (this.object.type == 'text' || this.object.type == 'journalentry' || this.object.type == 'oldentry' || setting("show-menubar")) {
+            //if (this.document.type == 'text' || this.document.type == 'journalentry' || this.document.type == 'oldentry' || setting("show-menubar")) {
                 let count = 0;
                 let that = this;
-                let data = this.object.getFlag('monks-enhanced-journal', 'style');
+            let data = this.document.getFlag('monks-enhanced-journal', 'style');
                 //if (data) {
                     let timer = window.setInterval(function () {
                         count++;
@@ -462,7 +644,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                         let editor = that.editors[name];
                         if (editor && editor.mce) {
                             editor.mce.enhancedsheet = that;
-                            that.updateStyle(data, $(editor.mce.contentDocument));
+                            that.constructor.updateStyle.call(that, data, $(editor.mce.contentDocument));
                             window.clearInterval(timer);
                         }
                     }, 100);
@@ -473,51 +655,111 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
     _onClickImage(event) {
         const target = event.currentTarget;
-        const title = this.object?.name ?? target.title;
-        const ip = new ImagePopout(target.src, { title });
-        //ip.shareImage = () => Journal.showDialog(this.object, { showAs: "image" });
+        const title = this.document?.name ?? target.title;
+        const ip = new foundry.applications.apps.ImagePopout({ src: target.src, window: { title } });
+        //ip.shareImage = () => foundry.documents.collections.Journal.showDialog(this.document, { showAs: "image" });
         ip.render(true);
     }
 
+    _dragDrop(html) {
+        new foundry.applications.ux.DragDrop.implementation({
+            dragSelector: ".sheet-icon",
+            dropSelector: "#board",
+            permissions: {
+                dragstart: this._canDragSheetIconStart.bind(this)
+            },
+            callbacks: {
+                dragstart: this._onDragSheetIconStart.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".relationships .items-list",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropRelationship.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".offering-list .items-list",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropOffering.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".journal-sheet-header",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropLinkedActor.bind(this)
+            }
+        }).bind(html);
+    }
+
     _contextMenu(html) {
-        //EnhancedJournalContextMenu.create(this, html, ".tab.description .tab-inner", this._getEntryContextOptions());
+        new foundry.applications.ux.ContextMenu(html, ".editor-parent", this._getDescriptionContextOptions(), { fixed: true, jQuery: false });
+
+        this.pictureContext = new foundry.applications.ux.ContextMenu(html, 'img[data-edit],div.picture-img', this._getImageContextOptions(), { eventName: "manual", fixed: true, jQuery: false, });
+
+        new foundry.applications.ux.ContextMenu(html, ".actor-img-container", this._getPersonActorContextOptions(), { fixed: true, jQuery: false });
     }
 
     async getRelationships() {
-        let relationships = {};
-        for (let item of (this.object.flags['monks-enhanced-journal']?.relationships || [])) {
-            let entity = item.uuid ? await fromUuid(item.uuid) : game.journal.get(item.id);
+        let relationships = this.document.flags['monks-enhanced-journal']?.relationships || {};
+
+        if (relationships instanceof Array) {
+            let newRelationships = {};
+            for (let relationship of relationships) {
+                newRelationships[relationship.id] = relationship;
+            }
+
+            relationships = newRelationships;
+            await this.document.setFlag("monks-enhanced-journal", "relationships", relationships);
+        }
+
+        let results = {};
+        for (let [relationshipId, relationship] of Object.entries(relationships)) {
+            let entity = relationship.uuid ? await fromUuid(relationship.uuid) : game.journal.get(relationshipId);
             if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage))
                 continue;
-            if (entity && entity.testUserPermission(game.user, "LIMITED") && (game.user.isGM || !item.hidden)) {
+            if (entity && entity.testUserPermission(game.user, "LIMITED") && (game.user.isGM || !relationship.hidden)) {
                 let page = (entity instanceof JournalEntryPage ? entity : entity.pages.contents[0]);
                 MonksEnhancedJournal.fixType(page);
                 let type = foundry.utils.getProperty(page, "flags.monks-enhanced-journal.type");
-                if (!relationships[type])
-                    relationships[type] = {
+                if (!results[type])
+                    results[type] = {
                         type: type,
-                        name: type && (game.i18n.translations.MonksEnhancedJournal || game.i18n._fallback.MonksEnhancedJournal || {})[type?.toLowerCase()] ? i18n(`MonksEnhancedJournal.${type?.toLowerCase()}`) : i18n("MonksEnhancedJournal.Unknown"),
+                        name: type && (game.i18n.translations.MonksEnhancedJournal || game.i18n._fallback.MonksEnhancedJournal || {})?.sheettype[type?.toLowerCase()] ? i18n(`MonksEnhancedJournal.sheettype.${type?.toLowerCase()}`) : i18n("MonksEnhancedJournal.Unknown"),
                         documents: []
                     };
 
-                if (relationships[type].documents.some(r => r.id == item.id && r.uuid == item.uuid))
+                if (results[type].documents.some(r => r.id == relationship.id && r.uuid == relationship.uuid))
                     continue;
 
-                item.name = page.name;
-                item.img = page.src || `modules/monks-enhanced-journal/assets/${type}.png`;
-                item.type = type;
-                item.shoptype = page.getFlag("monks-enhanced-journal", "shoptype");
-                item.role = page.getFlag("monks-enhanced-journal", "role");
+                relationship.id = relationship.id || relationshipId;
+                relationship.name = page.name;
+                relationship.img = page.src || `modules/monks-enhanced-journal/assets/${type}.png`;
+                relationship.type = type;
+                relationship.shoptype = page.getFlag("monks-enhanced-journal", "shoptype");
+                relationship.role = page.getFlag("monks-enhanced-journal", "role");
 
-                relationships[type].documents.push(item);
+                results[type].documents.push(relationship);
             }
         }
 
-        for (let [k, v] of Object.entries(relationships)) {
+        for (let [k, v] of Object.entries(results)) {
             v.documents = v.documents.sort((a, b) => a.name.localeCompare(b.name));
         }
 
-        return relationships;
+        return results;
     }
 
     _getDescriptionContextOptions() {
@@ -526,7 +768,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 name: "Show in Chat",
                 icon: '<i class="fas fa-comment"></i>',
                 condition: game.user.isGM,
-                callback: li => {
+                callback: () => {
                     this.copyToChat();
                 }
             },
@@ -534,8 +776,8 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 name: "Extract to Journal Entry",
                 icon: '<i class="fas fa-file-export"></i>',
                 condition: game.user.isGM,
-                callback: li => {
-                    this.splitJournal();
+                callback: () => {
+                    this.constructor.splitJournal.call(this);
                 }
             }
         ];
@@ -575,19 +817,22 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 name: "Show Image",
                 icon: '<i class="fas fa-image"></i>',
                 callback: () => {
-                    const ip = new ImagePopout(this.object.src, {
-                        uuid: this.object.uuid,
-                        title: this.object.name,
-                        caption: this.object.image?.caption
+                    const ip = new foundry.applications.apps.ImagePopout({
+                        src: this.document.src,
+                        uuid: this.document.uuid,
+                        window: {
+                            title: this.document.name
+                        },
+                        caption: this.document.image?.caption
                     });
-                    ip.shareImage = () => Journal.showDialog(this.object, { showAs: "image" });
+                    ip.shareImage = () => foundry.documents.collections.Journal.showDialog(this.document, { showAs: "image" });
                     ip.render(true);
                 }
             },
             {
                 name: "Edit Image",
                 icon: '<i class="fas fa-pencil"></i>',
-                condition: this.object.isOwner,
+                condition: this.document.isOwner,
                 callback: () => {
                     that._onEditImage.call(that);
                 }
@@ -595,14 +840,24 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             {
                 name: "Clear Image",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: this.object.isOwner,
+                condition: this.document.isOwner,
                 callback: () => {
-                    Dialog.confirm({
-                        title: `Clear Item`,
+                    foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: `Clear Item`,
+                        },
                         content: "Are you sure you want to clear the image?",
-                        yes: async () => {
-                            await that.object.update({ src: "" });
-                            that.render(true);
+                        yes: {
+                            callback: async () => {
+                                await that.document.update({ src: "" });
+                                if (this.constructor.type == "picture") {
+                                    $('img[data-edit="src"],div.picture-img', this.trueElement).css({ opacity: 0 }).attr('src', "").css({ backgroundImage: "" });
+                                    $('.sheet-body .instruction, .tab.picture .instruction', this.trueElement).show();
+                                } else {
+                                    let defaultImage = this.constructor.type == "picture" ? "" : `modules/monks-enhanced-journal/assets/${this.constructor.type}.png`;
+                                    $('img[data-edit="src"],div.picture-img', this.trueElement).attr('src', defaultImage).css({ backgroundImage: defaultImage });
+                                }
+                            }
                         }
                     });
                 }
@@ -610,12 +865,75 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         ]
     }
 
+    _getPersonActorContextOptions() {
+        return [
+            {
+                name: "SIDEBAR.Delete",
+                icon: '<i class="fas fa-trash"></i>',
+                condition: () => game.user.isGM,
+                callback: () => {
+                    foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: `${game.i18n.localize("SIDEBAR.Delete")} ${i18n("MonksEnhancedJournal.ActorLink")}`,
+                        },
+                        content: i18n("MonksEnhancedJournal.ConfirmRemoveLink"),
+                        yes: { callback: this.removeActor.bind(this) }
+                    });
+                }
+            },
+            {
+                name: i18n("MonksEnhancedJournal.ImportItems"),
+                icon: '<i class="fas fa-download fa-fw"></i>',
+                condition: () => game.user.isGM && this.document.type == "shop",
+                callback: () => {
+                    foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: i18n("MonksEnhancedJournal.ImportAllActorItems"),
+                        },
+                        content: i18n("MonksEnhancedJournal.msg.ConfirmImportAllItemsToShop"),
+                        yes: { callback: this.importActorItems.bind(this) }
+                    });
+                }
+            },
+            {
+                name: i18n("MonksEnhancedJournal.OpenActorSheet"),
+                icon: '<i class="fas fa-user fa-fw"></i>',
+                condition: () => game.user.isGM,
+                callback: () => {
+                    this.openActor.call(this, { newtab: true });
+                }
+            },
+            {
+                name: "Show Image",
+                icon: '<i class="fas fa-image"></i>',
+                callback: () => {
+                    let actorLink = this.document.getFlag('monks-enhanced-journal', 'actor');
+                    let actor = game.actors.find(a => a.id == actorLink.id);
+                    if (!actor)
+                        return;
+
+                    const ip = new foundry.applications.apps.ImagePopout({
+                        src: actor.img,
+                        uuid: actor.uuid,
+                        window: {
+                            title: actor.name
+                        }
+                    });
+                    ip.shareImage = () => foundry.documents.collections.Journal.showDialog(actor, { showAs: "image" });
+                    ip.render(true);
+                }
+            }
+        ];
+    }
+
     _disableFields(form) {
         super._disableFields(form);
         let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
-        if (hasGM)
+        if (hasGM) {
+            $('.tab.notes .editor-edit', form).removeAttr('disabled');
             $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly').on('blur', this._onChangeInput.bind(this));
-        $('.editor-edit', form).css({ width: '0px !important', height: '0px !important' });
+        }
+        //$('.editor-edit', form).css({ width: '0px !important', height: '0px !important' });
     }
 
     static getCurrency(actor, denomination) {
@@ -895,29 +1213,46 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return this.constructor.addCurrency(actor, denomination, value);
     }
 
-    onAddSound() {
-        let sound = (this.enhancedjournal ? this.enhancedjournal._backgroundsound[this.object.id] : this._backgroundsound);
-        new EditSound(this.object, sound).render(true);
+    static onAddSound(event, target) {
+        let sound = (this.enhancedjournal ? this.enhancedjournal._backgroundsound[this.document.id] : this._backgroundsound);
+        new EditSound({ document: this.document, sound, journalsheet: this }).render(true);
     }
 
-    toggleSound() {
-        let sound = (this.enhancedjournal ? this.enhancedjournal._backgroundsound[this.object.id] : this._backgroundsound);
+    loadSound(src, autoplay, autoplayOptions) {
+        let sound = new foundry.audio.Sound(src);
+        sound.load({ autoplay, autoplayOptions });
+
+        if (this.enhancedjournal)
+            this.enhancedjournal._backgroundsound[this.document.id] = sound;
+        else
+            this._backgroundsound = sound;
+    }
+
+    clearSound() {
+        if (this.enhancedjournal)
+            this.enhancedjournal._backgroundsound[this.document.id] = null;
+        else
+            this._backgroundsound = null;
+    }
+
+    static toggleSound() {
+        let sound = (this.enhancedjournal ? this.enhancedjournal._backgroundsound[this.document.id] : this._backgroundsound);
 
         if (sound?.playing) {
             // stop sound playing
             this._stopSound(sound);
         } else {
             // start sound playing
-            let soundData = this.object.getFlag("monks-enhanced-journal", "sound");
+            let soundData = this.document.getFlag("monks-enhanced-journal", "sound");
             if (!sound || sound.src != soundData.audiofile) {
-                sound = this.object.getFlag("monks-enhanced-journal", "sound");
+                sound = this.document.getFlag("monks-enhanced-journal", "sound");
             }
             this._playSound(sound).then((sound) => {
                 if (!sound)
                     return;
 
                 if (this.enhancedjournal)
-                    this.enhancedjournal._backgroundsound[this.object.id] = sound;
+                    this.enhancedjournal._backgroundsound[this.document.id] = sound;
                 else
                     this._backgroundsound = sound;
             });
@@ -927,37 +1262,37 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     _playSound(sound) {
         if (sound.audiofile) {
             let volume = sound.volume ?? 1;
-            $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.element)).addClass("loading").find("i").attr("class", "fas fa-sync fa-spin");
+            $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.trueElement)).addClass("loading").find("i").attr("class", "fas fa-sync fa-spin");
             return foundry.audio.AudioHelper.play({
                 src: sound.audiofile,
                 loop: sound.loop,
                 volume: 0
             }).then((soundfile) => {
                 if (game.modules.get("monks-sound-enhancements")?.active) {
-                    game.MonksSoundEnhancements.addSoundEffect(soundfile, this.object.name);
+                    game.MonksSoundEnhancements.addSoundEffect(soundfile, this.document.name);
                 }
-                $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.element)).addClass("active").removeClass("loading").find("i").attr("class", "fas fa-volume-up");
+                $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.trueElement)).addClass("active").removeClass("loading").find("i").attr("class", "fas fa-volume-up");
                 soundfile.fade(volume * getVolume(), { duration: 500 });
                 soundfile.addEventListener("end", () => {
-                    $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.element)).removeClass("active").find("i").attr("class", "fas fa-volume-off");
+                    $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.trueElement)).removeClass("active").find("i").attr("class", "fas fa-volume-off");
                 });
                 soundfile.addEventListener("stop", () => {
-                    $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.element)).removeClass("active").find("i").attr("class", "fas fa-volume-off");
+                    $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.trueElement)).removeClass("active").find("i").attr("class", "fas fa-volume-off");
                 });
                 soundfile.effectiveVolume = volume;
                 return soundfile;
             });
         } else {
-            let soundData = this.object.getFlag("monks-enhanced-journal", "sound");
+            let soundData = this.document.getFlag("monks-enhanced-journal", "sound");
             let options = { volume: (soundData.volume ?? 1), fade: 500, loop: soundData.loop };
             if (!sound.loaded)
                 sound.load({ autoplay: true, autoplayOptions: options });
             else
                 sound.play(options);
             if (game.modules.get("monks-sound-enhancements")?.active) {
-                game.MonksSoundEnhancements.addSoundEffect(sound, this.object.name);
+                game.MonksSoundEnhancements.addSoundEffect(sound, this.document.name);
             }
-            $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.element)).addClass("active").find("i").attr("class", "fas fa-volume-up");
+            $('.play-journal-sound', (this.enhancedjournal ? this.enhancedjournal.element : this.trueElement)).addClass("active").find("i").attr("class", "fas fa-volume-up");
         }
 
         return new Promise((resolve) => { });
@@ -965,7 +1300,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
     _stopSound(sound) {
         if (sound && sound.stop) {
-            $('.play-journal-sound i', (this.enhancedjournal ? this.enhancedjournal.element : this.element)).attr("class", "fas fa-volume-off");
+            $('.play-journal-sound i', (this.enhancedjournal ? this.enhancedjournal.element : this.trueElement)).attr("class", "fas fa-volume-off");
             sound.fade(0, { duration: 500 }).then(() => {
                 sound.stop();
             });
@@ -985,16 +1320,47 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         }
     }
 
-    _onShowImage(event) {
-        event.stopPropagation();
-        event.stopImmediatePropagation();
+    static async onAddImage(event, target) {
+        if (this.document.isOwner) {
+            if (!this.document.src) {
+                this._onEditImage.call(this, event);
+            } else if(event.shiftKey) {
+                await this.document.update({ src: "" });
+                let defaultImage = this.constructor.type == "picture" ? "" : `modules/monks-enhanced-journal/assets/${this.constructor.type}.png`;
+                $('img[data-edit="src"],div.picture-img', this.trueElement).attr('src', defaultImage).css({ backgroundImage: defaultImage });
+            }
+        }
+    }
 
-        const ip = new ImagePopout(this.object.src, {
-            uuid: this.object.uuid,
-            title: this.object.name,
-            caption: this.object.image?.caption
+    static onImageDblClick(event, target) {
+        if (this.document.isOwner && !this.document.src)
+            this._onEditImage.call(this, event);
+        else
+            this._onShowImage.call(this, event);
+    }
+
+    static onImageContext(event, target) {
+        if (this.document.isOwner && this.document.src) {
+            this.pictureContext._onActivate(event);
+        } else {
+            if (!this.document.src) {
+                this._onEditImage.call(this, event);
+            } else {
+                this._onShowImage.call(this, event);
+            }
+        }
+    }
+
+    _onShowImage(event) {
+        const ip = new foundry.applications.apps.ImagePopout({
+            src: this.document.src,
+            uuid: this.document.uuid,
+            window: {
+                title: this.document.name
+            },
+            caption: this.document.image?.caption
         });
-        ip.shareImage = () => Journal.showDialog(this.object, { showAs: "image" });
+        ip.shareImage = () => foundry.documents.collections.Journal.showDialog(this.document, { showAs: "image" });
         ip.render(true);
     }
 
@@ -1003,28 +1369,28 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         event?.stopPropagation();
         event?.stopImmediatePropagation();
 
-        if (this.object.permission < CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)
+        if (this.document.permission < CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)
             return null;
 
         if (event?.shiftKey) {
             $(event?.currentTarget).attr('src', "").css({ backgroundImage: `` });
-            $('img[data-edit="src"]', this.element).css({ opacity: '' });
-            $('.tab.picture .instruction', this.element).show();
-            $('.sheet-body .instruction', this.element).show();
-            this._onSubmit(event, { preventClose: true });
+            $('img[data-edit="src"]', this.trueElement).css({ opacity: '' });
+            $('.tab.picture .instruction', this.trueElement).show();
+            $('.sheet-body .instruction', this.trueElement).show();
+            this.submit(); // constructor.onSubmit.call(this, event, { preventClose: true });
         } else if (!event?.ctrlKey && !event?.metaKey) {
-            const fp = new FilePicker({
+            const fp = new foundry.applications.apps.FilePicker.implementation({
                 type: "image",
-                current: this.object.img,
+                current: this.document.img,
                 callback: async (path) => {
                     //$(event?.currentTarget).attr('src', path).css({ backgroundImage: `url(${path})` });
-                    $('img[data-edit="src"],div.picture-img', this.element).css({ opacity: '' }).attr('src', path).css({ backgroundImage: `url(${path})` });
-                    $('.tab.picture .instruction', this.element).hide();
-                    $('.sheet-body .instruction', this.element).hide();
-                    let result = this._onSubmit(event, { preventClose: true });
+                    $('img[data-edit="src"],div.picture-img', this.trueElement).css({ opacity: '' }).attr('src', path).css({ backgroundImage: `url(${path})` });
+                    $('.tab.picture .instruction', this.trueElement).hide();
+                    $('.sheet-body .instruction', this.trueElement).hide();
+                    let result = this.submit(); // constructor.onSubmit.call(this, event, { preventClose: true });
                     if (result instanceof Promise)
                         await result;
-                    this.render(true);
+                    //this.render(true);
                 },
                 top: this.position.top + 40,
                 left: this.position.left + 10
@@ -1033,44 +1399,83 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         }
     }
 
-    _onSubmit(ev) {
-        const formData = foundry.utils.expandObject(this._getSubmitData());
+    _prepareSubmitData(event, form, formData, updateData) {
+        const submitData = super._prepareSubmitData(event, form, formData, updateData);
 
-        if (Object.keys(formData).length == 0)
+        // Make sure to include all the relationship data if you're updating data
+        let relationships = foundry.utils.mergeObject(foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.relationships") || {}, foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.relationships") || {}, {overwrite: false});
+        foundry.utils.setProperty(submitData, "flags.monks-enhanced-journal.relationships", relationships);
+
+        // Make sure to include all the item data if you're updating data
+        let items = foundry.utils.mergeObject(foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.items") || {}, foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.items") || {}, { overwrite: false });
+        foundry.utils.setProperty(submitData, "flags.monks-enhanced-journal.items", items);
+
+        //Fix an issue with Foundry core not retrieving all the form inputs
+        for (let el of form.elements) {
+            if (!el.name || el.disabled || (el.tagName === "BUTTON")) continue;
+            const field = form.elements[el.name];
+
+            // Duplicate Fields
+            if (field instanceof RadioNodeList) {
+                const values = [];
+                for (let f of field) {
+                    if (f.type === "checkbox")
+                        values.push(f.checked);
+                }
+                if (values.length)
+                    submitData[el.name] = values;
+            }
+        }
+
+        return submitData;
+    }
+
+    static onSubmit(event, form, formData) {
+        let submitData = this._prepareSubmitData(event, form, formData, {})
+
+        if (Object.keys(submitData).length == 0)
             return;
 
         if (this.type == 'quest') {
-            $(`li[data-entry-id="${this.object.id}"]`, '#journal,#journal-directory').attr('status', formData.flags['monks-enhanced-journal'].status);
+            $(`li[data-entry-id="${this.document.id}"]`, '#journal,#journal-directory').attr('status', submitData.flags['monks-enhanced-journal'].status);
         }
 
-        if (formData.src?.startsWith("modules/monks-enhanced-journal/assets/"))
-            formData.src = null;
+        if (submitData.src?.startsWith("modules/monks-enhanced-journal/assets/"))
+            submitData.src = null;
 
-        if (formData.src != undefined) {
-            this.object.parent.setFlag('monks-enhanced-journal', 'img', formData.src);
+        if (submitData.src != undefined) {
+            this.document.parent.setFlag('monks-enhanced-journal', 'img', submitData.src);
         }
 
-        if (!this.isEditable && foundry.utils.getProperty(formData, 'flags.monks-enhanced-journal.' + game.user.id)) {
+        if (!this.isEditable && foundry.utils.getProperty(submitData, 'flags.monks-enhanced-journal.' + game.user.id)) {
             //need to have the GM update this, but only the user notes
             MonksEnhancedJournal.emit("saveUserData", {
-                documentId: this.object.uuid,
+                documentId: this.document.uuid,
                 userId: game.user.id,
-                userdata: formData.flags["monks-enhanced-journal"][game.user.id]
+                userdata: foundry.utils.getProperty(submitData, `flags.monks-enhanced-journal.${game.user.id}`)
             });
             return true;//new Promise(() => { });
         } else if (this.isEditable) {
-            formData.type = "text";
-            return this.object.update(formData);
+            // Removed this because Foundry was giving a == error and I think the Hook in monks-enhanced-journal was covering it submitData.type = "text";
+            return this.document.update(submitData);
         }
     }
 
     _documentControls() {
         let ctrls = [];
-        if (this.object.id)
-            ctrls.push({ id: 'locate', text: i18n("SIDEBAR.JumpPin"), icon: 'fa-crosshairs', conditional: game.user.isGM, attr: { "page-id": this.object.id, "journal-id": this.object.parent.id }, callback: this.enhancedjournal.findMapEntry.bind(this) });
+        if (!this.enhancedjournal && this.isEditable) {
+            ctrls.push({
+                icon: "fa-solid fa-gear",
+                label: "SHEETS.ConfigureSheet",
+                action: "configureSheet",
+                visible: true
+            });
+        }
+        if (this.document.id)
+            ctrls.push({ id: 'locate', label: i18n("SIDEBAR.JumpPin"), icon: 'fas fa-crosshairs', visible: game.user.isGM, attr: { "page-id": this.document.id, "journal-id": this.document.parent?.id }, action: "findMapEntry" });
         let defaultSettings = (game.settings.settings.get("monks-enhanced-journal.sheet-settings")?.default || {})[this.constructor.type];
         if (defaultSettings != undefined && Object.keys(defaultSettings).length > 0)
-            ctrls.push({ id: 'settings', text: i18n("MonksEnhancedJournal.EditFields"), icon: 'fa-cog', conditional: game.user.isGM, callback: this.onEditFields });
+            ctrls.push({ id: 'settings', label: i18n("MonksEnhancedJournal.EditFields"), icon: 'fas fa-cog', visible: game.user.isGM, action: "editFields" });
         return ctrls;
     }
 
@@ -1098,18 +1503,20 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         }
     }
 
-    updateStyle(data, element) {
+    static updateStyle(data, element) {
         if (data == undefined)
-            data = foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.style");
+            data = foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.style");
 
         if (data == undefined)
             return;
 
-        let content = $('.editor-content[data-edit="text.content"],.mce-content-body', (element || this.element));
+        let content = $(element).hasClass("editor-parent") ? $(element) : $('.editor-parent', (element || this.trueElement));
+
+        let img = data.img?.value || data.img;
 
         let css = {
             'background-color': (data.color ? data.color : ''),
-            'background-image': (data.img?.value ? 'url(' + data.img?.value + ')' : ''),
+            'background-image': (img ? 'url(' + img + ')' : ''),
             'background-repeat': (data.sizing == 'repeat' ? 'repeat' : 'no-repeat'),
             'background-position': 'center',
             'background-size': (data.sizing == 'repeat' ? 'auto' : (data.sizing == 'stretch' ? '100% 100%' : data.sizing))
@@ -1118,50 +1525,30 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         content.css(css);
     }
 
-    onEditDescription(event) {
+    static onEditDescription(event, target) {
         if (!this.isEditable)
             return null;
 
-        const name = $('.editor-content', this.element).attr("data-edit");
-        if (this.editors?.[name]?.active) {
-            /*
-            //close the editor
-            const name = $('.editor-content', this.element).attr("data-edit");
-            //this.saveEditor(name);
-            const editor = this.editors[name];
-            if (!editor || !editor.mce) throw new Error(`${name} is not an active editor name!`);
-            editor.active = false;
-            const mce = editor.mce;
-
-            const submit = this._onSubmit(new Event("mcesave"));
-
-            mce.remove();
-            if (editor.hasButton) editor.button.style.display = "";
-
-            //$('.nav-button.edit i', this.element).addClass('fa-pencil-alt').removeClass('fa-download');
-
-            return submit.then(() => {
-                mce.destroy();
-                editor.mce = null;
-                //this.render(true, { action:'update', data: {content: editor.initial, _id: this.object.id}}); //need to send this so that the render looks to the subsheet instead
-                editor.changed = false;
-                $('.sheet-body', this.element).removeClass('editing');
-            });*/
-            this.saveEditor(name);
-        } else {
-            if ($('.editor', this.element).is(":visible"))
-                $('.editor .editor-edit', this.element).click();
-            //$('.sheet-body', this.element).addClass('editing');
-        }
+        let navElement = $(".sheet-tabs.tabs", this.trueElement).get(0);
+        if (this.tabGroups["primary"])
+            this.changeTab.call(this.enhancedjournal || this, "description", "primary", { event, navElement });
+        let editing = $(".editor-parent[data-editor-id='description']", this.trueElement).hasClass("editing");
+        $(".editor-parent[data-editor-id='description']", this.trueElement).toggleClass("editing", !editing);
+        $(".nav-button.edit i", this.enhancedjournal?.element || this.element).toggleClass("fa-pencil-alt", editing).toggleClass("fa-save", !editing);
     }
 
-    onEditFields() {
+    static onEditNotes(event, target) {
+        let editing = $(".editor-parent[data-editor-id='notes']", this.trueElement).hasClass("editing");
+        $(".editor-parent[data-editor-id='notes']", this.trueElement).toggleClass("editing", !editing);
+    }
+
+    static findMapEntry(event, target) {
+        canvas.notes.panToNote(this.document.sceneNote);
+    }
+
+    static onEditFields() {
         //popup a dialog with the available fields to edit
-        /*
-        let fields = this.fieldlist();
-        new EditFields(this.object, fields).render(true);
-        */
-       new CustomisePage(this).render(true);
+        new CustomisePage({ document: this.document, journalsheet: this }).render(true);
     }
 
     async renderPolyglot(html) {
@@ -1169,12 +1556,12 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         //show the runes if [(gm or owner) and userunes][not gm and lang unknown]
 
         let that = this;
-        //userunes = !(this.object.getFlag('monks-enhanced-journal', 'use-runes') != undefined ? this.object.getFlag('monks-enhanced-journal', 'use-runes') : setting('use-runes'));
+        //userunes = !(this.document.getFlag('monks-enhanced-journal', 'use-runes') != undefined ? this.document.getFlag('monks-enhanced-journal', 'use-runes') : setting('use-runes'));
         //MonksEnhancedJournal.journal.object.setFlag('monks-enhanced-journal', 'use-runes', userunes);
-        //$('.nav-button.polyglot i', this.element).attr('class', 'fas ' + (userunes ? 'fa-link' : 'fa-unlink'));
+        //$('.nav-button.polyglot i', this.trueElement).attr('class', 'fas ' + (userunes ? 'fa-link' : 'fa-unlink'));
 
 
-        $('.editor-content span.polyglot-journal:not(.converted)', html).each(function () {
+        $('.editor-display span.polyglot-journal:not(.converted)', html).each(function () {
             const lang = this.dataset.language;
             if (!lang) return;
 
@@ -1183,12 +1570,12 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             if (!polyglot)
                 return;
 
-            let scramble = polyglot.scrambleString(this.textContent, that.object.id, lang);
+            let scramble = polyglot.scrambleString(this.textContent, that.document.id, lang);
             let font = polyglot._getFontStyle(lang);
             let languages = polyglot.LanguageProvider?.languages || polyglot.languageProvider?.languages;
 
             $(this).addClass('converted')
-                .attr('title', (game.user.isGM || that.object.permission == CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER || polyglot.known_languages.has(lang) ? languages[lang] : 'Unknown'))
+                .attr('data-tooltip', (game.user.isGM || that.document.permission == CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER || polyglot.known_languages.has(lang) ? languages[lang]?.label : '????'))
                 .attr('data-language', lang)
                 .css({ font: font })
                 .data({ text: text, scramble: scramble, lang: lang, font: font, changed: true })
@@ -1197,7 +1584,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                     function () {
                         let data = $(this).data();
                         const lang = data.lang;
-                        if (game.user.isGM || that.object.permission == CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER || polyglot.known_languages.has(lang)) {
+                        if (game.user.isGM || that.document.permission == CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER || polyglot.known_languages.has(lang)) {
                             $(this).data('changed', !data.changed).html(data.changed ? data.scramble : data.text).css({ font: (data.changed ? data.font : '') });
                         }
                     }
@@ -1231,16 +1618,34 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return str;
     }
 
-    getItemGroups(items, type, purchasing, sort = "name") {
-        //let type = data?.data?.flags['monks-enhanced-journal'].type;
-        //let purchasing = data?.data?.flags['monks-enhanced-journal'].purchasing;
+    getItemList() {
+        let items = this.document.getFlag("monks-enhanced-journal", "items");
+        return items || {};
+    }
+
+    async getItemGroups(purchasing, sort = "name") {
+        let items = this.document.getFlag("monks-enhanced-journal", "items");
+        let type = foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type");
 
         if (!items)
             return {};
 
+        if (items instanceof Array) {
+            let newItems = {};
+            for (let item of items) {
+                let id = item.id || item._id;
+                if (!id)
+                    continue;
+                newItems[id] = item;
+            }
+
+            items = newItems;
+            await this.document.setFlag("monks-enhanced-journal", "items", items);
+        }
+        
         let groups = {};
-        for (let item of items) {
-            if (!item)
+        for (let [key, item] of Object.entries(items)) {
+            if (!key || !item)
                 continue;
             if (!item.system && item.data)
                 item = item.data;
@@ -1256,12 +1661,31 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             let hasRequest = (requests.find(r => r.id == game.user.id) != undefined);
 
             let flags = foundry.utils.getProperty(item, "flags.monks-enhanced-journal") || {};
-            let text = (type == 'shop' ?
-                (flags.quantity === 0 ? i18n("MonksEnhancedJournal.SoldOut") : (flags.lock ? i18n("MonksEnhancedJournal.Unavailable") : i18n("MonksEnhancedJournal.Purchase"))) :
-                (purchasing == "free" || purchasing == "confirm" ? i18n("MonksEnhancedJournal.Take") : (hasRequest ? i18n("MonksEnhancedJournal.Cancel") : i18n("MonksEnhancedJournal.Request"))));
-            let icon = (type == 'shop' ?
-                (flags.quantity === 0 ? "" : (flags.lock ? "fa-lock" : "fa-dollar-sign")) :
-                (purchasing == "free" || purchasing == "confirm" ? "fa-hand-paper" : (hasRequest ? "" : "fa-hand-holding-medical")));
+            let text = i18n("MonksEnhancedJournal.Unavailable");
+            let icon = "";
+            if (type == 'shop') {
+                if (flags.quantity === 0) {
+                    text = i18n("MonksEnhancedJournal.SoldOut");
+                    icon = "";
+                } else if (item.lock) {
+                    text = i18n("MonksEnhancedJournal.Unavailable");
+                    icon = "fa-lock";
+                } else {
+                    text = i18n("MonksEnhancedJournal.Purchase");
+                    icon = "fa-dollar-sign";
+                }
+            } else {
+                if (purchasing == "free") {
+                    text = i18n("MonksEnhancedJournal.Take");
+                    icon = "fa-hand-paper";
+                } else if (hasRequest) {
+                    text = i18n("MonksEnhancedJournal.Cancel");
+                    icon = "";
+                } else {
+                    text = i18n("MonksEnhancedJournal.Request");
+                    icon = "fa-hand-holding-medical";
+                }
+            }
 
             let qtyof = foundry.utils.getProperty(item, "system." + quantityname());
 
@@ -1282,20 +1706,20 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             }
 
             let itemData = {
-                id: item._id,
+                _id: key,
                 name: name,
                 identifiedname: game.user.isGM && identifiedName != name ? identifiedName : null,
                 type: item.type,
                 img: img,
-                hide: flags.hide,
-                lock: flags.lock,
-                consumable: flags.consumable,
+                hidden: item.hidden,
+                lock: item.lock,
+                consumable: item.consumable,
                 from: flags.from,
                 quantity: flags.quantity,
                 qtyof: qtyof,
                 remaining: flags.remaining,
                 price: (price.consume ? "-" : "") + price.value + " " + price.currency,
-                cost: (cost.consume && (game.user.isGM || this.object.isOwner) ? "-" : "") + (cost.value + " " + cost.currency),
+                cost: (cost.consume && (game.user.isGM || this.document.isOwner) ? "-" : "") + (cost.value + " " + cost.currency),
                 text: text,
                 icon: icon,
                 assigned: flags.assigned,
@@ -1309,10 +1733,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 itemData.rarity = i18n(CONFIG.PF2E.rarityTraits[item.system?.traits?.rarity]);
             }
 
-            if (game.user.isGM || this.object.isOwner || (flags.hide !== true && (flags.quantity !== 0 || setting('show-zero-quantity')))) {
+            if (game.user.isGM || this.document.isOwner || (item.hide !== true && (flags.quantity !== 0 || setting('show-zero-quantity')))) {
                 let groupId = (!sort || sort == "name" ? this.slugify(item.type) : "");
                 if (groups[groupId] == undefined)
-                    groups[groupId] = { id: groupId, name: item.type, items: [] };
+                    groups[groupId] = { id: groupId, name: item.type || "Unknown", items: [] };
                 groups[groupId].items.push(itemData);
             }
         }
@@ -1343,13 +1767,15 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             });
         }
 
+        /*
         groups = Object.values(groups).sort((a, b) => {
             if (a.name < b.name) return -1;
             return a.name > b.name ? 1 : 0;
         });
+        */
 
-        for (let group of groups) {
-            group.collapsed = this.object._itemList[group.id];
+        for (let group of Object.values(groups)) {
+            group.collapsed = this.document._itemList[group.id];
         }
 
         return groups;
@@ -1358,8 +1784,8 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     getOfferings() {
         let currencies = MonksEnhancedJournal.currencies;
 
-        return (this.object.flags['monks-enhanced-journal']?.offerings || []).map(o => {
-            if (o.hidden && !(game.user.isGM || this.object.isOwner || (o.userid == game.user.id && o.state != "cancelled")))
+        return (this.document.flags['monks-enhanced-journal']?.offerings || []).map(o => {
+            if (o.hidden && !(game.user.isGM || this.document.isOwner || (o.userid == game.user.id && o.state != "cancelled")))
                 return null;
 
             let actor = game.actors.get(o.actor?.id || o.actorId);
@@ -1370,7 +1796,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             for (let [k, v] of Object.entries(o.currency)) {
                 if (v) {
                     let curr = currencies.find(c => c.id == k);
-                    items.push({ img: "icons/svg/coins.svg", name: `${v} ${curr?.name || "Unknown Currency"}`});
+                    items.push({ img: "icons/svg/coins.svg", name: `${v} ${i18n(curr?.name) || "Unknown Currency"}`});
                 }
             }
             items = items.concat(
@@ -1385,7 +1811,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                         item = itemActor.items.get(i.id);
                     }
 
-                    return { img: item?.img || i.img, name: `${itemActor.id != actor.id ? (itemActor.name || i.actorName) + ", " : ''}${i.qty > 1 ? "&times;" + i.qty + " " : ""}${item?.name || i.itemName}` };
+                    return {
+                        img: item?.img || i.img,
+                        name: `${itemActor.id != actor.id ? (itemActor.name || i.actorName) + ", " : ''}${i.qty > 1 ? "&times;" + i.qty + " " : ""}${item?.name || i18n(i.itemName)}`
+                    };
                 })
             );
             return {
@@ -1398,7 +1827,8 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 owner: o.userid == game.user.id,
                 state: o.state,
                 done: o.state != "offering",
-                stateName: i18n(`MonksEnhancedJournal.offer.${o.state}`)
+                stateName: i18n(`MonksEnhancedJournal.offer.${o.state}`),
+                stateIcon: (o.state == "offering" ? "fa-hand-holding-medical" : (o.state == "accepted" ? "fa-check" : (o.state == "rejected" ? "fa-times" : "fa-undo"))),
             }
         }).filter(o => !!o);
     }
@@ -1442,9 +1872,9 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return this.constructor.getDocument(...args);
     }
 
-    static async createRequestMessage(entry, item, actor, shop) {
+    static async createRequestMessage(entry, item, actor, isShop) {
         let data = foundry.utils.getProperty(item, "flags.monks-enhanced-journal");
-        let price = shop ? MEJHelpers.getPrice(data.cost) : null; //item, "cost", !shop);
+        let price = isShop ? MEJHelpers.getPrice(data.cost) : null;
         data.sell = price?.value;
         data.currency = price?.currency;
         data.maxquantity = data.maxquantity ?? data.quantity;
@@ -1461,7 +1891,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             action: 'buy',
             actor: { id: actor.id, name: actor.name, img: actor.img },
             items: [item],
-            shop: { uuid: entry.uuid, name: entry.name, img: entry.src }
+            shop: { uuid: entry.uuid, name: entry.name, img: entry.src || `modules/monks-enhanced-journal/assets/${entry.type}.png` }
         }
 
         //create a chat message
@@ -1469,7 +1899,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         if (!whisper.find(u => u == game.user.id))
             whisper.push(game.user.id);
         let speaker = ChatMessage.getSpeaker();
-        let content = await renderTemplate("./modules/monks-enhanced-journal/templates/request-item.html", messageContent);
+        let content = await foundry.applications.handlebars.renderTemplate("./modules/monks-enhanced-journal/templates/request-item.html", messageContent);
         let messageData = {
             user: game.user.id,
             speaker: speaker,
@@ -1487,7 +1917,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
     static async confirmQuantity(item, max, verb, showTotal = true, price) {
         if (!price)
-            price = MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.cost"));
+            price = MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.cost") || foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
 
         let maxquantity = max != "" ? parseInt(max) : null;
         if (maxquantity == 1 && !showTotal)
@@ -1496,22 +1926,24 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         let details = MonksEnhancedJournal.getItemDetails(item);
 
         let quantity = 1;
-        let content = await renderTemplate('/modules/monks-enhanced-journal/templates/confirm-purchase.html',
-            {
-                msg: format("MonksEnhancedJournal.HowManyWouldYouLike", { verb: verb }),
-                img: details.img,
-                name: details.name,
-                quantity: quantity,
-                price: price?.value + " " + price?.currency,
-                maxquantity: maxquantity,
-                total: (showTotal ? price?.value + " " + price?.currency : null),
-                isGM: game.user.isGM
-            });
-        let result = await Dialog.confirm({
-            title: i18n("MonksEnhancedJournal.ConfirmQuantity"),
+        let data = {
+            msg: format("MonksEnhancedJournal.HowManyWouldYouLike", { verb: verb }),
+            img: details.img,
+            name: details.name,
+            quantity: quantity,
+            price: price?.value + " " + price?.currency,
+            maxquantity: maxquantity,
+            total: (showTotal ? price?.value + " " + price?.currency : null),
+            isGM: game.user.isGM
+        };
+        let content = await foundry.applications.handlebars.renderTemplate('/modules/monks-enhanced-journal/templates/confirm-purchase.html', data);
+        let result = await foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: i18n("MonksEnhancedJournal.ConfirmQuantity"),
+            },
             content: content,
-            render: (html) => {
-                $('input[name="quantity"]', html).change((event) => {
+            render: (evt, dialog) => {
+                $('input[name="quantity"]', dialog.element).change((event) => {
                     quantity = parseInt($(event.currentTarget).val() || 1);
                     if (quantity < 1) {
                         quantity = 1;
@@ -1522,19 +1954,23 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                         $(event.currentTarget).val(quantity);
                     }
                     if (showTotal)
-                        $('.request-total', html).html((quantity * price.value) + " " + price.currency);
+                        $('.request-total', dialog.element).html((quantity * price.value) + " " + price.currency);
                 });
-                $('input[name="price"]', html).change((event) => {
+                $('input[name="price"]', dialog.element).change((event) => {
                     price = MEJHelpers.getPrice($(event.currentTarget).val());
                     $(event.currentTarget).val(price?.value + " " + price?.currency);
                     if (showTotal)
-                        $('.request-total', html).html((quantity * price?.value) + " " + price?.currency);
+                        $('.request-total', dialog.element).html((quantity * price?.value) + " " + price?.currency);
                 });
+                $(".dialog-content", dialog.element).css({ 'gap': '0.2rem' });
             },
-            yes: (html) => {
-                //let quantity = parseInt($('input[name="quantity"]', html).val());
-                //let price = MEJHelpers.getPrice(item, $('input[name="price"]', html).val());
-                return { quantity, price };
+            yes: {
+                callback: (event) => {
+                    let form = event.target.form;
+                    let new_quantity = parseInt($('input[name="quantity"]', form).val());
+                    let new_price = (game.user.isGM ? MEJHelpers.getPrice($('input[name="price"]', form).val()) : price);
+                    return { quantity: new_quantity, price: new_price };
+                }
             }
         });
 
@@ -1542,18 +1978,9 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     }
 
     static purchaseItem(entry, id, quantity = 1, { actor = null, user = null, remaining = false, purchased = false, chatmessage = true }) {
-        let items = foundry.utils.duplicate(entry.getFlag('monks-enhanced-journal', 'items') || []);
-        let rewards;
-        if (entry.getFlag('monks-enhanced-journal', 'rewards')) {
-            rewards = foundry.utils.duplicate(entry.getFlag('monks-enhanced-journal', 'rewards'));
-            let reward = rewards.find(r => {
-                return !!r.items.find(i => i._id == id);
-            });
-            if (reward)
-                items = reward.items;
-        }
+        let items = foundry.utils.duplicate(entry.getFlag('monks-enhanced-journal', 'items') || {});
         if (items) {
-            let item = items.find(i => i._id == id);
+            let item = items[id];
             if (item) {
                 if (remaining) {
                     foundry.utils.setProperty(item, "flags.monks-enhanced-journal.remaining", Math.max(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.remaining") - quantity, 0));
@@ -1564,13 +1991,17 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                     if (qty && qty != "")
                         foundry.utils.setProperty(item, "flags.monks-enhanced-journal.quantity", Math.max(qty - quantity, 0));
                 }
-                if (rewards)
-                    entry.setFlag('monks-enhanced-journal', 'rewards', rewards);
-                else {
-                    if(entry.getFlag('monks-enhanced-journal', 'type') == 'loot')
-                        items = items.filter(i => foundry.utils.getProperty(i, "flags.monks-enhanced-journal.quantity") > 0);
+                if (entry.getFlag('monks-enhanced-journal', 'type') == 'loot') {
+                    for (let [key, item] of Object.entries(items)) {
+                        let quantity = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity") ?? 0;
+                        if (quantity <= 0) {
+                            delete items[key];
+                            items[`-=${key}`] = null;
+                        }
+                    }
                     entry.setFlag('monks-enhanced-journal', 'items', items);
-                }
+                } else
+                    entry.setFlag('monks-enhanced-journal', 'items', items);
                 if (chatmessage)
                     this.sendChatPurchase(actor, item, purchased, user, quantity);
             }
@@ -1599,7 +2030,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                         whisper.push(user);
                 }
             }
-            let content = await renderTemplate("./modules/monks-enhanced-journal/templates/receive-item.html", messageContent);
+            let content = await foundry.applications.handlebars.renderTemplate("./modules/monks-enhanced-journal/templates/receive-item.html", messageContent);
             let messageData = {
                 user: user,
                 speaker: speaker,
@@ -1636,31 +2067,37 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return result;
     }
 
-    clearAllItems(event) {
-        Dialog.confirm({
-            title: i18n("MonksEnhancedJournal.ClearContents"),
+    static clearAllItems(event, target) {
+        foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: i18n("MonksEnhancedJournal.ClearContents"),
+            },
             content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${i18n("MonksEnhancedJournal.msg.AllItemsWillBeDeleted")}</p><p class="notes">Hold down the Ctrl key to clear locked items as well.</p>`,
-            yes: () => {
-                let items = event?.ctrlKey ? [] : foundry.utils.duplicate(this.object.getFlag('monks-enhanced-journal', 'items') || []);
-                items = items.filter((i) => foundry.utils.getProperty(i, "flags.monks-enhanced-journal.lock"));
-                this.object.setFlag('monks-enhanced-journal', 'items', items);
+            yes: {
+                callback: async () => {
+                    this.doClearAllItems(event?.ctrlKey);
+                }
             },
         });
     }
 
-    async editItem(event) {
-        let id = $(event.currentTarget).closest('li').attr('data-id');
-        let items = (this.object.getFlag('monks-enhanced-journal', 'items') || []);
-
-        if (this.object?.type == "quest") {
-            let rewards = this.getRewardData();
-            if (rewards.length) {
-                let reward = this.getReward(rewards);
-                items = reward.items;
+    async doClearAllItems(clearLocked = false) {
+        if (clearLocked) {
+            await this.document.unsetFlag('monks-enhanced-journal', 'items');
+        } else {
+            let items = this.document.getFlag('monks-enhanced-journal', 'items') || {};
+            for (let [k, v] of Object.entries(items)) {
+                if (!v.lock)
+                    await this.document.unsetFlag('monks-enhanced-journal', 'items.' + k);
             }
         }
+    }
 
-        let itemData = items.find(i => i._id == id);
+    static async editItem(event, target) {
+        let id = target.closest('li').dataset.id;
+        let items = (this.document.getFlag('monks-enhanced-journal', 'items') || {});
+
+        let itemData = items[id];
         if (itemData) {
             if (game.system.id === "pf2e") {
                 let rules = foundry.utils.getProperty(itemData, "system.rules");
@@ -1681,9 +2118,15 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 }
             }
             let item = new CONFIG.Item.documentClass(itemData);
+            const itemCls = item._getSheetClass();
+            if (itemCls.DEFAULT_OPTIONS) {
+                item._sheet = new itemCls({ document: item, alterprice: true, addcost: (this.document.type == "shop") });
+            } else {
+                item._sheet = new itemCls(item, { alterprice: true, addcost: (this.document.type == "shop") });
+            }
             let sheet = item.sheet;
 
-            let newSubmit = async (event, { updateData = null, preventClose = false, preventRender = false } = {}) => {
+            let newSubmit = async (event, form, submitData, updateOptions) => {
                 event.preventDefault();
 
                 if (game.system.id == "pf2e") {
@@ -1692,14 +2135,8 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                     }))
                 }
 
-                sheet._submitting = true;
-                const states = this.constructor.RENDER_STATES;
-
-                // Process the form data
-                const formData = foundry.utils.expandObject(sheet._getSubmitData(updateData));
-
                 if (game.system.id === "pf2e") {
-                    let rules = foundry.utils.getProperty(formData, "system.rules");
+                    let rules = foundry.utils.getProperty(submitData, "system.rules");
                     if (rules && !(rules instanceof Array)) {
                         let newRules = [];
                         for (let v of Object.values(rules)) {
@@ -1713,49 +2150,33 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                                 newRules.push(v);
                             }
                         }
-                        foundry.utils.setProperty(formData, "system.rules", newRules);
+                        foundry.utils.setProperty(submitData, "system.rules", newRules);
                     }
                 }
 
                 if (game.system.id == "dnd5e") {
-                    if (foundry.utils.hasProperty(formData, "system.properties")) {
-                        formData.system.properties = new Set(formData.system.properties);
+                    if (foundry.utils.hasProperty(submitData, "system.properties")) {
+                        submitData.system.properties = new Set(submitData.system.properties);
                     }
                 }
 
-                let items = foundry.utils.duplicate(this.object.getFlag('monks-enhanced-journal', 'items') || []);
-                if (this.object?.type == "quest") {
-                    let rewards = this.getRewardData();
-                    if (rewards.length) {
-                        let reward = this.getReward(rewards);
-                        items = reward.items;
-                    }
-                }
+                let items = foundry.utils.duplicate(this.document.getFlag('monks-enhanced-journal', 'items') || {});
 
-                foundry.utils.mergeObject(sheet.object, formData);
+                foundry.utils.mergeObject(sheet.document, submitData);
 
-                let itm = items.find(i => i._id == itemData._id);
+                let itm = items[id];
                 if (itm) {
-                    itm = foundry.utils.mergeObject(itm, formData);
+                    itm = foundry.utils.mergeObject(itm, submitData);
                     //let sysPrice = MEJHelpers.getSystemPrice(itm, pricename());
                     //let price = MEJHelpers.getPrice(sysPrice);
                     //foundry.utils.setProperty(itm, "flags.monks-enhanced-journal.price", `${price.value} ${price.currency}`);
-                    if (this.object?.type == "quest") {
-                        let rewards = this.getRewardData();
-                        if (rewards.length) {
-                            let reward = this.getReward(rewards);
-                            reward.items = items;
-                            await this.object.setFlag('monks-enhanced-journal', 'rewards', rewards);
-                        }
-                    } else {
-                        await this.object.setFlag('monks-enhanced-journal', 'items', items);
-                    }
+                    await this.document.setFlag('monks-enhanced-journal', 'items', items);
 
                     if (game.system.id == "dnd5e") {
-                        sheet.object.name = itm.name;
+                        sheet.document.name = itm.name;
                     }
                 }
-
+                /*
                 // Handle the form state prior to submission
                 let closeForm = sheet.options.closeOnSubmit && !preventClose;
                 const priorState = sheet._state;
@@ -1773,14 +2194,17 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
                 if (!closeForm)
                     sheet.bringToTop();
+                    */
             }
 
-            sheet._onSubmit = newSubmit.bind(sheet);
+            sheet._processSubmitData = newSubmit.bind(sheet);
+            sheet._mode = 2; // sheet.constructor.MODES.EDIT;
             try {
-                let result = sheet.render(true, { focus: true });
-                result.options.alterprice = true;
-                //result.options.addremaining = (this.object.type == "encounter" || this.object.type == "quest");
-                result.options.addcost = (this.object.type == "shop");
+                if (sheet.constructor.DEFAULT_OPTIONS) {
+                    sheet.render({ focus: true, force: true });
+                } else {
+                    sheet.render(true, { focus: true });
+                }
             } catch {
                 ui.notifications.warn(i18n("MonksEnhancedJournal.msg.ErrorTryingToEdit"));
             }
@@ -1819,234 +2243,236 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
         let that = this;
 
-        let lastrolltable = that.object.getFlag('monks-enhanced-journal', "lastrolltable") || game.user.getFlag('monks-enhanced-journal', "lastrolltable");
+        let lastrolltable = that.document.getFlag('monks-enhanced-journal', "lastrolltable") || game.user.getFlag('monks-enhanced-journal', "lastrolltable");
 
         let table = await fromUuid(lastrolltable);
 
-        let html = await renderTemplate("modules/monks-enhanced-journal/templates/roll-table.html", { rollTables: rolltables, useFrom: useFrom, lastrolltable: lastrolltable, rollformula: table?.formula });
-        Dialog.confirm({
-            title: i18n("MonksEnhancedJournal.PopulateFromRollTable"),
+        let html = await foundry.applications.handlebars.renderTemplate("modules/monks-enhanced-journal/templates/roll-table.html", { rollTables: rolltables, useFrom: useFrom, lastrolltable: lastrolltable, rollformula: table?.formula });
+        foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: i18n("MonksEnhancedJournal.PopulateFromRollTable"),
+            },
             content: html,
-            yes: async (html) => {
-                let getDiceRoll = async function (value, chatmessage = false) {
-                    if (value.indexOf("d") != -1) {
-                        let r = new Roll(value);
-                        await r.evaluate({ async: true });
-                        //if (chatmessage)
-                        //    r.toMessage({ whisper: ChatMessage.getWhisperRecipients("GM").map(u => u.id), speaker: null }, { rollMode: "self" });
-                        value = r.total;
-                    } else {
-                        value = parseInt(value);
-                        if (isNaN(value)) value = 1;
-                    }
-
-                    return value;
-                }
-
-                let rolltable = $('[name="rollable-table"]').val();
-                let numberof = $('[name="numberof"]').val();
-                let quantity = $('[name="quantity"]').val();
-                let reset = $('[name="reset"]').prop("checked");
-                let clear = $('[name="clear"]').val();
-                let duplicate = $('[name="duplicate"]').val();
-
-                let useFrom = $('[name="from"]').prop("checked");
-
-                let table = await fromUuid(rolltable);
-                if (table) {
-                    await that.object.setFlag('monks-enhanced-journal', "lastrolltable", rolltable);
-                    await game.user.setFlag('monks-enhanced-journal', "lastrolltable", rolltable);
-
-                    numberof = await getDiceRoll(numberof);
-
-                    let items = that.object.getFlag('monks-enhanced-journal', "items") || [];
-
-                    if (that.object.getFlag('monks-enhanced-journal', "type") == "quest") {
-                        let rewardId = that.object.getFlag('monks-enhanced-journal', "reward");
-                        let rewards = that.object.getFlag('monks-enhanced-journal', "rewards");
-                        let reward = rewards.find(r => r.id == rewardId || r.active);
-                        items = reward.items;
-                    }
-                    if (clear == "all")
-                        items = [];
-                    else if (clear == "notlocked")
-                        items = items.filter((i) => foundry.utils.getProperty(i, "flags.monks-enhanced-journal.lock"));
-
-                    let currency = that.object.getFlag('monks-enhanced-journal', "currency") || {};
-                    let currChanged = false;
-
-                    for (let i = 0; i < numberof; i++) {
-                        const available = table.results.filter(r => !r.drawn);
-                        
-                        if (!table.formula || !available.length) {
-                            if (table.formula && reset)
-                                await table.resetResults();
-                            else {
-                                ui.notifications.warn("There are no available results which can be drawn from this table.");
-                                break;
-                            }
+            yes: {
+                callback: async () => {
+                    let getDiceRoll = async function (value, chatmessage = false) {
+                        if (value.indexOf("d") != -1) {
+                            let r = new Roll(value);
+                            await r.evaluate({ async: true });
+                            //if (chatmessage)
+                            //    r.toMessage({ whisper: ChatMessage.getWhisperRecipients("GM").map(u => u.id), speaker: null }, { rollMode: "self" });
+                            value = r.total;
+                        } else {
+                            value = parseInt(value);
+                            if (isNaN(value)) value = 1;
                         }
 
-                        let result = await table.draw({ rollMode: "selfroll", displayChat: false });
+                        return value;
+                    }
 
-                        if (!result.results.length)
-                            continue;
+                    let rolltable = $('[name="rollable-table"]').val();
+                    let numberof = $('[name="numberof"]').val();
+                    let quantity = $('[name="quantity"]').val();
+                    let reset = $('[name="reset"]').prop("checked");
+                    let clear = $('[name="clear"]').val();
+                    let duplicate = $('[name="duplicate"]').val();
 
-                        let item = null;
+                    let useFrom = $('[name="from"]').prop("checked");
 
-                        for (let tableresult of result.results) {
-                            switch (tableresult.type) {
-                                case CONST.TABLE_RESULT_TYPES.DOCUMENT:
-                                    {
-                                        let collection = CONFIG[tableresult.documentCollection]?.collection.instance;
-                                        item = collection.get(tableresult.documentId);
-                                    }
+                    let table = await fromUuid(rolltable);
+                    if (table) {
+                        await that.document.setFlag('monks-enhanced-journal', "lastrolltable", rolltable);
+                        await game.user.setFlag('monks-enhanced-journal', "lastrolltable", rolltable);
+
+                        numberof = await getDiceRoll(numberof);
+
+                        let items = that.document.getFlag('monks-enhanced-journal', itemtype) || {};
+                        let newItems = {};
+
+                        if (clear != "none") {
+                            this.doClearAllItems(clear == "all");
+                        }
+
+                        let currency = that.document.getFlag('monks-enhanced-journal', "currency") || {};
+                        let currChanged = false;
+
+                        for (let i = 0; i < numberof; i++) {
+                            const available = table.results.filter(r => !r.drawn);
+
+                            if (!table.formula || !available.length) {
+                                if (table.formula && reset)
+                                    await table.resetResults();
+                                else {
+                                    ui.notifications.warn("There are no available results which can be drawn from this table.");
                                     break;
-                                case CONST.TABLE_RESULT_TYPES.COMPENDIUM:
-                                    {
-                                        const items = game.packs.get(tableresult.documentCollection);
-                                        if (items)
-                                            item = await items.getDocument(tableresult.documentId);
-                                    }
-                                    break;
-                                default:
-                                    if (foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.type") == 'loot') {
-                                        async function tryRoll(formula) {
-                                            try {
-                                                return (await (new Roll(formula)).roll({ async: true })).total || 1;
-                                            } catch {
-                                                return 1;
-                                            }
+                                }
+                            }
+
+                            let result = await table.draw({ rollMode: "selfroll", displayChat: false });
+
+                            if (!result.results.length)
+                                continue;
+
+                            let item = null;
+
+                            for (let tableresult of result.results) {
+                                switch (tableresult.type) {
+                                    case CONST.TABLE_RESULT_TYPES.DOCUMENT:
+                                        {
+                                            item = await fromUuid(tableresult.documentUuid);
                                         }
-
-                                        let text = tableresult.text;
-                                        let textCoins = [];
-                                        if (text.startsWith("{") && text.endsWith("}") && text.length > 2) {
-                                            let splitStr = (text.indexOf("[") > -1 && text.indexOf("]") > -1) ? "," : " ";
-                                            let rolls = text.substring(1, text.length - 1).trim().split(splitStr);
-                                            for (let part of rolls) {
-                                                if (!part) continue;
-                                                let formula = part;
-                                                let coin = part.match(/\[[a-z]+\]/);
-                                                if (splitStr == " ") 
-                                                    [, formula, coin] = part.match(/^(.+?)(\D+)$/) ?? [];
-                                                if (Array.isArray(coin)) {
-                                                    coin = coin[0];
-                                                    formula = formula.replace(`${coin}`, '');
-                                                    coin = coin.replace("[", "").replace("]", "");
+                                        break;
+                                    default:
+                                        if (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type") == 'loot') {
+                                            async function tryRoll(formula) {
+                                                try {
+                                                    return (await (new Roll(formula)).roll({ async: true })).total || 1;
+                                                } catch {
+                                                    return 1;
                                                 }
+                                            }
 
-                                                textCoins.push({ formula, coin });
+                                            let text = tableresult.text;
+                                            let textCoins = [];
+                                            if (text.startsWith("{") && text.endsWith("}") && text.length > 2) {
+                                                let splitStr = (text.indexOf("[") > -1 && text.indexOf("]") > -1) ? "," : " ";
+                                                let rolls = text.substring(1, text.length - 1).trim().split(splitStr);
+                                                for (let part of rolls) {
+                                                    if (!part) continue;
+                                                    let formula = part;
+                                                    let coin = part.match(/\[[a-z]+\]/);
+                                                    if (splitStr == " ")
+                                                        [, formula, coin] = part.match(/^(.+?)(\D+)$/) ?? [];
+                                                    if (Array.isArray(coin)) {
+                                                        coin = coin[0];
+                                                        formula = formula.replace(`${coin}`, '');
+                                                        coin = coin.replace("[", "").replace("]", "");
+                                                    }
+
+                                                    textCoins.push({ formula, coin });
+                                                }
+                                            }
+
+                                            // DND5E Award Enricher Parsing
+                                            if (text.startsWith("[[/award") && text.endsWith("]]")) {
+                                                const awards = text.substring(8, text.length - 2).trim().split(" ");
+                                                for (const part of awards) {
+                                                    if (!part) continue;
+                                                    let [, formula, coin] = part.match(/^(.+?)(\D+)$/) ?? [];
+
+                                                    textCoins.push({ formula, coin });
+                                                }
+                                            }
+
+                                            for (let tc of textCoins) {
+                                                if (tc.coin == undefined)
+                                                    tc.coin = MEJHelpers.defaultCurrency();
+                                                else if (MonksEnhancedJournal.currencies.find(c => c.id == tc.coin) == undefined)
+                                                    continue;
+
+                                                tc.coin = tc.coin?.toLowerCase();
+
+                                                let value = await tryRoll(tc.formula);
+                                                currency[tc.coin] = (currency[tc.coin] || 0) + value;
+                                                currChanged = true;
                                             }
                                         }
-
-                                        // DND5E Award Enricher Parsing
-                                        if (text.startsWith("[[/award") && text.endsWith("]]")) {
-                                            const awards = text.substring(8, text.length - 2).trim().split(" ");
-                                            for (const part of awards) {
-                                                if (!part) continue;
-                                                let [,formula, coin] = part.match(/^(.+?)(\D+)$/) ?? [];
-                                                
-                                                textCoins.push({ formula, coin });
-                                            }
-                                        }
-
-                                        for (let tc of textCoins) {
-                                            if (tc.coin == undefined)
-                                                tc.coin = MEJHelpers.defaultCurrency();
-                                            else if (MonksEnhancedJournal.currencies.find(c => c.id == tc.coin) == undefined)
-                                                continue;
-
-                                            tc.coin = tc.coin?.toLowerCase();
-
-                                            let value = await tryRoll(tc.formula);
-                                            currency[tc.coin] = (currency[tc.coin] || 0) + value;
-                                            currChanged = true;
-                                        }
-                                    }
-                            }
-                            /*
-                            if (tableresult.collection === undefined) {
-                                //check to see if this is a roll for currency
-                                
-                            } else {
-                                item = tableresult.collection.get(tableresult.id);
-                                if (tableresult.collection === "Item") {
-                                    let collection = game.collections.get(tableresult.collection);
-                                    if (collection)
-                                        item = collection.get(tableresult.resultId);
-                                } else {
-                                    // Try to find it in the compendium
-                                    const items = game.packs.get(tableresult.collection);
-                                    if (items)
-                                        item = await items.getDocument(tableresult.resultId);
                                 }
-                            }*/
-
-                            if (item) {
-                                if (itemtype == "items" && item instanceof Item) {
-                                    let itemData = item.toObject();
-
-                                    if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
-                                        let id = itemData._id;
-                                        itemData = await EnhancedJournalSheet.createScrollFromSpell(itemData);
-                                        itemData._id = id;
-                                    }
-
-                                    let oldId = itemData._id;
-                                    let oldItem = items.find(i => i.flags['monks-enhanced-journal']?.parentId == oldId && oldId && i.flags['monks-enhanced-journal']?.parentId);
-                                    if (oldItem && duplicate != "additional") {
-                                        if (duplicate == "increase") {
-                                            let oldqty = foundry.utils.getProperty(oldItem, "flags.monks-enhanced-journal.quantity") || 1;
-                                            let newqty = parseInt(oldqty) + parseInt(quantity != "" ? await getDiceRoll(quantity) : 1);
-                                            foundry.utils.setProperty(oldItem, "flags.monks-enhanced-journal.quantity", newqty);
-                                        }
+                                /*
+                                if (tableresult.collection === undefined) {
+                                    //check to see if this is a roll for currency
+                                    
+                                } else {
+                                    item = tableresult.collection.get(tableresult.id);
+                                    if (tableresult.collection === "Item") {
+                                        let collection = game.collections.get(tableresult.collection);
+                                        if (collection)
+                                            item = collection.get(tableresult.resultId);
                                     } else {
-                                        itemData._id = makeid();
-                                        let sysPrice = MEJHelpers.getSystemPrice(itemData, pricename());
-                                        let price = MEJHelpers.getPrice(sysPrice);
-                                        let adjustment = this.sheetSettings()?.adjustment || {};
-                                        let sell = adjustment[itemData.type]?.sell ?? adjustment?.default?.sell ?? 1;
-                                        let cost = MEJHelpers.getPrice(`${price.value * sell} ${price.currency}`);
-                                        itemData.flags['monks-enhanced-journal'] = {
-                                            parentId: oldId,
-                                            price: `${price.value} ${price.currency}`,
-                                            cost: `${cost.value} ${cost.currency}`,
-                                            quantity: quantity != "" ? await getDiceRoll(quantity) : 1
-                                        };
-                                        if (useFrom)
-                                            foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", table.name);
-                                        items.push(itemData);
+                                        // Try to find it in the compendium
+                                        const items = game.packs.get(tableresult.collection);
+                                        if (items)
+                                            item = await items.getDocument(tableresult.resultId);
                                     }
-                                } else if (itemtype == "actors" && item instanceof Actor) {
-                                    let itemData = {
-                                        _id: item.id,
-                                        uuid: item.uuid,
-                                        img: item.img,
-                                        name: item.name,
-                                        quantity: (quantity != "" ? await getDiceRoll(quantity) : 1),
-                                        type: "Actor"
+                                }*/
+
+                                if (item) {
+                                    if (itemtype == "items" && item instanceof Item) {
+                                        let itemData = item.toObject();
+
+                                        if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
+                                            let id = itemData._id;
+                                            itemData = await EnhancedJournalSheet.createScrollFromSpell(itemData);
+                                            itemData._id = id;
+                                        }
+
+                                        let oldId = (itemData._id || itemData.id)?.replace("Item.", "");
+                                        let oldItem = Object.values({ ...items, ...newItems }).find(i => {
+                                            let parentId = i.flags['monks-enhanced-journal']?.parentId?.replace("Item.", "");
+                                            return (!!oldId && !!parentId && parentId == oldId);
+                                        });
+                                        if (oldItem && duplicate != "additional") {
+                                            if (duplicate == "increase") {
+                                                let oldqty = foundry.utils.getProperty(oldItem, "flags.monks-enhanced-journal.quantity") || 1;
+                                                let newqty = parseInt(oldqty) + parseInt(quantity != "" ? await getDiceRoll(quantity) : 1);
+                                                foundry.utils.setProperty(oldItem, "flags.monks-enhanced-journal.quantity", newqty);
+                                            }
+                                        } else {
+                                            itemData._id = itemData.id = makeid();
+                                            let sysPrice = MEJHelpers.getSystemPrice(itemData, pricename());
+                                            let price = MEJHelpers.getPrice(sysPrice);
+                                            let adjustment = this.sheetSettings()?.adjustment || {};
+                                            let sell = adjustment[itemData.type]?.sell ?? adjustment?.default?.sell ?? 1;
+                                            let cost = MEJHelpers.getPrice(`${price.value * sell} ${price.currency}`);
+                                            let itemQuantity = (quantity != "" ? await getDiceRoll(quantity) : 1);
+                                            itemData.flags['monks-enhanced-journal'] = {
+                                                parentId: oldId?.replace("Item.", ""),
+                                                price: `${price.value} ${price.currency}`,
+                                                cost: `${cost.value} ${cost.currency}`,
+                                                quantity: itemQuantity,
+                                                remaining: itemQuantity,
+                                            };
+                                            if (useFrom)
+                                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", table.name);
+                                            newItems[itemData.id] = itemData;
+                                        }
+                                    } else if (itemtype == "actors" && item instanceof Actor) {
+                                        let itemQuantity = (quantity != "" ? await getDiceRoll(quantity) : 1);
+                                        if (!newItems[item.id]) {
+                                            let itemData = {
+                                                id: item.id,
+                                                uuid: item.uuid,
+                                                img: item.img,
+                                                name: item.name,
+                                                quantity: itemQuantity,
+                                                type: "Actor"
+                                            }
+                                            if (item.pack)
+                                                itemData.pack = item.pack;
+                                            newItems[item.id] = itemData;
+                                        } else {
+                                            if (duplicate == "increase") {
+                                                newItems[item.id].quantity = parseInt(newItems[item.id].quantity) + itemQuantity;
+                                            }
+                                        }
                                     }
-                                    if (item.pack)
-                                        itemData.pack = item.pack;
-                                    items.push(itemData);
                                 }
                             }
                         }
-                    }
 
-                    if (items.length > 0) {
-                        if (that.object.getFlag('monks-enhanced-journal', "type") == "quest") {
-                            let rewardId = that.object.getFlag('monks-enhanced-journal', "reward");
-                            let rewards = that.object.getFlag('monks-enhanced-journal', "rewards");
-                            let reward = rewards.find(r => r.id == rewardId || r.active);
-                            reward.items = items;
-                            await that.object.setFlag('monks-enhanced-journal', "rewards", rewards);
-                        } else
-                            await that.object.setFlag('monks-enhanced-journal', itemtype, items);
+                        if (that.document.getFlag('monks-enhanced-journal', "type") == "quest" && itemtype == "items") {
+                            let rewardId = game.user.getFlag('monks-enhanced-journal', `reward${this.document.id}`) || "";
+                            let rewards = that.document.getFlag('monks-enhanced-journal', "rewards");
+                            let reward = rewards[rewardId];
+                            reward.itemIds = reward.itemIds.concat(Object.keys(newItems));
+                            await that.document.setFlag('monks-enhanced-journal', "rewards", rewards);
+                        }
+                        items = foundry.utils.mergeObject(newItems, items);
+                        await that.document.setFlag('monks-enhanced-journal', itemtype, items);
+
+                        if (currChanged)
+                            await that.document.setFlag('monks-enhanced-journal', "currency", currency);
                     }
-                    if (currChanged)
-                        await that.object.setFlag('monks-enhanced-journal', "currency", currency);
                 }
             },
             render: (html) => {
@@ -2069,55 +2495,237 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         });
     }
 
-    _deleteItem(event) {
-        let item = event.currentTarget.closest('.item');
-        this.deleteItem(item.dataset.id, item.dataset.container);
+    static onDeleteItem(event, target) {
+        let item = target.closest('.item');
+        let list = target.closest('.item-list');
+        if (item && list)
+            this.deleteItem(item.dataset.id, list.dataset.container);
     }
 
     async deleteItem(id, container, cascade = true) {
-        let data = foundry.utils.duplicate(this.object.flags["monks-enhanced-journal"][container]);
-        data.findSplice(i => i.id == id || i._id == id);
-        await this.object.setFlag('monks-enhanced-journal', container, data);
+        let data = foundry.utils.duplicate(this.document.flags["monks-enhanced-journal"][container]);
+        if (data instanceof Array) {
+            data.findSplice(i => i.id == id || i._id == id);
+            await this.document.setFlag('monks-enhanced-journal', container, data);
+        } else {
+            await this.document.unsetFlag('monks-enhanced-journal', `${container}.${id}`);
+        }
 
         if (container == "relationships" && cascade) {
             let journal = game.journal.get(id);
             if (journal && journal.pages.size > 0) {
                 let page = journal.pages.contents[0];
                 if (journal.isOwner && page.isOwner) {
-                    let data = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
-                    data.findSplice(i => i.id == this.object.id || i._id == this.object.id);
-                    page.setFlag('monks-enhanced-journal', "relationships", data);
+                    page.unsetFlag('monks-enhanced-journal', `relationships.${id}`);
                 } else {
-                    MonksEnhancedJournal.emit("deleteRelationship", { uuid: journal.uuid, id: this.object.id, page: this.object.id });
+                    MonksEnhancedJournal.emit("deleteRelationship", { uuid: journal.uuid, id: this.document.id, page: this.document.id });
                 }
             }
         }
     }
 
-    async alterItem(event) {
-        $(event.currentTarget).prev().click();
-        if ($(event.currentTarget).hasClass('item-hide')) {
-            let li = $(event.currentTarget).closest('li.item');
-            const uuid = li.data("uuid");
-            let journal = await fromUuid(uuid);
+    static async onRevealRelationship(event, target) {
+        let li = target.closest('li.item');
+
+        // Toggle the hidden value for the current relationship
+        let relationships = this.document.getFlag('monks-enhanced-journal', 'relationships') || {};
+        relationships[li.dataset.id].revealed = !relationships[li.dataset.id].revealed;
+        await this.document.setFlag('monks-enhanced-journal', 'relationships', relationships);
+    }
+
+    static async onToggleRelationship(event, target) {
+        let li = target.closest('li.item');
+
+        // Toggle the hidden value for the current relationship
+        let relationships = this.document.getFlag('monks-enhanced-journal', 'relationships') || {};
+        relationships[li.dataset.id].hidden = !relationships[li.dataset.id].hidden;
+        await this.document.setFlag('monks-enhanced-journal', 'relationships', relationships);
+
+
+        // Toggle 
+        let journal;
+        if (li.dataset.uuid) {
+            journal = await fromUuid(li.dataset.uuid);
+        } else {
+            journal = game.journal.get(li.dataset.id);
+        }
+        if (journal && (journal instanceof JournalEntryPage || journal.pages.size > 0)) {
+            let page = journal instanceof JournalEntryPage ? journal : journal.pages.contents[0];
+            let otherRelationships = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
+            let otherRelationship = Object.values(otherRelationships).find(value => value.uuid == this.document.uuid || value.uuid == this.document.parent.uuid);
+            if (otherRelationship) {
+                otherRelationship.hidden = !otherRelationship.hidden;
+                page.setFlag('monks-enhanced-journal', "relationships", otherRelationships);
+            }
+        }
+    }
+
+    async addItem(data) {
+        data = data instanceof Array ? data : [data];
+        let items = foundry.utils.duplicate(this.document.flags["monks-enhanced-journal"].items || {});
+        let addedItems = [];
+        for (let d of data) {
+            let item = await EnhancedJournalSheet.getDocument(d);
+
+            if (item) {
+                let oldId = (item._id || item.id)?.replace("Item.", "");
+                let existingItem = Object.values(this.getItemList()).find(i => {
+                    let parentId = i.flags["monks-enhanced-journal"]?.parentId?.replace("Item.", "");
+                    return (!!oldId && !!parentId && parentId == oldId);
+                });
+                if (existingItem) {
+                    // Increase quantity if already exists
+                    existingItem = items[existingItem._id];
+                    let quantity = parseInt(foundry.utils.getProperty(existingItem, "flags.monks-enhanced-journal.quantity")) + 1;
+                    foundry.utils.setProperty(existingItem, "flags.monks-enhanced-journal.quantity", quantity);
+                    let remaining = parseInt(foundry.utils.getProperty(existingItem, "flags.monks-enhanced-journal.remaining")) + 1;
+                    foundry.utils.setProperty(existingItem, "flags.monks-enhanced-journal.remaining", remaining);
+                    await this.document.setFlag('monks-enhanced-journal', 'items', items);
+                } else {
+                    if (getValue(item.system, quantityname()) || (item.type == "spell" && game.system.id == 'dnd5e')) {
+
+                        let itemData = item.toObject();
+                        if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
+                            itemData = await EncounterSheet.createScrollFromSpell(itemData);
+                        }
+
+                        let sysPrice = MEJHelpers.getSystemPrice(item, pricename()); //MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
+                        let price = MEJHelpers.getPrice(sysPrice);
+                        let sell = 1;
+                        if (this.document.type == "shop") {
+                            let adjustment = this.sheetSettings()?.adjustment || {};
+                            sell = adjustment[item.type]?.sell ?? adjustment.default.sell ?? 1;
+                        }
+                        let flags = Object.assign({
+                            hide: false,
+                            lock: false,
+                            quantity: 1,
+                            remaining: 1,
+                        }, foundry.utils.getProperty(itemData, "flags.monks-enhanced-journal"), {
+                            parentId: item.id,
+                            price: `${price.value} ${price.currency}`,
+                            cost: (price.value * sell) + " " + price.currency
+                        });
+                        let update = {
+                            _id: makeid(),
+                            uuid: item.uuid,
+                            flags: {
+                                'monks-enhanced-journal': flags
+                            }
+                        };
+                        if (game.system.id == "dnd5e") {
+                            foundry.utils.setProperty(update, "system.equipped", false);
+                        }
+
+                        items[update._id] = foundry.utils.mergeObject(itemData, update);
+
+                        addedItems.push(update);
+                    } else {
+                        ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotAddItemType"));
+                    }
+                }
+            }
+        }
+
+        this.document.flags["monks-enhanced-journal"].items = items;
+        await this.document.setFlag('monks-enhanced-journal', 'items', items);
+
+        return addedItems;
+    }
+
+    refillItems(id) {
+        let items = foundry.utils.duplicate(this.document.flags["monks-enhanced-journal"].items || {});
+
+        if (id == 'all') {
+            for (let id of Object.keys(items)) {
+                foundry.utils.setProperty(items[id], "flags.monks-enhanced-journal.remaining", foundry.utils.getProperty(items[id], "flags.monks-enhanced-journal.quantity"));
+            }
+        } else {
+            let item = items[id];
+            if (item) {
+                foundry.utils.setProperty(item, "flags.monks-enhanced-journal.remaining", foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity"));
+            }
+        }
+
+        this.document.setFlag('monks-enhanced-journal', 'items', items);
+    }
+
+    static async onLockItem(event, target) {
+        let id = target.closest('li.item').dataset.id;
+        let collection = target.closest('.item-list').dataset.container;
+
+        let items = foundry.utils.duplicate(this.document.getFlag('monks-enhanced-journal', collection) || {});
+        if (["actors", "items"].includes(collection)) {
+            if (items[id]) {
+                items[id].lock = !items[id].lock;
+                await this.document.setFlag('monks-enhanced-journal', collection, items);
+            }
+        }
+    }
+
+    static async onHideItem(event, target) {
+        let li = target.closest('li.item');
+        let id = li.dataset.id;
+        let collection = target.closest('.item-list').dataset.container;
+
+        let items = foundry.utils.duplicate(this.document.getFlag('monks-enhanced-journal', collection) || {});
+        if (["actors", "relationships", "items"].includes(collection)) {
+            if (items[id]) {
+                items[id].hidden = !items[id].hidden;
+                await this.document.setFlag('monks-enhanced-journal', collection, items);
+            }
+
+            if (collection == "relationships") {
+                // Toggle 
+                let journal;
+                if (li.dataset.uuid) {
+                    journal = await fromUuid(li.dataset.uuid);
+                } else {
+                    journal = game.journal.get(li.dataset.id);
+                }
+                if (journal && (journal instanceof JournalEntryPage || journal.pages.size > 0)) {
+                    let page = journal instanceof JournalEntryPage ? journal : journal.pages.contents[0];
+                    let otherRelationships = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
+                    let otherRelationship = Object.values(otherRelationships).find(value => value.uuid == this.document.uuid || value.uuid == this.document.parent.uuid);
+                    if (otherRelationship) {
+                        otherRelationship.hidden = !otherRelationship.hidden;
+                        page.setFlag('monks-enhanced-journal', "relationships", otherRelationships);
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+    static async onAlterItem(event, target) {
+        $(target).prev().click();
+        if ($(target).hasClass('item-hide')) {
+            let li = target.closest('li.item');
+            let journal;
+            if (li.dataset.uuid) {
+                journal = await fromUuid(li.dataset.uuid);
+            } else {
+                journal = game.journal.get(li.dataset.id);
+            }
             if (journal && (journal instanceof JournalEntryPage || journal.pages.size > 0)) {
                 let page = journal instanceof JournalEntryPage ? journal : journal.pages.contents[0];
                 let relationships = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
-                let relationship = relationships.find(r => r.id == this.object.id);
+                let relationship = relationships.find(r => r.uuid == this.document.parent.uuid);
                 if (relationship) {
-                    relationship.hidden = $(event.currentTarget).prev().prop('checked');
+                    relationship.hidden = $(target).prev().prop('checked');
                     page.setFlag('monks-enhanced-journal', "relationships", relationships);
                 }
             }
-        } else if ($(event.currentTarget).hasClass('item-private')) {
-            let li = $(event.currentTarget).closest('li.item');
+        } else if ($(target).hasClass('item-private')) {
+            let li = $(target).closest('li.item');
             const id = li.data("id");
-            let offerings = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "offerings"));
+            let offerings = foundry.utils.duplicate(this.document.getFlag("monks-enhanced-journal", "offerings"));
             let offering = offerings.find(r => r.id == id);
-            offering.hidden = $(event.currentTarget).prev().prop('checked');
-            await this.object.setFlag('monks-enhanced-journal', "offerings", offerings);
+            offering.hidden = $(target).prev().prop('checked');
+            await this.document.setFlag('monks-enhanced-journal', "offerings", offerings);
         }
     }
+    */
 
     /*
     async alterRelationship(event) {
@@ -2126,10 +2734,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         let journal = await fromUuid(uuid);
 
         if (journal) {
-            if ((this.object.type == "person" && journal.type == "person") || (this.object.type == "organization" && journal.type == "organization"))
+            if ((this.document.type == "person" && journal.type == "person") || (this.document.type == "organization" && journal.type == "organization"))
                 return;
             let relationships = foundry.utils.duplicate(journal.flags["monks-enhanced-journal"].relationships);
-            let relationship = relationships.find(r => r.id == this.object.id);
+            let relationship = relationships.find(r => r.id == this.document.id);
             if (relationship) {
                 relationship.relationship = $(event.currentTarget).val();
                 journal.setFlag('monks-enhanced-journal', "relationships", relationships);
@@ -2138,32 +2746,36 @@ export class EnhancedJournalSheet extends JournalPageSheet {
     }*/
 
     checkForChanges() {
-        return this.editors?.["text.content"]?.active && this.editors?.["text.content"]?.mce?.isDirty();
+        return $("prose-mirror", this.trueElement).toArray().some((editor) => {
+            return editor.isDirty();
+        });
     }
 
     async close(options) {
         if (options?.submit !== false) {
             if (this.checkForChanges()) {
-                const confirm = await Dialog.confirm({
-                    title: i18n("MonksEnhancedJournal.SaveChanges"),
+                const confirm = await foundry.applications.api.DialogV2.confirm({
+                    window: {
+                        title: i18n("MonksEnhancedJournal.SaveChanges"),
+                    },
                     content: `<p>${i18n("MonksEnhancedJournal.YouHaveChanges")}</p>`
                 });
                 if (!confirm) return false;
             }
 
-            if (this.object.type == 'blank')
+            if (this.document.type == 'blank')
                 return;
 
             //go through the scroll Y's and save the last position
             if (this.options.scrollY?.length) {
                 const selectors = this.options.scrollY || [];
                 let scrollPos = selectors.reduce((pos, sel) => {
-                    const el = $(this.element).find(sel);
+                    const el = $(this.trueElement).find(sel);
                     if (el.length === 1) pos[sel] = el[0].scrollTop;
                     return pos;
                 }, {});
-                if (this.isEditable && this.object.isOwner)
-                    this.object.setFlag('monks-enhanced-journal', 'scrollPos', JSON.stringify(scrollPos));
+                if (this.isEditable && this.document.isOwner)
+                    this.document.setFlag('monks-enhanced-journal', 'scrollPos', JSON.stringify(scrollPos));
             }
 
             if (!this.enhancedjournal) {
@@ -2174,15 +2786,15 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             }
 
             if (this.tempOwnership || (this.enhancedjournal && this.enhancedjournal.tempOwnership)) {
-                if (this.object._source.ownership[game.user.id] == undefined)
-                    delete this.object.ownership[game.user.id];
+                if (this.document._source.ownership[game.user.id] == undefined)
+                    delete this.document.ownership[game.user.id];
                 else
-                    this.object.ownership[game.user.id] = this.object._source.ownership[game.user.id];
-                if (this.object.parent) {
-                    if (this.object.parent._source.ownership[game.user.id] == undefined)
-                        delete this.object.parent.ownership[game.user.id];
+                    this.document.ownership[game.user.id] = this.document._source.ownership[game.user.id];
+                if (this.document.parent) {
+                    if (this.document.parent._source.ownership[game.user.id] == undefined)
+                        delete this.document.parent.ownership[game.user.id];
                     else
-                        this.object.parent.ownership[game.user.id] = this.object.parent._source.ownership[game.user.id];
+                        this.document.parent.ownership[game.user.id] = this.document.parent._source.ownership[game.user.id];
                 }
                 delete this.tempOwnership;
                 delete this.enhancedjournal?.tempOwnership;
@@ -2192,32 +2804,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         }
     }
 
-    async _onShowPlayers(event) {
+    static async _onShowPlayers(event, target, options = {}) {
         event.preventDefault();
         await this.submit();
-        return Journal.showDialog(this.object);
-    }
-
-    _getSubmitData(updateData = {}) {
-        const data = super._getSubmitData(updateData);
-        //Fix an issue with Foundry core not retrieving all the form inputs
-        for (let el of this.form.elements) {
-            if (!el.name || el.disabled || (el.tagName === "BUTTON")) continue;
-            const field = this.form.elements[el.name];
-
-            // Duplicate Fields
-            if (field instanceof RadioNodeList) {
-                const values = [];
-                for (let f of field) {
-                    if (f.type === "checkbox")
-                        values.push(f.checked);
-                }
-                if (values.length)
-                    data[el.name] = values;
-            }
-        }
-
-        return data;
+        return foundry.documents.collections.Journal.showDialog(this.document, options);
     }
 
     static isLootActor(lootsheet) {
@@ -2259,7 +2849,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             return lootname;
         }
 
-        let newitems = items.map(i => {
+        let newitems = Object.values(items).map(i => {
             let item = foundry.utils.duplicate(i);
             item._id = makeid();
             return (foundry.utils.getProperty(item, "flags.monks-enhanced-journal.remaining") > 0 ? item : null);
@@ -2383,9 +2973,9 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 entity.update({ data: data });
             }
         } else if (lootSheet == 'monks-enhanced-journal') {
-            let loot = foundry.utils.duplicate(entity.getFlag('monks-enhanced-journal', 'items') || []);
+            let loot = foundry.utils.duplicate(entity.getFlag('monks-enhanced-journal', 'items') || {});
 
-            loot = loot.concat(newitems);
+            loot = foundry.utils.mergeObject(loot, newitems);
             await entity.setFlag('monks-enhanced-journal', 'items', loot);
 
             let newcurr = entity.getFlag("monks-enhanced-journal", "currency") || {};
@@ -2409,7 +2999,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         ui.notifications.info(format("MonksEnhancedJournal.ItemAddedToActor", { name: entity.name }));
 
         //set the currency to 0 and the remaining to 0 for all items
-        for (let item of items) {
+        for (let item of Object.values(items)) {
             if (foundry.utils.getProperty(item, "flags.monks-enhanced-journal.remaining") > 0) {
                 item = foundry.utils.mergeObject(item, { flags: { "monks-enhanced-journal": { remaining: 0, received: entity.name, assigned: true } } });
             }
@@ -2418,13 +3008,11 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         return items;
     }
 
-    async _onItemSummary(event) {
-        event.preventDefault();
+    static async onItemSummary(event, target) {
+        let li = target.closest('li.item');
+        const id = li.dataset.id;
 
-        let li = $(event.currentTarget).closest('li.item');
-        const id = li.data("id");
-
-        let itemData = (this.object.getFlag('monks-enhanced-journal', 'items') || []).find(i => i._id == id);
+        let itemData = (this.document.getFlag('monks-enhanced-journal', 'items') || {})[id];
         if (!itemData)
             return;
 
@@ -2442,8 +3030,8 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
         if (chatData) {
             // Toggle summary
-            if (li.hasClass("expanded")) {
-                let summary = li.children(".item-summary");
+            if ($(li).hasClass("expanded")) {
+                let summary = $(li).children(".item-summary");
                 summary.slideUp(200, () => summary.remove());
             } else {
                 let div;
@@ -2509,10 +3097,10 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                         div.append(props);
                     }
                 }
-                li.append(div.hide());
+                $(li).append(div.hide());
                 div.slideDown(200);
             }
-            li.toggleClass("expanded");
+            $(li).toggleClass("expanded");
         }
     }
 
@@ -2522,7 +3110,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         if (!entity)
             return;
 
-        if (entity.id == this.object.parent.id)
+        if (entity.id == this.document.parent.id)
             return;
 
         if (!relationship.id)
@@ -2531,14 +3119,14 @@ export class EnhancedJournalSheet extends JournalPageSheet {
         let page = entity.pages.contents[0];
         let type = foundry.utils.getProperty(page, "flags.monks-enhanced-journal.type");
         if (this.allowedRelationships.includes(type)) {
-            let relationships = foundry.utils.duplicate(this.object.flags["monks-enhanced-journal"].relationships || []);
+            let relationships = foundry.utils.duplicate(this.document.flags["monks-enhanced-journal"].relationships || {});
 
             //only add one item
-            if (relationships.find(t => t.id == relationship.id) != undefined)
+            if (relationships[relationship.id] != undefined)
                 return;
 
-            relationships.push(relationship);
-            this.object.setFlag("monks-enhanced-journal", "relationships", relationships);
+            relationships[relationship.id] = relationship;
+            this.document.setFlag("monks-enhanced-journal", "relationships", relationships);
 
             //add the reverse relationship
             if (cascade) {
@@ -2547,16 +3135,16 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 if (original.isOwner && orgPage.isOwner) {
                     MonksEnhancedJournal.fixType(orgPage);
                     let sheet = orgPage.sheet;
-                    sheet.addRelationship({ id: this.object.parent.id, uuid: this.object.parent.uuid, hidden: false }, false);
+                    sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: true }, false);
                 } else {
-                    MonksEnhancedJournal.emit("addRelationship", { uuid: relationship.uuid, relationship: { id: this.object.parent.id, uuid: this.object.parent.uuid }, page: this.object.id, hidden: false });
+                    MonksEnhancedJournal.emit("addRelationship", { uuid: relationship.uuid, relationship: { id: this.document.parent.id, uuid: this.document.parent.uuid }, page: this.document.id, hidden: true });
                 }
             }
         }
     }
 
-    async openRelationship(event) {
-        let item = event.currentTarget.closest('.item');
+    static async onOpenRelationship(event, target) {
+        let item = target.closest('.item');
         let journal;
         if (item.dataset.uuid) {
             journal = await fromUuid(item.dataset.uuid);
@@ -2606,7 +3194,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
     collapseItemSection(event) {
         let header = $(event.currentTarget);
-        let ul = header.next();
+        let ul = header.parent().next();
 
         let that = this;
         if (header.hasClass("collapsed")) {
@@ -2614,7 +3202,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             return new Promise(resolve => {
                 ul.slideDown(200, () => {
                     //icon.removeClass("fa-caret-down").addClass("fa-caret-up");
-                    that.object._itemList[header.data("id")] = false;
+                    that.document._itemList[header.data("id")] = false;
                     return resolve(false);
                 });
             });
@@ -2623,36 +3211,292 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             return new Promise(resolve => {
                 ul.slideUp(200, () => {
                     //icon.removeClass("fa-caret-up").addClass("fa-caret-down");
-                    that.object._itemList[header.data("id")] = true;
+                    that.document._itemList[header.data("id")] = true;
                     return resolve(true);
                 });
             });
         }
     }
 
-    makeOffer() {
-        new MakeOffering(this.object, this).render(true);
+    static clearScale(event) {
+        $('button[data-action="resetScale"]', this.trueElement).removeClass("scale");
+        $('div.picture-outer', this.trueElement).data({ "size": 100, "translate": { x: -50, y: -50 } });
+        $('div.picture-outer .picture-img', this.trueElement).css({ "transform": "translate(-50%, -50%) scale(1)" });
     }
 
-    cancelOffer(event) {
-        let li = $(event.currentTarget).closest('li.item');
-        const id = li.data("id");
+    scaleImage(event) {
+        event.stopPropagation();
+        event.preventDefault();
 
-        if (game.user.isGM || this.object.isOwner) {
-            let offerings = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "offerings"));
+        if (event.ctrlKey || event.metaKey) {
+            let wheel = (-event.originalEvent.wheelDelta || event.originalEvent.deltaY || event.originalEvent.detail);
+
+            let size = parseInt($(event.currentTarget).data("size") ?? 100);
+            size += (wheel < 0 ? -5 : 5);
+            size = Math.max(size, 5);
+
+            console.log(size);
+
+            $(event.currentTarget).data("size", size);
+            let translate = $(event.currentTarget).data("translate");
+            $('.picture-img', event.currentTarget).css({ "transform": `translate(${translate?.x ?? -50}%, ${translate?.y ?? -50}%) scale(${size / 100})` });
+
+            $('button[data-action="resetScale"]', this.trueElement).addClass("scale");
+        }
+    }
+
+    checkScale(event) {
+        if (event.ctrlKey || event.metaKey) {
+            $(event.currentTarget).addClass("scaling").data({ "position": $(event.currentTarget).data("translate"), "origin": { x: event.clientX, y: event.clientY } });
+            event.currentTarget.setPointerCapture(event.pointerId);
+        }
+    }
+
+    moveScale(event) {
+        if ($(event.currentTarget).hasClass("scaling")) {
+            $('button[data-action="resetScale"]', this.trueElement).addClass("scale");
+
+            let origin = $(event.currentTarget).data("origin");
+            let position = $(event.currentTarget).data("position") || { x: -50, y: -50 };
+
+            let dx = ((event.clientX - origin.x) / $(event.currentTarget).width()) * 100;
+            let dy = ((event.clientY - origin.y) / $(event.currentTarget).height()) * 100;
+
+            let size = $(event.currentTarget).data("size") ?? 100;
+            let posX = Math.max(Math.min(position.x + dx, 40), -140);
+            let posY = Math.max(Math.min(position.y + dy, 40), -140);
+            $(event.currentTarget).data("translate", { x: posX, y: posY });
+            $('.picture-img', event.currentTarget).css({ "transform": `translate(${posX}%, ${posY}%) scale(${size / 100})` });
+        }
+    }
+
+    releaseScale(event) {
+        $('div.picture-outer', this.trueElement).removeClass("scaling");
+        event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    static async splitJournal() {
+        let ctrl = window.getSelection().baseNode?.parentNode || window.getSelection().anchorNode?.parentNode;
+
+        if (ctrl == undefined) {
+            ui.notifications.info(i18n("MonksEnhancedJournal.NoTextSelected"));
+            return;
+        }
+
+        //make sure this is editor content selected
+        if ($(ctrl).closest('.editor-container,.editor-display').length > 0) {
+            var selection = window.getSelection().getRangeAt(0);
+            var selectedText = selection.extractContents();
+            let selectedHTML = $('<div>').append(selectedText);
+            if (selectedHTML.html() != '') {
+                let title = $('h1,h2,h3,h4', selectedHTML).first().text().trim() || i18n("MonksEnhancedJournal.ExtractedJournalEntry");
+
+                //create a new Journal entry in the same folder as the current object
+                //set the content to the extracted text (selectedHTML.html()) and use the title
+                let type = foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type");
+                if (type == "base" || type == "oldentry") type = "journalentry";
+                let types = MonksEnhancedJournal.getDocumentTypes();
+                if (types[type]) {
+                    let newentry = await JournalEntry.create({ name: title, folder: this.document.parent.folder, flags: { 'monks-enhanced-journal': { type: 'journalentry' } } }, { render: false });
+                    let data = { name: title, type: 'text', text: { content: `<p>${selectedHTML.html()}</p>` }, flags: { 'monks-enhanced-journal': { type: 'journalentry' } } };
+                    await JournalEntryPage.create(data, { parent: newentry });
+                    ui.journal.render();
+                    MonksEnhancedJournal.emit("refreshDirectory", { name: "journal" });
+
+                    //add a new tab but don't switch to it
+                    this.enhancedjournal.addTab(newentry, { activate: false });
+                    this.enhancedjournal.render();
+
+                    //save the current entry and refresh to make sure everything is reset
+                    await this.document.update({ text: { content: $(ctrl).closest('.editor-container,.editor-display').html() } });
+                    if (this.enhancedjournal)
+                        this.enhancedjournal.render();
+                    else
+                        this.render();
+                }
+            } else
+                ui.notifications.warn(i18n("MonksEnhancedJournal.NothingSelected"));
+        } else {
+            ui.notifications.warn(i18n("MonksEnhancedJournal.NoEditorContent"));
+        }
+    }
+
+    async copyToChat() {
+        let ctrl = window.getSelection().baseNode?.parentNode || window.getSelection().anchorNode?.parentNode;
+
+        if (ctrl == undefined) {
+            ui.notifications.info(i18n("MonksEnhancedJournal.NoTextSelected"));
+            return;
+        }
+
+        //make sure this is editor content selected
+        if ($(ctrl).closest('div.editor-display,.editor-control').length > 0) {
+            var selection = window.getSelection().getRangeAt(0);
+            var selectedText = selection.cloneContents();
+            let selectedHTML = $('<div>').append(selectedText);
+            if (selectedHTML.html() != '') {
+                let messageData = {
+                    user: game.user.id,
+                    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+                    content: selectedHTML.html(),
+                };
+
+                ChatMessage.create(messageData, {});
+            } else
+                ui.notifications.warn(i18n("MonksEnhancedJournal.NothingSelected"));
+        } else {
+            ui.notifications.warn(i18n("MonksEnhancedJournal.NoEditorContent"));
+        }
+    }
+
+    clickItem(event) {
+        let target = event.currentTarget;
+        let li = target.closest('li');
+        let id = li.dataset.id;
+
+        let itemData = (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.items") || {})[id];
+        if (itemData) {
+            let cls = game.items.documentClass;
+            let item = new cls(itemData);
+            if (item.displayCard)
+                item.displayCard();
+        }
+    }
+
+    static addLog(options = {}) {
+        let { actor, item, quantity, price, type } = options
+        if (game.user.isGM) {
+            let log = foundry.utils.duplicate(this.getFlag("monks-enhanced-journal", "log") || []);
+            log.unshift({ actor, item, quantity, price, type, time: Date.now() });
+            this.setFlag("monks-enhanced-journal", "log", log);
+        } else {
+            MonksEnhancedJournal.emit("addLog", Object.assign({ entityId: this.uuid }, options))
+        }
+    }
+
+    static onConfigureSheet(event) {
+        event.stopPropagation(); // Don't trigger other events
+        if (event.detail > 1) return; // Ignore repeated clicks
+
+        const docSheetConfigWidth = foundry.applications.apps.DocumentSheetConfig.DEFAULT_OPTIONS.position.width;
+        new foundry.applications.apps.DocumentSheetConfig({
+            document: this.document,
+            position: {
+                top: this.position.top + 40,
+                left: this.position.left + ((this.position.width - docSheetConfigWidth) / 2)
+            }
+        }).render({ force: true });
+    }
+
+    searchText(query) {
+        if (this.enhancedjournal)
+            this.enhancedjournal.searchText.call(this.enhancedjournal, query);
+    }
+
+    _onRevealSecret(event) {
+        let container = event.target.closest('div[data-key]');
+        let key = container.dataset.key;
+        const content = foundry.utils.getProperty(this.document, key);
+        const modified = event.target.toggleRevealed(content);
+        let update = {};
+        update[key] = modified;
+        this.document.update(update);
+    }
+
+    async addActor(data) {
+        let actor = await this.getItemData(data);
+
+        if (actor) {
+            let update = {};
+            if (!this.document.name)
+                update.name = actor.name;
+            if (!this.document.src)
+                update.src = actor.img;
+            await this.document.update(update);
+            await this.document.setFlag("monks-enhanced-journal", "actor", actor);
+        }
+    }
+
+    openActor(event) {
+        let actorLink = this.document.getFlag('monks-enhanced-journal', 'actor');
+        let actor = game.actors.find(a => a.id == actorLink.id);
+        if (!actor)
+            return;
+
+        actor.sheet.render(true);
+    }
+
+    removeActor() {
+        this.document.unsetFlag('monks-enhanced-journal', 'actor');
+        $('.actor-img-container', this.trueElement).remove();
+    }
+
+    async _onDropOffering(event) {
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+
+        if (data.type == 'Item') {
+            this.addOffering(data);
+        } else
+            return false;
+    }
+
+    async addOffering(data) {
+        let item = await fromUuid(data.uuid);
+        if (!(item?.parent instanceof Actor)) {
+            ui.notifications.warn("Offerings must come from an Actor");
+            return;
+        }
+        new MakeOffering({
+            document: this.document, journalsheet: this,
+            offering: {
+                actor: {
+                    id: item.parent.id,
+                    name: item.parent.name,
+                    img: item.parent.img
+                },
+                items: [{
+                    id: item.id,
+                    itemName: item.name,
+                    actorId: item.parent.id,
+                    actorName: item.parent.name,
+                    qty: 1
+                }]
+            }
+        }).render(true);
+    }
+
+    static onOpenOfferingActor(event, target) {
+        let id = target.closest(".item").dataset.actorId;
+        let actor = game.actors.find(a => a.id == id);
+        if (!actor)
+            return;
+
+        actor.sheet.render(true);
+    }
+
+    static onMakeOffering() {
+        new MakeOffering({ document: this.document, journalsheet: this }).render(true);
+    }
+
+    static onCancelOffer(event, target) {
+        let li = target.closest('li.item');
+        const id = li.dataset.id;
+
+        if (game.user.isGM || this.document.isOwner) {
+            let offerings = foundry.utils.duplicate(this.document.getFlag("monks-enhanced-journal", "offerings"));
             let offering = offerings.find(r => r.id == id);
             offering.hidden = true;
             offering.state = "cancelled";
-            this.object.setFlag('monks-enhanced-journal', "offerings", offerings);
+            this.document.setFlag('monks-enhanced-journal', "offerings", offerings);
         } else
-            MonksEnhancedJournal.emit("cancelOffer", { id: id, uuid: this.object.uuid });
+            MonksEnhancedJournal.emit("cancelOffer", { id: id, uuid: this.document.uuid });
     }
 
-    async acceptOffer(event) {
-        let li = $(event.currentTarget).closest('li.item');
-        const id = li.data("id");
+    static async onAcceptOffer(event, target) {
+        let li = target.closest('li.item');
+        const id = li.dataset.id;
 
-        let offerings = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "offerings"));
+        let offerings = foundry.utils.duplicate(this.document.getFlag("monks-enhanced-journal", "offerings"));
         let offer = offerings.find(r => r.id == id);
         if (!offer)
             return;
@@ -2694,8 +3538,8 @@ export class EnhancedJournalSheet extends JournalPageSheet {
 
         // If we've made it here then we're good to process this offer
         let destActor;
-        let actorLink = this.object.getFlag('monks-enhanced-journal', 'actor');
-        if (actorLink) 
+        let actorLink = this.document.getFlag('monks-enhanced-journal', 'actor');
+        if (actorLink)
             destActor = game.actors.find(a => a.id == actorLink.id);
 
         for (let [k, v] of Object.entries(offering.currency)) {
@@ -2712,7 +3556,7 @@ export class EnhancedJournalSheet extends JournalPageSheet {
                 setValue(itemData, quantityname(), item.qty * itemQty);
                 let sheet = destActor.sheet;
                 if (sheet._onDropItem)
-                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, { type: "Item", uuid: `${this.object.uuid}.Items.${item.item._id}`, data: itemData });
+                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
                 else
                     destActor.createEmbeddedDocuments("Item", [itemData]);
             }
@@ -2731,186 +3575,112 @@ export class EnhancedJournalSheet extends JournalPageSheet {
             }
         }
 
-        this.object.setFlag('monks-enhanced-journal', "offerings", offerings);
+        this.document.setFlag('monks-enhanced-journal', "offerings", offerings);
     }
 
-    rejectOffer(event) {
-        let li = $(event.currentTarget).closest('li.item');
-        const id = li.data("id");
+    static onRejectOffer(event, target) {
+        let li = target.closest('li.item');
+        const id = li.dataset.id;
 
-        let offerings = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "offerings"));
+        let offerings = foundry.utils.duplicate(this.document.getFlag("monks-enhanced-journal", "offerings"));
         let offering = offerings.find(r => r.id == id);
-        offering.state = "rejected";
-        this.object.setFlag('monks-enhanced-journal', "offerings", offerings);
-    }
-
-    clearScale(event) {
-        event.stopPropagation();
-        $('.reset-scale', this.element).removeClass("scale");
-        $('div.picture-outer', this.element).data({ "size": 100, "translate": { x: -50, y: -50 } });
-        $('div.picture-outer .picture-img', this.element).css({ "transform": "translate(-50%, -50%) scale(1)" });
-    }
-
-    scaleImage(event) {
-        event.stopPropagation();
-        event.preventDefault();
-
-        if (event.ctrlKey || event.metaKey) {
-            let wheel = (-event.originalEvent.wheelDelta || event.originalEvent.deltaY || event.originalEvent.detail);
-
-            let size = parseInt($(event.currentTarget).data("size") ?? 100);
-            size += (wheel < 0 ? -5 : 5);
-            size = Math.max(size, 5);
-
-            console.log(size);
-
-            $(event.currentTarget).data("size", size);
-            let translate = $(event.currentTarget).data("translate");
-            $('.picture-img', event.currentTarget).css({ "transform": `translate(${translate?.x ?? -50}%, ${translate?.y ?? -50}%) scale(${size / 100})` });
-
-            $('.reset-scale', this.element).addClass("scale");
+        if (offering) {
+            offering.state = "rejected";
+            this.document.setFlag('monks-enhanced-journal', "offerings", offerings);
         }
     }
 
-    checkScale(event) {
-        if (event.ctrlKey || event.metaKey) {
-            $(event.currentTarget).addClass("scaling").data({ "position": $(event.currentTarget).data("translate"), "origin": { x: event.clientX, y: event.clientY } });
-            event.currentTarget.setPointerCapture(event.pointerId);
-        }
+    static async onChangePlayerPermissions(event, target) {
+        let ownership = this.document.parent.ownership;
+        let showing = ownership['default'] >= CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
+        ownership['default'] = (showing ? CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE : CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER);
+        await this.document.parent.update({ ownership: ownership });
+        this.render(true);
     }
 
-    moveScale(event) {
-        if ($(event.currentTarget).hasClass("scaling")) {
-            $('.reset-scale', this.element).addClass("scale");
-
-            let origin = $(event.currentTarget).data("origin");
-            let position = $(event.currentTarget).data("position") || { x: -50, y: -50 };
-
-            let dx = ((event.clientX - origin.x) / $(event.currentTarget).width()) * 100;
-            let dy = ((event.clientY - origin.y) / $(event.currentTarget).height()) * 100;
-
-            let size = $(event.currentTarget).data("size") ?? 100;
-            let posX = Math.max(Math.min(position.x + dx, 40), -140);
-            let posY = Math.max(Math.min(position.y + dy, 40), -140);
-            $(event.currentTarget).data("translate", { x: posX, y: posY });
-            $('.picture-img', event.currentTarget).css({ "transform": `translate(${posX}%, ${posY}%) scale(${size / 100})` });
-        }
+    static onCopyUuid(event) {
+        event.preventDefault(); // Don't open context menu
+        event.stopPropagation(); // Don't trigger other events
+        if (event.detail > 1) return; // Ignore repeated clicks
+        const id = event.button === 2 ? this.document.id : this.document.uuid;
+        const type = event.button === 2 ? "id" : "uuid";
+        const label = game.i18n.localize(this.document.constructor.metadata.label);
+        game.clipboard.copyPlainText(id);
+        ui.notifications.info("DOCUMENT.IdCopiedClipboard", { format: { label, type, id } });
     }
 
-    releaseScale(event) {
-        $('div.picture-outer', this.element).removeClass("scaling");
-        event.currentTarget.releasePointerCapture(event.pointerId);
+    static onOpenActor(event, target) {
+        this.openActor(event);
     }
 
-    async splitJournal() {
-        let ctrl = window.getSelection().baseNode?.parentNode || window.getSelection().anchorNode?.parentNode;
+    static onCopyImage(event, target) {
+        // Copy the image path to the clipboard
+        let img = this.document.src;
+        if (!img) {
+            let actorLink = this.document.getFlag('monks-enhanced-journal', 'actor');
+            let actor = game.actors.find(a => a.id == actorLink?.id);
+            if (!actor) {
+                ui.notifications.info("No image set for this entry");
+                return;
+            }
+            img = actor.img;
+        }
+        game.clipboard.copyPlainText(img);
+        ui.notifications.info("Image path copied to clipboard");
+    }
 
-        if (ctrl == undefined) {
-            ui.notifications.info(i18n("MonksEnhancedJournal.NoTextSelected"));
-            return;
+    static async onGenerateName(event, target) {
+        let names = [];
+        for (let i = 0; i < 5; i++) {
+            let name = await this.createName();
+            if (name)
+                names.push(name);
         }
 
-        //make sure this is editor content selected
-        if ($(ctrl).closest('div.editor-content').length > 0) {
-            var selection = window.getSelection().getRangeAt(0);
-            var selectedText = selection.extractContents();
-            let selectedHTML = $('<div>').append(selectedText);
-            if (selectedHTML.html() != '') {
-                let title = $('h1,h2,h3,h4', selectedHTML).first().text().trim() || i18n("MonksEnhancedJournal.ExtractedJournalEntry");
-
-                //create a new Journal entry in the same folder as the current object
-                //set the content to the extracted text (selectedHTML.html()) and use the title
-                let type = foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.type");
-                if (type == "base" || type == "oldentry") type = "journalentry";
-                let types = MonksEnhancedJournal.getDocumentTypes();
-                if (types[type]) {
-                    let newentry = await JournalEntry.create({ name: title, folder: this.object.parent.folder, flags: { 'monks-enhanced-journal': { type: 'journalentry' } } }, { render: false });
-                    let data = { name: title, type: 'text', text: { content: `<p>${selectedHTML.html()}</p>` }, flags: { 'monks-enhanced-journal': { type: 'journalentry' } } };
-                    await JournalEntryPage.create(data, { parent: newentry });
-                    ui.journal.render();
-                    MonksEnhancedJournal.emit("refreshDirectory", { name: "journal" });
-
-                    //add a new tab but don't switch to it
-                    this.enhancedjournal.addTab(newentry, { activate: false });
-                    this.enhancedjournal.render();
-
-                    //save the current entry and refresh to make sure everything is reset
-                    await this.object.update({ text: { content: $(ctrl).closest('div.editor-content').html() } });
-                    if (this.enhancedjournal)
-                        this.enhancedjournal.render();
-                    else
-                        this.render();
+        let buttons = names.map((name, index) => {
+            return {
+                type: "button",
+                action: `selectName${index}`,
+                label: name,
+                callback: (event, target) => {
+                    let index = target.dataset.index;
+                    return names[index];
                 }
-            } else
-                ui.notifications.warn(i18n("MonksEnhancedJournal.NothingSelected"));
-        } else {
-            ui.notifications.warn(i18n("MonksEnhancedJournal.NoEditorContent"));
+            }
+        });
+
+        let context = { names: names };
+        let html = await foundry.applications.handlebars.renderTemplate("modules/monks-enhanced-journal/templates/generate-name.html", context);
+
+        let name = await foundry.applications.api.DialogV2.wait({
+            window: {
+                title: `Generate a new name`,
+                contentClasses: ["flexcol"]
+            },
+            position: { width: 300 },
+            content: html,
+            render: (event, dialog) => {
+                $(".dialog-form > footer", dialog.element).hide();
+                $("button[data-action='generate']", dialog.element).on("click", async (event) => {
+                    event.preventDefault();
+                    for (let i = 0; i < 5; i++) {
+                        let name = await this.createName();
+                        if (name) {
+                            names[i] = name;
+                            $(`button[data-index="${i}"]`, dialog.element).html(name);
+                        }
+                    }
+                });
+                $("button[data-action='cancel']", dialog.element).on("click", (event) => {
+                    event.preventDefault();
+                    dialog.close();
+                });
+            },
+            buttons
+        });
+
+        if (name) {
+            await this.document.update({ name: name });
         }
-    }
-
-    async copyToChat() {
-        let ctrl = window.getSelection().baseNode?.parentNode || window.getSelection().anchorNode?.parentNode;
-
-        if (ctrl == undefined) {
-            ui.notifications.info(i18n("MonksEnhancedJournal.NoTextSelected"));
-            return;
-        }
-
-        //make sure this is editor content selected
-        if ($(ctrl).closest('div.editor-content').length > 0) {
-            var selection = window.getSelection().getRangeAt(0);
-            var selectedText = selection.cloneContents();
-            let selectedHTML = $('<div>').append(selectedText);
-            if (selectedHTML.html() != '') {
-                let messageData = {
-                    user: game.user.id,
-                    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-                    content: selectedHTML.html(),
-                };
-
-                ChatMessage.create(messageData, {});
-            } else
-                ui.notifications.warn(i18n("MonksEnhancedJournal.NothingSelected"));
-        } else {
-            ui.notifications.warn(i18n("MonksEnhancedJournal.NoEditorContent"));
-        }
-    }
-
-    openOfferingActor(event) {
-        let id = event.currentTarget.closest(".item").dataset.actorId;
-        let actor = game.actors.find(a => a.id == id);
-        if (!actor)
-            return;
-
-        actor.sheet.render(true);
-    }
-
-    clickItem(event) {
-        let target = event.currentTarget;
-        let li = target.closest('li');
-        let id = li.dataset.id;
-
-        let itemData = (foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.items") || []).find(i => i._id == id);
-        if (itemData) {
-            let cls = game.items.documentClass;
-            let item = new cls(itemData);
-            if (item.displayCard)
-                item.displayCard();
-        }
-    }
-
-    static addLog(options = {}) {
-        let { actor, item, quantity, price, type } = options
-        if (game.user.isGM) {
-            let log = foundry.utils.duplicate(this.getFlag("monks-enhanced-journal", "log") || []);
-            log.unshift({ actor, item, quantity, price, type, time: Date.now() });
-            this.setFlag("monks-enhanced-journal", "log", log);
-        } else {
-            MonksEnhancedJournal.emit("addLog", Object.assign({ entityId: this.uuid }, options))
-        }
-    }
-
-    clearLog() {
-        this.setFlag("monks-enhanced-journal", "log", []);
     }
 }

@@ -1,0 +1,68 @@
+<div class="items-list objective-items alternate-rows">
+    <header>
+        <div class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Objectives'}}</div>
+
+        <div class="item-detail flexrow">
+            {{localize 'MonksEnhancedJournal.Visible'}}
+        </div>
+
+        <div class="item-detail flexrow">
+            {{localize 'MonksEnhancedJournal.Completed'}}
+        </div>
+
+        <div class="item-detail flexrow">
+            {{localize 'MonksEnhancedJournal.Counter'}}
+        </div>
+
+        <div class="item-controls flexrow">
+            {{#if owner}}
+            <a class="item-control text objective-create" data-tooltip="{{localize 'MonksEnhancedJournal.CreateObjective'}}" data-type="objective" data-action="createObjective">
+                <i class="fas fa-plus-square"></i>
+            </a>
+            {{/if}}
+        </div>
+        
+    </header>
+
+    {{#if has.objectives}}
+    <ol class="item-list" data-container="objectives">
+        {{#each objectives}}
+        <li class="item flexcol " data-id="{{this.id}}" data-document="Objective" draggable="true">
+            <div class="item-name flexrow">
+                <div style="white-space: normal;font-weight:700;">{{this.title}}</div>
+            </div>
+
+            <div class="item-detail item-available flexrow">
+                {{#if @root.owner}}
+                <input class="objective-available" name="flags.monks-enhanced-journal.objectives.{{this.id}}.available" type="checkbox" {{checked this.available}} />
+                {{/if}}
+            </div>
+                
+            <div class="item-detail item-status flexrow">
+                <input class="objective-status" name="flags.monks-enhanced-journal.objectives.{{this.id}}.status" type="checkbox" {{checked this.status}} />
+            </div>
+
+            <div class="item-detail item-status flexrow">
+                <span class="objective-counter">{{this.counter}}</span>
+            </div>
+
+            <div class="item-controls flexrow">
+                {{#if @root.owner}}
+                <a class="item-control objective-edit" data-tooltip="Edit Objective" data-action="editObjective"><i class="fas fa-edit"></i></a>
+                <a class="item-control objective-delete" data-tooltip="{{localize 'MonksEnhancedJournal.DeleteItem'}}" data-action="deleteObjective"><i class="fas fa-trash"></i></a>
+                {{/if}}
+            </div>
+        </li>
+        <li class="objective-content">
+            <div style="width:100%;">
+                <div style="white-space: normal;" data-key="flags.monks-enhanced-journal.objectives.{{this.id}}.content" class="{{#unless owner}}not-owner{{/unless}}">
+                    {{{this.enrichedText}}}
+                </div>
+            </div>
+        </li>
+        {{/each}}
+    </ol>
+    {{else}}
+    <div class="instruction">{{#if owner}}{{localize 'MonksEnhancedJournal.msg.NoObjectivesPressAddButton'}}{{else}}{{localize 'MonksEnhancedJournal.msg.NoObjectivesAtTheMoment'}}{{/if}}</div>
+    {{/if}}
+</div>

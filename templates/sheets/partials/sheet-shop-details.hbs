@@ -1,0 +1,28 @@
+<div class="flexcol details-section no-border" style="flex-grow:0;margin-bottom: 8px;width: 100%;align-content: center;">
+    <div class="form-group owner-only">
+        <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.Hours'}}</label>
+        <input type="text" class="time-field" name="opening" value="{{opening}}" style="text-align: right;" /><span style="flex: 0 0 50px;text-align:center;">to</span><input type="text" class="time-field" name="closing" value="{{closing}}" style="text-align: right;" />
+    </div>
+    <div class="form-group owner-only">
+        <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.ShopOpen'}}</label>
+        <select class="shop-state" name="flags.monks-enhanced-journal.state"{{#if data.flags.monks-enhanced-journal.autoopen}} disabled{{/if}}>
+            {{ selectOptions openOptions selected=data.flags.monks-enhanced-journal.state localize=true }}
+        </select>
+    </div>
+    <div class="form-group owner-only">
+        <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.AutoOpen'}}</label>
+        <input type="checkbox" name="flags.monks-enhanced-journal.autoopen" {{checked data.flags.monks-enhanced-journal.autoopen}} />
+    </div>
+    <div class="form-group owner-only">
+        <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.PlayerPurchasing'}}</label>
+        <select class="shop-state" name="flags.monks-enhanced-journal.purchasing">
+            {{ selectOptions purchaseOptions selected=data.flags.monks-enhanced-journal.purchasing localize=true }}
+        </select>
+    </div>
+    <div class="form-group owner-only">
+        <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.PlayerSelling'}}</label>
+        <select class="shop-state" name="flags.monks-enhanced-journal.selling">
+            {{ selectOptions sellingOptions selected=data.flags.monks-enhanced-journal.selling localize=true }}
+        </select>
+    </div>
+</div>

@@ -1,63 +1,184 @@
 import { setting, i18n, log, makeid, MonksEnhancedJournal } from "../monks-enhanced-journal.js";
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
-import { ListEdit } from "../apps/listedit.js";
+import { ListItemEdit } from "../apps/list-item-edit.js";
+import { ListFolderEdit } from "../apps/list-folder-edit.js";
 
 export class ListSheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
+    constructor(options) {
+        super(options);
 
-        this.initialize();
+        this._expand = {};
+    }
+
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.list",
+            icon: "fa-solid fa-list",
+        },
+        actions: {
+            convertSheet: ListSheet.convertSheet,
+            itemChecked: ListSheet.onCheckItem,
+            clearVote: ListSheet.onClearVote,
+            vote: ListSheet.onVote,
+            toggleBar: ListSheet.onToggleBar,
+            updateProgress: ListSheet.onUpdateProgress,
+            createFolder: ListSheet.onCreateFolder,
+            createItem: ListSheet.onCreateItem,
+            editItem: ListSheet.onEditItem,
+            toggleFolder: ListSheet.onToggleFolder,
+            collapseAll: ListSheet.onCollapseAll
+        },
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/sheets/list.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs",
+            ],
+            scrollable: [".list-list"],
+        }
+    };
+
+    #search = new foundry.applications.ux.SearchFilter({
+        inputSelector: "input.searchList",
+        contentSelector: ".list-list",
+        callback: this._onSearchFilter.bind(this)
+    });
+
+    _configureRenderParts(options) {
+        const parts = super._configureRenderParts(options);
+        parts.main.templates.push(`modules/monks-enhanced-journal/templates/sheets/partials/list-template-${this.subtype}.html`);
+        return parts;
     }
 
     static get type() {
         return 'list';
     }
 
-    get sheetTemplates() {
-        delete Handlebars.partials["modules/monks-enhanced-journal/templates/sheets/list-template.html"];
-        return {
-            listItemTemplate: "modules/monks-enhanced-journal/templates/sheets/list-template.html"
-        };
-    }
-
-    get hasNumbers() {
-        return false;
+    get subtype() {
+        return this.document.getFlag("monks-enhanced-journal", "subtype", "basic");
     }
 
     static get defaultObject() {
-        return { items: [], folders: [] };
+        return { entries: [], folders: [] };
     }
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.list"),
-            template: "modules/monks-enhanced-journal/templates/sheets/list.html",
-            dragDrop: [
-                { dragSelector: ".list-item", dropSelector: ".list-list" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            filters: [{ inputSelector: 'input[name="search"]', contentSelector: ".list-list" }],
-            contextMenuSelector: ".document",
-            scrollY: [".list-list"]
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
+
+        let items = this.document.getFlag('monks-enhanced-journal', 'items');
+        let entries = items;
+        if (!(items instanceof Array)) {
+            entries = [];
+            for (let [id, item] of Object.entries(items || {})) {
+                item.id = id;
+                entries.push(item);
+            }
+        }
+
+        if (!this.document.getFlag('monks-enhanced-journal', 'entries') && items) {
+            await this.document.setFlag('monks-enhanced-journal', 'entries', entries);
+        }
+
+        this.initialize();
+
+        let tree = this.tree;
+        if (this.subtype == "poll") {
+            let calcPercent = function (folder) {
+                let max = game.users.size;
+                //+++ setting for max percentage based on total players or max votes.
+                if (false) {
+                    for (let item of folder.content) {
+                        let count = parseInt(item.document.count || 0);
+                        if (Number.isInteger(count))
+                            max = Math.max(max, count);
+                    }
+                }
+
+                for (let item of folder.content) {
+                    let count = 0;
+                    let against = 0;
+
+                    item.voted = (item.document.players || {})[game.user.id] != undefined;
+
+                    item.players = [];
+                    for (let [key, value] of Object.entries(item.document.players || {}))
+                    {
+                        let user = game.users.get(key);
+                        if (!user) continue;
+
+                        if (value === false) against++;
+                        else count++;
+
+                        item.players.push({
+                            color: user?.color,
+                            letter: user?.name[0],
+                            username: user?.name,
+                            against: value === false
+                        });
+                    }
+
+                    max += (item.document.votefor || 0) + (item.document.against || 0);
+                    count += (item.document.votefor || 0);
+                    against += (item.document.against || 0);
+
+                    item.percent = count == 0 ? 0 : Math.clamp(count / max, 0, 1) * 100;
+                    item.against = against == 0 ? 0 : Math.clamp(against / max, 0, 1) * 100;
+                    item.votesFor = count;
+                    item.votesAgainst = against;
+                }
+
+                for (let child of folder.children) {
+                    calcPercent(child);
+                }
+            }
+
+            calcPercent(tree);
+        }
+        else if (this.subtype == "progress") {
+            let calcPercent = function (folder) {
+                for (let entry of folder.content) {
+                    let count = parseInt(entry.document.count || 0);
+                    let max = parseInt(entry.document.max);
+                    if (!Number.isInteger(max)) {
+                        entry.noprogress = true;
+                    } else {
+                        entry.noprogress = false;
+                        entry.percent = (count / max) * 100;
+                        entry.valueText = `${count}/${max}`;
+                    }
+                }
+
+                for (let child of folder.children) {
+                    calcPercent(child);
+                }
+            }
+
+            calcPercent(tree);
+        }
+
+        context.placeholder = "MonksEnhancedJournal.List";
+
+        let listFolders = game.user.getFlag('monks-enhanced-journal', 'list-folders') || {}
+        return foundry.utils.mergeObject(context, {
+            listtype: "basic",
+            documentPartial: `modules/monks-enhanced-journal/templates/sheets/partials/list-template-${this.subtype}.html`,
+            tree,
+            folders: listFolders[this.document.id] || {},
+            canCreate: this.document.isOwner,
+            allowAgainst: setting("allow-poll-against") && this.subtype == "poll",
         });
     }
 
     initialize() {
         let idx = 0;
-        this.folders = (this.object?.flags['monks-enhanced-journal']?.folders || []).map(f => { if (f.parent == '') f.parent = null; return { id: f.id, name: f.name, data: f, sort: idx++ }; });
+        this.folders = (this.document?.flags['monks-enhanced-journal']?.folders || []).map(f => { if (f.parent == '') f.parent = null; return { id: f.id, name: f.name, document: f, sort: idx++ }; });
         idx = 0;
-        this.items = (this.object?.flags['monks-enhanced-journal']?.items || []).map(i => { return { id: i.id, data: i, sort: idx++ }; });
+        this.entries = (this.document?.flags['monks-enhanced-journal']?.entries || []).map(i => { return { id: i.id, document: i, sort: idx++ }; });
         // Build Tree
-        this.tree = this.constructor.setupFolders(this.folders, this.items);
-    }
-
-    async getData(options) {
-        let data = await super.getData();
-
-        data.tree = this.tree;
-        data.canCreate = this.object.isOwner;
-
-        return data;
+        this.tree = this.constructor.setupFolders(this.folders, this.entries);
     }
 
     async _render(force = false, options = {}) {
@@ -66,22 +187,53 @@ export class ListSheet extends EnhancedJournalSheet {
         super._render(force, options);
     }
 
-    async _renderInner(...args) {
-        await loadTemplates(this.sheetTemplates);
-        return super._renderInner(...args);
-    }
-
     _documentControls() {
         let ctrls = [
-            { id: 'sheet-config', text: i18n("MonksEnhancedJournal.ChangeSheetType"), icon: 'fa-cog', conditional: game.user.isGM, callback: (ev) => { this._onConfigureSheet(ev) } },
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers }
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" }
         ];
         //this.addPolyglotButton(ctrls);
         return ctrls.concat(super._documentControls());
     }
 
+    _disableFields(form) {
+        super._disableFields(form);
+
+        let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
+        if (hasGM)
+            $(`.vote-button`, form).removeAttr('disabled').removeAttr('readonly');
+    }
+
     get canPlaySound() {
         return false;
+    }
+
+    static async convertSheet(event, target) {
+        let context = {
+            options: [
+                { id: "basic", name: "MonksEnhancedJournal.list.basic", disabled: this.subtype == "basic" },
+                { id: "checklist", name: "MonksEnhancedJournal.list.checklist", disabled: this.subtype == "checklist" },
+                { id: "poll", name: "MonksEnhancedJournal.list.poll", disabled: this.subtype == "poll" },
+                { id: "progress", name: "MonksEnhancedJournal.list.progress", disabled: this.subtype == "progress" },
+            ],
+            sheetType: i18n(`MonksEnhancedJournal.list.${this.subtype}`)
+        };
+        let html = await foundry.applications.handlebars.renderTemplate("modules/monks-enhanced-journal/templates/convert.html", context);
+        let that = this;
+        foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: `Convert List`,
+            },
+            content: html,
+            yes: {
+                callback: (event, button) => {
+                    const form = button.form;
+                    const fd = new foundry.applications.ux.FormDataExtended(form).object;
+
+                    that.document.setFlag('monks-enhanced-journal', 'subtype', fd.convertTo);
+                }
+            }
+        });
     }
 
     static setupFolders(folders, documents) {
@@ -154,21 +306,21 @@ export class ListSheet extends EnhancedJournalSheet {
         let ownershipLevels = CONST.DOCUMENT_OWNERSHIP_LEVELS;
         // Partition folders into children and unassigned folders
         let [u, children] = folders
-            /*.filter((f) => {
-                let ownership = c.data.ownership || { default: ownershipLevels.OBSERVER };
-                return game.user.isGM || ownership?.default >= ownershipLevels.LIMITED || ownership[game.user.id] >= ownershipLevels.LIMITED;
-            })*/
-            .partition((f) => allowChildren && (f.data?.parent === id || (f.data?.parent == undefined && id == null)));
+            .partition((f) => {
+                return allowChildren && (f.document?.parent === id || (f.document?.parent == undefined && id == null))
+            });
         folder.children = children.sort((a, b) => a.name.localeCompare(b.name));
         folders = u;
 
         // Partition documents into contents and unassigned documents
         const [docs, content] = documents
             .filter((e) => {
-                let ownership = e.data.ownership || { default: ownershipLevels.OBSERVER };
+                let ownership = e.document.ownership || { default: ownershipLevels.OBSERVER };
                 return game.user.isGM || ownership?.default >= ownershipLevels.LIMITED || ownership[game.user.id] >= ownershipLevels.LIMITED;
             })
-            .partition((e) => e.data?.folder === id || (e.data?.folder == undefined && id == null));
+            .partition((e) => {
+                return e.document?.folder === id || (e.document?.folder == undefined && id == null)
+            });
         folder.content = content.sort((a, b) => a.sort - b.sort);
         documents = docs;
 
@@ -176,7 +328,7 @@ export class ListSheet extends EnhancedJournalSheet {
         return [folders, documents];
     }
 
-     _onSearchFilter(event, query, rgx, html) {
+    _onSearchFilter(event, query, rgx, html) {
         const isSearch = !!query;
         let documentIds = new Set();
         let folderIds = new Set();
@@ -185,17 +337,17 @@ export class ListSheet extends EnhancedJournalSheet {
         if ( isSearch ) {
 
             // Match document names
-            for ( let d of this.items ) {
-                if ((d.data.text && rgx.test(SearchFilter.cleanQuery(d.data.text))) || (d.data.title && rgx.test(SearchFilter.cleanQuery(d.data.title)) )) {
+            for (let d of this.entries ) {
+                if ((d.document.text && rgx.test(foundry.applications.ux.SearchFilter.cleanQuery(d.document.text))) || (d.document.title && rgx.test(foundry.applications.ux.SearchFilter.cleanQuery(d.document.title)) )) {
                     documentIds.add(d.id);
-                    if ( d.data.folder ) folderIds.add(d.data.folder);
+                    if (d.document.folder) folderIds.add(d.document.folder);
                 }
             }
 
             // Match folder tree
             const includeFolders = fids => {
                 const folders = this.folders.filter(f => fids.has(f.id));
-                const pids = new Set(folders.filter(f => f.data.parent).map(f => f.data.parent));
+                const pids = new Set(folders.filter(f => f.document.parent).map(f => f.document.parent));
                 if ( pids.size ) {
                     pids.forEach(p => folderIds.add(p));
                     includeFolders(pids);
@@ -204,7 +356,9 @@ export class ListSheet extends EnhancedJournalSheet {
             includeFolders(folderIds);
         }
 
-        // Toggle each directory item
+        // Toggle each directory entry
+        let listFolders = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'list-folders') || {});
+        let folders = listFolders[this.document.id] || {};
         for ( let el of html.querySelectorAll(".list-item") ) {
 
             // Entities
@@ -216,183 +370,123 @@ export class ListSheet extends EnhancedJournalSheet {
             if (el.classList.contains("folder")) {
                 let match = isSearch && folderIds.has(el.dataset.folderId);
                 el.style.display = (!isSearch || match) ? "flex" : "none";
-                if (isSearch && match) el.classList.remove("collapsed");
-                else el.classList.toggle("collapsed", !this.folders.find(f => f.id == el.dataset.folderId).data.expanded);
+                if (isSearch && match) el.classList.remove("expanded");
+                else el.classList.toggle("expanded", folders[el.dataset.folderId]);
             }
         }
      }
 
-    collapseAll() {
-        $(this.element).find('li.folder').addClass("collapsed");
-        let folders = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal'].folders || []);
-        for (let f of folders) {
-            f.expanded = false;
-        }
-
-        this.object.setFlag('monks-enhanced-journal', 'folders', folders);
+    static onCollapseAll(event, target) {
+        $(target).closest("form").find('li.folder').removeClass("expanded");
+        let listFolders = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'list-folders') || {});
+        delete listFolders[this.document.id];
+        game.user.setFlag('monks-enhanced-journal', 'list-folders', listFolders);
     }
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
+    _dragDrop(html) {
+        new foundry.applications.ux.DragDrop.implementation({
+            dragSelector: ".list-item",
+            dropSelector: ".list-list",
+            permissions: {
+                dragstart: this._canDragStart.bind(this),
+                drop: this._canDragDrop.bind(this)
+            },
+            callbacks: {
+                dragstart: this._onDragStart.bind(this),
+                drop: this._onDrop.bind(this)
+            }
+        }).bind(html);
+    }
 
-        const list = html.find(".list-list");
-        const entries = list.find(".list-item");
+    async activateListeners(html) {
+        await super.activateListeners(html);
+
+        this.#search.bind(html);
 
         // Folder-level events
-        html.find('.create-item').click((ev) => {
-            let folderId = ev.currentTarget.closest("li.folder")?.dataset?.folderId;
-            new ListEdit({ data: { folder: folderId } }, this).render(true, { focus: true });
-            ev.preventDefault();
-            ev.stopPropagation();
-        });
-        html.find('.collapse-all').click(this.collapseAll.bind(this));
-        html.find(".folder .folder .folder .create-folder").remove(); // Prevent excessive folder nesting
-        if (game.user.isGM) html.find('.create-folder').click(ev => this._onCreateFolder(ev));
+        $(".folder .folder .folder .create-folder", html).remove(); // Prevent excessive folder nesting
 
         // Entry-level events
-        list.on("dblclick", ".document.item", (event) => {
-            let id = event.currentTarget.closest("li.document").dataset.documentId;
-            const item = this.items.find(i => i.id == id);
-            if (!item) return;
-
-            new ListEdit(item, this).render(true);
-        });
-        list.on("click", ".folder-header", this._toggleFolder.bind(this));
         const dh = this._onDragHighlight.bind(this);
-        html.find(".folder").on("dragenter", dh).on("dragleave", dh);
-
-        this._searchFilters = this.options.filters.map(f => {
-            f.callback = this._onSearchFilter.bind(this);
-            return new SearchFilter(f);
-        }).forEach(f => f.bind(html[0]));
-
-        $('.document', html).on("contextmenu", (event) => {
-            var r = document.querySelector(':root');
-            r.style.setProperty('--mej-context-x', event.originalEvent.offsetX + "px");
-            r.style.setProperty('--mej-context-y', event.originalEvent.offsetY + "px");
-        });
+        $(".folder", html).on("dragenter", dh).on("dragleave", dh);
     }
 
-    _onClickDocumentName(event) {
-        event.preventDefault();
-        const element = event.currentTarget;
-        let li = $(element).closest('li')[0];
-        let item = this.items.find(i => i.id === li.dataset.documentId);
+    _prepareSubmitData(event, form, formData, updateData) {
+        const submitData = super._prepareSubmitData(event, form, formData, updateData);
 
-        //edit the item
-        const options = { width: 520, left: window.innerWidth - 630, top: li.offsetTop, type: 'item' };
-        this.createDialog(item.data, options);
-    }
+        if (this.subtype == "progress") {
+            if (submitData.max != "" && submitData.max != undefined) {
+                submitData.max = parseInt(submitData.max);
+            }
+            if (submitData.count != "" && submitData.count != undefined) {
+                submitData.count = parseInt(submitData.count);
+                if (submitData.max != "" && submitData.max != undefined)
+                    submitData.count = Math.clamp(submitData.count, 0, submitData.max);
+            }
 
-    async _onCreateItem(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        const button = event.currentTarget;
-        const data = { folder: button.dataset.folder };
-        const options = { width: 520, left: window.innerWidth - 630, top: button.offsetTop, type: 'item' };
-        this.createDialog(data, options);
-    }
-
-    _onCreateFolder(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        const button = event.currentTarget;
-        const parent = button.dataset.parentFolder;
-        const data = { parent: parent ? parent : null };
-        const options = { top: button.offsetTop, left: window.innerWidth - 310 - FolderConfig.defaultOptions.width, type: 'folder' };
-        this.createDialog(data, options);
-    }
-
-    updateData(data) {
-    }
-
-    async createDialog(data = {}, options = {}) {
-        let that = this;
-        // Collect data
-        const folders = this.folders;//.filter(f => f.displayed);
-        const label = (data.id ? (options.type == 'folder' ? game.i18n.localize("FOLDER.Update") : i18n("MonksEnhancedJournal.UpdateEntry"))
-            : (options.type == 'folder' ? game.i18n.localize("FOLDER.Create") : game.i18n.format("DOCUMENT.Create", { type: (options.type == 'folder' ? game.i18n.localize("DOCUMENT.Folder") : i18n("MonksEnhancedJournal.Entry")) })));
-        const title = label + (data.id && options.type == 'folder' ? ' : ' + data.name : '');
-
-        // Render the entity creation form
-        const html = await renderTemplate(`modules/monks-enhanced-journal/templates/sheets/list${options.type}.html`, {
-            data: data,
-            name: data.name || game.i18n.format("DOCUMENT.New", { type: options.type }),
-            folder: data.folder,
-            folders: folders,
-            hasFolders: folders.length > 0,
-            hasNumber: this.hasNumbers
-        });
-
-        // Render the confirmation dialog window
-        return Dialog.prompt({
-            title: title,
-            content: html,
-            label: label,
-            callback: html => {
-                const form = html[0].querySelector("form");
-                const fd = new FormDataExtended(form);
-                data = foundry.utils.mergeObject(data, fd.object);
-                if (!data.folder) delete data["folder"];
-
-                this.updateData(data);
-
-                let collection = foundry.utils.duplicate((options.type == 'folder' ? that.object.flags['monks-enhanced-journal']?.folders : that.object.flags['monks-enhanced-journal']?.items) || []);
-                if (data.id == undefined) {
-                    data.id = makeid();
-                    collection.push(data);
-                } else {
-                    let document = collection.find(i => i.id == data.id);
-                    document = foundry.utils.mergeObject(document, data);
-                }
-
-                that.object.setFlag('monks-enhanced-journal', (options.type == 'folder' ? 'folders' : 'items'), collection);
-            },
-            rejectClose: false,
-            options: options
-        });
-    }
-
-    async _toggleFolder(event) {
-        let elem = $(event.currentTarget.parentElement);
-        let collapsed = elem.hasClass("collapsed");
-        let folders = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal']?.folders || []);
-        let id = elem.attr("data-folder-id");
-        let folder = folders.find(f => f.id == id);
-        if (folder) folder.expanded = collapsed;
-
-        if (collapsed)
-            elem.removeClass("collapsed");
-        else {
-            elem.addClass("collapsed");
-            const subs = elem.find('.folder').addClass("collapsed");
-            subs.each((i, f) => {
-                let folder = folders.find(f => f.id == id);
-                if (folder) folder.expanded = false;
-            });
+        } else if (this.subtype == "poll") {
+            if (submitData.count != "" && submitData.count != undefined) {
+                submitData.count = parseInt(submitData.count);
+            }
         }
 
-        await this.object.setFlag('monks-enhanced-journal', 'folders', folders);
+        return submitData;
+    }
+
+    static async onEditItem(event, target) {
+        let id = event.currentTarget.closest("li.document").dataset.documentId;
+        const entry = this.entries.find(i => i.id == id);
+        if (!entry) return;
+
+        new ListItemEdit({ document: entry.document, sheet: this }).render(true);
+    }
+
+    static async onCreateItem(event, target) {
+        let folderId = target.closest("li.folder")?.dataset?.folderId;
+        new ListItemEdit({ folder: folderId, sheet: this }).render(true, { focus: true });
+    }
+
+    static async onEditFolder(event, target) {
+        let id = event.currentTarget.closest("li.document").dataset.documentId;
+        const entry = this.entries.find(i => i.id == id);
+        if (!entry) return;
+
+        new ListFolderEdit({ document: entry.document, sheet: this }).render(true);
+    }
+
+    static async onCreateFolder(event, target) {
+        let folderId = target.closest("li.folder")?.dataset?.folderId;
+        new ListFolderEdit({ folder: folderId, sheet: this }).render(true, { focus: true });
+    }
+
+    static async onToggleFolder(event, target) {
+        let elem = $(target.parentElement);
+        let expanded = elem.hasClass("expanded");
+        let listFolders = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'list-folders') || {});
+        let folders = listFolders[this.document.id] || {};
+        let id = elem[0].dataset.folderId;
+        folders[id] = !expanded;
+
+        elem.toggleClass("expanded", !expanded);
+
+        listFolders[this.document.id] = folders;
+        await game.user.setFlag('monks-enhanced-journal', 'list-folders', listFolders);
     }
 
     _onDragStart(event) {
-        if ($(event.currentTarget).hasClass("sheet-icon"))
-            return super._onDragStart(event);
-
         let li = event.currentTarget.closest(".list-item");
         if (li) {
             const isFolder = li.classList.contains("folder");
             const dragData = isFolder ?
                 { type: "Folder", id: li.dataset.folderId } :
-                { type: "ListItem", id: li.dataset.documentId, uuid: `${this.object.uuid}.Item.${li.dataset.documentId}` };
+                { type: "ListItem", id: li.dataset.documentId, uuid: `${this.document.uuid}.Item.${li.dataset.documentId}` };
             event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
             this._dragType = dragData.type;
         }
     }
 
     _canDragStart(selector) {
-        if (selector == ".sheet-icon") return game.user.isGM;
-        return this.object.isOwner;
+        return this.document.isOwner;
     }
 
     _onDragHighlight(event) {
@@ -420,16 +514,9 @@ export class ListSheet extends EnhancedJournalSheet {
 
     _onDrop(event) {
         // Try to extract the data
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         // Identify the drop target
-        const selector = this._dragDrop[0].dropSelector;
         const target = event.target.closest(".list-item") || null;
 
         // Call the drop handler
@@ -442,45 +529,45 @@ export class ListSheet extends EnhancedJournalSheet {
     }
 
     async _handleDroppedDocument(target, data) {
-        let items = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal'].items || []);
+        let entries = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal'].entries || []);
         // Determine the closest folder ID
         const closestFolder = target ? target.closest(".folder") : null;
         if (closestFolder) closestFolder.classList.remove("droptarget");
         const closestFolderId = closestFolder ? closestFolder.dataset.folderId : null;
 
         // Obtain the dropped document
-        const item = items.find(i => i.id == data.id);
-        if (!item) return;
+        const entry = entries.find(i => i.id == data.id);
+        if (!entry) return;
 
-        let from = items.findIndex(a => a.id == data.id);
-        let to = items.length - 1; //if there's no target then add to the end of the root
+        let from = entries.findIndex(a => a.id == data.id);
+        let to = entries.length - 1; //if there's no target then add to the end of the root
 
         if (target == undefined)
-            delete item.folder;
+            delete entry.folder;
         else {
             if (data.id === target.dataset.documentId) return; // Don't drop on yourself
 
             if ($(target).hasClass('folder')) {
                 //if this is dropping on a folder then add to the end of a folder
-                let folderItems = items.filter(i => i.folder == target.dataset.folderId);
+                let folderItems = entries.filter(i => i.folder == target.dataset.folderId);
                 if(folderItems.length)
-                    to = items.findIndex(a => a.id == folderItems[folderItems.length - 1]);
-                item.folder = target.dataset.folderId;
+                    to = entries.findIndex(a => a.id == folderItems[folderItems.length - 1]);
+                entry.folder = target.dataset.folderId;
             } else {
                 //if this is dropping on an item...
-                if (item.folder != closestFolderId)
-                    item.folder = closestFolderId;
-                to = items.findIndex(a => a.id == target.dataset.documentId);
+                if (entry.folder != closestFolderId)
+                    entry.folder = closestFolderId;
+                to = entries.findIndex(a => a.id == target.dataset.documentId);
             }
         }
 
         if (from != to)
-            items.splice(to, 0, items.splice(from, 1)[0]);
-        await this.object.setFlag('monks-enhanced-journal', 'items', items);
+            entries.splice(to, 0, entries.splice(from, 1)[0]);
+        await this.document.setFlag('monks-enhanced-journal', 'entries', entries);
     }
 
     async _handleDroppedFolder(target, data) {
-        let folders = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal'].folders || []);
+        let folders = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal'].folders || []);
 
         // Determine the closest folder ID
         const closestFolder = target ? target.closest(".folder") : null;
@@ -515,13 +602,13 @@ export class ListSheet extends EnhancedJournalSheet {
         if (from != to)
             folders.splice(to, 0, folders.splice(from, 1)[0]);
 
-        await this.object.setFlag('monks-enhanced-journal', 'folders', folders);
+        await this.document.setFlag('monks-enhanced-journal', 'folders', folders);
     }
 
     async _deleteFolder(folder, options, userId) {
-        let folders = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal']?.folders || []);
-        let items = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal']?.items || []);
-        const parentId = folder.data.parent || null;
+        let folders = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.folders || []);
+        let entries = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.entries || []);
+        const parentId = folder.document.parent || null;
         const { deleteSubfolders, deleteContents } = options;
 
         let getSubfolders = function(id, recursive = false) {
@@ -546,16 +633,16 @@ export class ListSheet extends EnhancedJournalSheet {
 
         // Delete or move contained Documents
         const deleteDocumentIds = [];
-        for (let d of items) {
+        for (let d of entries) {
             if (!deleteFolderIds.includes(d.folder)) continue;
             if (deleteContents) deleteDocumentIds.push(d.id);
             else d.folder = parentId;
         }
         for (let d of deleteDocumentIds)
-            items.findSplice(i => i.id === d);
+            entries.findSplice(i => i.id === d);
 
-        await this.object.setFlag('monks-enhanced-journal', 'folders', folders);
-        await this.object.setFlag('monks-enhanced-journal', 'items', items);
+        await this.document.setFlag('monks-enhanced-journal', 'folders', folders);
+        await this.document.setFlag('monks-enhanced-journal', 'entries', entries);
     }
 
     _contextMenu(html) {
@@ -567,8 +654,8 @@ export class ListSheet extends EnhancedJournalSheet {
         const entryOptions = this._getEntryContextOptions();
 
         // Create ContextMenus
-        if (folderOptions) new ContextMenu(html, ".folder .folder-header", folderOptions);
-        if (entryOptions) new ContextMenu(html, this.options.contextMenuSelector, entryOptions);
+        if (folderOptions) new foundry.applications.ux.ContextMenu(html, ".folder .folder-header", folderOptions, { fixed: true, jQuery: false });
+        if (entryOptions) new foundry.applications.ux.ContextMenu(html, ".document", entryOptions, { fixed: true, jQuery: false });
     }
 
     _getFolderContextOptions() {
@@ -577,27 +664,32 @@ export class ListSheet extends EnhancedJournalSheet {
             {
                 name: "FOLDER.Edit",
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM || this.object.isOwner,
+                condition: game.user.isGM || this.document.isOwner,
                 callback: header => {
-                    const li = header.parent()[0];
-                    const folder = this.folders.find(f => f.id == li.dataset.folderId);
-                    const options = { top: li.offsetTop, left: window.innerWidth - 310 - FolderConfig.defaultOptions.width, type: 'folder' };
-                    this.createDialog(folder.data, options);
+                    const li = header.parentNode;
+                    const folder = that.folders.find(i => i.id == li.dataset.folderId);
+                    if (!folder) return;
+
+                    new ListFolderEdit({ document: folder, sheet: that }).render(true);
                 }
             },
             {
                 name: "FOLDER.Remove",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: game.user.isGM || this.object.isOwner,
+                condition: game.user.isGM || this.document.isOwner,
                 callback: header => {
-                    const li = header.parent();
-                    const folder = that.folders.find(f => f.id == li.data("folderId"));
-                    return Dialog.confirm({
-                        title: `${game.i18n.localize("FOLDER.Remove")} ${folder?.data?.name}`,
+                    const li = header.parentNode;
+                    const folder = that.folders.find(f => f.id == li.dataset.folderId);
+                    return foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: `${game.i18n.localize("FOLDER.Remove")} ${folder?.document?.name}`,
+                        },
                         content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.localize("FOLDER.RemoveWarning")}</p>`,
-                        yes: () => that._deleteFolder(folder, { deleteSubfolders: false, deleteContents: false }),
-                        options: {
-                            top: Math.min(li[0].offsetTop, window.innerHeight - 350),
+                        yes: {
+                            callback: () => that._deleteFolder(folder, { deleteSubfolders: false, deleteContents: false }),
+                        },
+                        position: {
+                            top: Math.min(li.offsetTop, window.innerHeight - 350),
                             left: window.innerWidth - 720,
                             width: 400
                         }
@@ -607,16 +699,20 @@ export class ListSheet extends EnhancedJournalSheet {
             {
                 name: "FOLDER.Delete",
                 icon: '<i class="fas fa-dumpster"></i>',
-                condition: game.user.isGM || this.object.isOwner,
+                condition: game.user.isGM || this.document.isOwner,
                 callback: header => {
-                    const li = header.parent();
+                    const li = header.parentNode;
                     const folder = that.folders.find(f => f.id == li.data("folderId"));
-                    return Dialog.confirm({
-                        title: `${game.i18n.localize("FOLDER.Delete")} ${folder?.data?.name}`,
+                    return foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: `${game.i18n.localize("FOLDER.Delete")} ${folder?.document?.name}`,
+                        },
                         content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.localize("FOLDER.DeleteWarning")}</p>`,
-                        yes: () => that._deleteFolder(folder, { deleteSubfolders: true, deleteContents: true }),
-                        options: {
-                            top: Math.min(li[0].offsetTop, window.innerHeight - 350),
+                        yes: {
+                            callback: () => that._deleteFolder(folder, { deleteSubfolders: true, deleteContents: true }),
+                        },
+                        position: {
+                            top: Math.min(li.offsetTop, window.innerHeight - 350),
                             left: window.innerWidth - 720,
                             width: 400
                         }
@@ -632,31 +728,35 @@ export class ListSheet extends EnhancedJournalSheet {
             {
                 name: i18n("MonksEnhancedJournal.EditItem"),
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM || this.object.isOwner,
+                condition: game.user.isGM || this.document.isOwner,
                 callback: async (li) => {
-                    const item = that.items.find(i => i.id == li[0].dataset.documentId);
-                    if (!item) return;
+                    const entry = that.entries.find(i => i.id == li.dataset.documentId);
+                    if (!entry) return;
 
-                    new ListEdit(item, that).render(true);
+                    new ListItemEdit({ document: entry.document, sheet: that }).render(true);
                 }
             },
             {
                 name: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM || this.object.isOwner,
+                condition: () => game.user.isGM || this.document.isOwner,
                 callback: li => {
-                    const item = that.items.find(i => i.id == li[0].dataset.documentId);
-                    if (!item) return;
-                    return Dialog.confirm({
-                        title: i18n("MonksEnhancedJournal.DeleteItem"),
-                        content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.format("SIDEBAR.DeleteWarning", { type: "List Item" })}</p>`,
-                        yes: () => {
-                            let items = (that.object.flags['monks-enhanced-journal'].items || []);
-                            items.findSplice(i => i.id === item.id);
-                            that.object.setFlag('monks-enhanced-journal', 'items', items);
+                    const entry = that.entries.find(i => i.id == li.dataset.documentId);
+                    if (!entry) return;
+                    return foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: i18n("MonksEnhancedJournal.DeleteItem"),
                         },
-                        options: {
-                            top: Math.min(li[0].offsetTop, window.innerHeight - 350),
+                        content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.format("SIDEBAR.DeleteWarning", { type: "List Item" })}</p>`,
+                        yes: {
+                            callback: () => {
+                                let entries = (that.document.flags['monks-enhanced-journal'].entries || []);
+                                entries.findSplice(i => i.id === entry.id);
+                                that.document.setFlag('monks-enhanced-journal', 'entries', entries);
+                            },
+                        },
+                        position: {
+                            top: Math.min(li.offsetTop, window.innerHeight - 350),
                             left: window.innerWidth - 720,
                             width: 400
                         }
@@ -666,171 +766,34 @@ export class ListSheet extends EnhancedJournalSheet {
             {
                 name: "SIDEBAR.Duplicate",
                 icon: '<i class="far fa-copy"></i>',
-                condition: () => game.user.isGM || this.object.isOwner,
+                condition: () => game.user.isGM || this.document.isOwner,
                 callback: li => {
-                    let items = (that.object.flags['monks-enhanced-journal'].items || []);
-                    const original = items.find(i => i.id == li.data("documentId"));
-                    let newItem = foundry.utils.duplicate(original);
-                    newItem.id = foundry.utils.randomID();
-                    items.push(newItem);
-                    that.object.setFlag('monks-enhanced-journal', 'items', items);
+                    let entries = (that.document.flags['monks-enhanced-journal'].entries || []);
+                    const original = entries.find(i => i.id == li.dataset.documentId);
+                    let newEntry = foundry.utils.duplicate(original);
+                    newEntry.id = foundry.utils.randomID();
+                    entries.push(newEntry);
+                    that.document.setFlag('monks-enhanced-journal', 'entries', entries);
                 }
             },
-            {
-                name: "OWNERSHIP.Configure",
-                icon: '<i class="fas fa-lock"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
-                    let items = (that.object.flags['monks-enhanced-journal'].items || []);
-                    const document = items.find(i => i.id == li.data("documentId"));
-                    document.ownership = document.ownership || { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER };
-                    document.apps = [];
-                    document.uuid = document.id;
-                    document.isOwner = game.user.isGM;
-                    document.getFlag = function (module, key) {
-                        return;
-                    }
-                    let docOwnership = new DocumentOwnershipConfig(document, {
-                        top: Math.min(li[0].offsetTop, window.innerHeight - 350),
-                        left: window.innerWidth - 720
-                    })
-
-                    docOwnership._updateObject = async function (event, formData) {
-                        event.preventDefault();
-                        if (!game.user.isGM) throw new Error("You do not have the ability to configure permissions.");
-                        // Collect new ownership levels from the form data
-                        const ownershipLevels = {};
-                        for (let [user, level] of Object.entries(formData)) {
-                            ownershipLevels[user] = level;
-                        }
-
-                        // Update a single Document
-                        document.ownership = ownershipLevels;
-                        delete document.apps;
-                        delete document.uuid;
-                        delete document.isOwner;
-                        that.object.setFlag('monks-enhanced-journal', 'items', items);
-                    }
-
-                    docOwnership._canUserView = function(user) {
-                        return user.isGM;
-                    }
-
-                    docOwnership.render(true, { editable: true });
-                }
-            }
         ];
     }
-}
 
-export class CheckListSheet extends ListSheet {
-    get sheetTemplates() {
-        delete Handlebars.partials["modules/monks-enhanced-journal/templates/sheets/list-template-checklist.html"];
-        return {
-            listItemTemplate: "modules/monks-enhanced-journal/templates/sheets/list-template-checklist.html"
-        };
-    }
+    static onCheckItem(event, target) {
+        let li = target.closest('li');
+        let documentId = li.dataset.documentId;
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
+        let entries = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.entries || []);
+        let entry = entries.find(i => i.id == documentId);
 
-        const list = html.find(".list-list");
-        const entries = list.find(".list-item");
-        entries.on("click", ".item-checked", this._onCheckItem.bind(this));
-    }
-
-    _onCheckItem(event) {
-        event.preventDefault();
-        const element = event.currentTarget;
-        let li = $(element).closest('li')[0];
-
-        let items = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal']?.items || []);
-        let item = items.find(i => i.id == li.dataset.documentId);
-
-        if (item) {
-            item.checked = $(element).prop('checked');
-            this.object.setFlag('monks-enhanced-journal', 'items', items);
+        if (entry) {
+            entry.checked = $(target).prop('checked');
+            this.document.setFlag('monks-enhanced-journal', 'entries', entries);
         }
     }
-}
 
-export class PollListSheet extends ListSheet {
-    constructor(data, options) {
-        super(data, options);
-
-        this._expand = {};
-    }
-
-    get hasNumbers() {
-        return "count";
-    }
-
-    get sheetTemplates() {
-        delete Handlebars.partials["modules/monks-enhanced-journal/templates/sheets/list-template-poll.html"];
-        return {
-            listItemTemplate: "modules/monks-enhanced-journal/templates/sheets/list-template-poll.html"
-        };
-    }
-
-    async getData(options) {
-        let data = await super.getData();
-
-        let calcPercent = function (folder) {
-            let max = game.users.size;
-            //+++ setting for max percentage based on total players or max votes.
-            if (false) {
-                for (let item of folder.content) {
-                    let count = parseInt(item.data.count || 0);
-                    if (Number.isInteger(count))
-                        max = Math.max(max, count);
-                }
-            }
-
-            for (let item of folder.content) {
-                let count = parseInt(item.data.count || 0);
-                item.percent = count == 0 ? 0 : Math.clamp(count / max, 0, 1) * 100;
-
-                item.voted = (item.data.players || []).includes(game.user.id);
-
-                item.players = (item.data.players || []).map(p => {
-                    let user = game.users.get(p);
-                    if (!user) return null;
-                    return {
-                        color: user?.color,
-                        letter: user?.name[0],
-                        username: user?.name
-                    };
-                }).filter(p => !!p);
-            }
-
-            for (let child of folder.children) {
-                calcPercent(child);
-            }
-        }
-
-        let tree = this.tree;
-        calcPercent(tree);
-
-        return data;
-    }
-
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-
-        $('.vote-button', html).click(this.vote.bind(this));
-        $('.poll-toggle', html).click(this._onToggleBar.bind(this));
-    }
-
-    _disableFields(form) {
-        super._disableFields(form);
-        let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
-        if (hasGM)
-            $(`.vote-button`, form).removeAttr('disabled').removeAttr('readonly');
-    }
-
-    _onToggleBar(event) {
-        event.preventDefault();
-        let li = event.currentTarget.closest('li.list-item');
+    static onToggleBar(event, target) {
+        let li = target.closest('li.list-item');
         let id = li.dataset.documentId;
         if (this._expand[id]) return this.collapse(li);
         else return this.expand(li);
@@ -869,118 +832,88 @@ export class PollListSheet extends ListSheet {
         });
     }
 
-    async vote(ev) {
-        let li = ev.currentTarget.closest(".list-item");
-        let id = li.dataset.documentId;
+    static async onVote(event, target) {
+        let li = target.closest(".list-item");
+        let entryId = li.dataset.documentId;
 
-        let items = foundry.utils.duplicate(foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.items"));
-        let item = items.find(i => i.id == id);
+        let against = $(target).hasClass("against");
+
+        let entries = foundry.utils.duplicate(foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.entries"));
+        let entry = entries.find(i => i.id == entryId);
+
+        if (!entry)
+            return;
 
         let ownershipLevels = CONST.DOCUMENT_OWNERSHIP_LEVELS;
-        let ownership = item.ownership || { default: ownershipLevels.OBSERVER };
+        let ownership = entry.ownership || { default: ownershipLevels.OBSERVER };
         let canVote = game.user.isGM || ownership?.default >= ownershipLevels.OBSERVER || ownership[game.user.id] >= ownershipLevels.OBSERVER;
 
         if (!canVote)
             return;
 
         if (game.user.isGM) {
-            if (item) {
-                if ((item.players || []).includes(game.user.id)) {
-                    item.players = item.players.filter(p => p != game.user.id);
-                    if (item.count > 0)
-                        item.count--;
-                } else {
-                    item.players = (item.players || []);
-                    item.players.push(game.user.id);
-                    item.count = (item.count || 0) + 1;
-                    //+++ check to see if you're allowed multiple votes, otherwise remove any other votes by this user in the group it's in.
-                }
+            let players = entry.players || {};
+            players[game.user.id] = !against;
+            entry.players = players;
 
-                await this.object.update({ "flags.monks-enhanced-journal.items": items });
+            if (!!entry.folder && setting("poll-folders-single-vote")) {
+                let groupItems = entries.filter(i => i.folder == entry.folder && i.id != entry.id);
+                for (let gi of groupItems) {
+                    if (gi.players && gi.players[game.user.id] != undefined) {
+                        delete gi.players[game.user.id];
+                    }
+                }
             }
+
+            await this.document.update({ "flags.monks-enhanced-journal.entries": entries });
         } else {
-            MonksEnhancedJournal.emit("vote", { userId: game.user.id, listId: this.object.uuid, itemId: id })
+            MonksEnhancedJournal.emit("vote", { userId: game.user.id, listId: this.document.uuid, entryId, against })
         }
     }
 
-    updateData(data) {
-        if (data.count != "" && data.count != undefined) {
-            data.count = parseInt(data.count);
+    static async onClearVote(event, target) {
+        let li = target.closest(".list-item");
+        let entryId = li.dataset.documentId;
+
+        let entries = foundry.utils.duplicate(foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.entries"));
+        let entry = entries.find(i => i.id == entryId);
+        if (!entry)
+            return;
+
+        let ownershipLevels = CONST.DOCUMENT_OWNERSHIP_LEVELS;
+        let ownership = entry.ownership || { default: ownershipLevels.OBSERVER };
+        let canVote = game.user.isGM || ownership?.default >= ownershipLevels.OBSERVER || ownership[game.user.id] >= ownershipLevels.OBSERVER;
+
+        if (!canVote)
+            return;
+
+        if (game.user.isGM) {
+            let players = entry.players || {};
+            delete players[game.user.id];
+            entry.players = players;
+            await this.document.update({ "flags.monks-enhanced-journal.entries": entries });
+        } else {
+            MonksEnhancedJournal.emit("clearVote", { userId: game.user.id, listId: this.document.uuid, entryId })
         }
     }
-}
 
-export class ProgressListSheet extends ListSheet {
-    get hasNumbers() {
-        return "full";
-    }
-
-    get sheetTemplates() {
-        delete Handlebars.partials["modules/monks-enhanced-journal/templates/sheets/list-template-progress.html"];
-        return {
-            listItemTemplate: "modules/monks-enhanced-journal/templates/sheets/list-template-progress.html"
-        };
-    }
-
-    async getData(options) {
-        let data = await super.getData();
-
-        let calcPercent = function (folder) {
-            for (let item of folder.content) {
-                let count = parseInt(item.data.count || 0);
-                let max = parseInt(item.data.max);
-                if (!Number.isInteger(max)) {
-                    item.noprogress = true;
-                } else {
-                    item.noprogress = false;
-                    item.percent = (count / max) * 100;
-                    item.valueText = `${count}/${max}`;
-                }
-            }
-
-            for (let child of folder.children) {
-                calcPercent(child);
-            }
-        }
-
-        let tree = this.tree;
-        calcPercent(tree);
-
-        return data;
-    }
-
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-
-        $('.progress-button', html).click(this.updateProgress.bind(this));
-        $('.progress-expand', html).on("click", (ev) => {
-            $(ev.currentTarget).prev().toggleClass("expand");
-            $(ev.currentTarget).html($(ev.currentTarget).prev().hasClass("expand") ? "Show less..." : "Show more...");
-        });
-    }
-
-    async updateProgress(ev) {
-        let value = $(ev.currentTarget).hasClass("decrease") ? -1 : 1;
-        let li = ev.currentTarget.closest(".list-item");
+    static async onUpdateProgress(event, target) {
+        let value = $(target).hasClass("decrease") ? -1 : 1;
+        let li = target.closest(".list-item");
         let id = li.dataset.documentId;
 
-        let items = foundry.utils.duplicate(foundry.utils.getProperty(this.object, "flags.monks-enhanced-journal.items"));
-        let item = items.find(i => i.id == id);
+        let entries = foundry.utils.duplicate(foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.entries"));
+        let entry = entries.find(i => i.id == id);
 
-        if (item) {
-            item.count = Math.clamp((item.count || 0) + value, 0, item.max);
-            await this.object.update({ "flags.monks-enhanced-journal.items": items });
+        if (entry) {
+            entry.count = Math.clamp((entry.count || 0) + value, 0, entry.max);
+            await this.document.update({ "flags.monks-enhanced-journal.entries": entries });
         }
     }
 
-    updateData(data) {
-        if (data.max != "" && data.max != undefined) {
-            data.max = parseInt(data.max);
-        }
-        if (data.count != "" && data.count != undefined) {
-            data.count = parseInt(data.count);
-            if (data.max != "" && data.max != undefined)
-                data.count = Math.clamp(data.count, 0, data.max);
-        }
+    static onExpandProgress(event, target) {
+        $(target).prev().toggleClass("expand");
+        $(target).html($(target).prev().hasClass("expand") ? i18n("MonksEnhancedJournal.ShowLess") : i18n("MonksEnhancedJournal.ShowMore"));
     }
 }
+

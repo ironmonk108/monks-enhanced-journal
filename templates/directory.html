@@ -1,36 +1,43 @@
 {{#*inline "folderPartial"}}
-<li class="directory-item folder flexcol {{#unless folder.expanded}}collapsed{{/unless}}"
-    data-folder-id="{{folder.id}}" data-uuid={{folder.uuid}} data-folder-depth="{{node.depth}}">
-    <header class="folder-header flexrow{{#if folder.color}} customcolor{{/if}}" {{#if folder.color}} style="background-color: {{folder.color}}" {{/if}}>
-        <h3 class="noborder"><i class="fas fa-folder-open fa-fw"></i>{{folder.name}}</h3>
-        {{#if @root.canCreateFolder}}
-        <a class="create-button create-folder">
-            <i class="{{@root.folderIcon}}"></i>
-            <i class="fas fa-plus"></i>
-        </a>
+{{#unless (eq folder.name "_fql_quests")}}
+{{#unless (eq folder.name "_simple_calendar_notes_directory")}}
+<li class="directory-item folder flexcol {{#if folder.expanded}}expanded{{/if}}"
+    data-folder-id="{{folder._id}}" data-uuid={{folder.uuid}} data-folder-depth="{{node.depth}}">
+    <header class="folder-header" {{#if folder.color}} style="background-color: {{ folder.color.css }};" {{/if}} data-action="toggleFolder">
+        <i class="fa-solid fa-folder-open fa-fw" inert></i>
+        <span class="folder-name ellipsis">{{ folder.name }}</span>
+
+        {{#if (and @root.canCreateFolder (lt node.depth @root.maxFolderDepth))}}
+        <button type="button" class="create-button create-folder icon icon-plus {{ @root.folderIcon }}"
+                data-action="createFolder" data-tooltip aria-label="{{localize "SIDEBAR.ACTIONS.CREATE.Folder"}}"></button>
         {{/if}}
+
         {{#if @root.canCreateEntry}}
-        <a class="create-button create-entry">
-            <i class="{{@root.sidebarIcon}}"></i>
-            <i class="fas fa-plus"></i>
-        </a>
+        <button type="button" class="create-button create-entry icon icon-plus {{ @root.sidebarIcon }}"
+                data-action="createEntry" data-tooltip
+                aria-label="{{localize (concat "SIDEBAR.ACTIONS.CREATE." @root.documentName)}}"></button>
         {{/if}}
     </header>
 
-    <ol class="subdirectory" {{#if folder.color}} style="border-left-color: {{folder.color}};border-bottom-color: {{folder.color}}" {{/if}}>
+    <ol class="subdirectory plain" {{#if folder.color}} style="border-left-color: {{ folder.color.css }};" {{/if}}>
         {{~#each node.children}}
-        {{> folderPartial node=this folder=this.folder user=../user}}
+        {{> folderPartial node=this folder=folder }}
         {{/each}}
-        {{#each node.entries}}
-        {{> entryPartial}}
-        {{/each~}}
+        {{~#each node.entries}}
+        {{> entryPartial }}
+        {{/each}}
     </ol>
 </li>
+{{/unless}}
+{{/unless}}
 {{/inline}}
 
 {{#*inline "entryPartial"}}
-<li class="directory-item entry document journalentry flexrow" data-document-id="{{this.id}}" data-entry-id="{{this.id}}">
-    <h4 class="entry-name"><a>{{this.name}}</a></h4>
+<li class="directory-item entry document journalentry flexrow" data-document-id="{{this._id}}" data-entry-id="{{this._id}}">
+    {{#if thumbnail}}
+    <img class="thumbnail" src="{{ thumbnail }}" alt="{{ name }}" loading="lazy">
+    {{/if}}
+    <a class="entry-name ellipsis" data-action="activateEntry">{{ name }}</a>
 </li>
 {{/inline}}
 
@@ -39,18 +46,28 @@
     <header class="directory-header">
         <div class="header-actions action-buttons flexrow">
             {{#if canCreateEntry}}
-            <button class="create-document create-entry"><i class="{{sidebarIcon}}"></i> {{localize 'SIDEBAR.Create' type=label}}</button>
+            <button type="button" class="create-entry" data-action="createEntry">
+                <i class="{{ sidebarIcon }}" inert></i>
+                <span>{{ localize (concat "SIDEBAR.ACTIONS.CREATE." documentName) }}</span>
+            </button>
             {{/if}}
             {{#if canCreateFolder }}
-            <button class="create-folder"><i class="{{folderIcon}}"></i> {{localize 'FOLDER.Create'}}</button>
+            <button type="button" class="create-folder" data-action="createFolder">
+                <i class="{{ folderIcon }}" inert></i>
+                <span>{{ localize "SIDEBAR.ACTIONS.CREATE.Folder" }}</span>
+            </button>
             {{/if}}
         </div>
-        <div class="header-search flexrow">
-            <a class="header-control toggle-search-mode" data-tooltip="{{localize searchTooltip}}"><i class="fas {{searchIcon}}"></i></a>
-            <input type="search" name="search" value="" placeholder="{{localize 'SIDEBAR.Search' types=labelPlural}}" autocomplete="off" />
-            <a class="header-control toggle-sort" data-tooltip="{{localize sortTooltip}}"><i class="fa-solid {{sortIcon}}"></i></a>
-            <a class="header-control collapse-all" data-tooltip="{{localize 'FOLDER.Collapse'}}"><i class="fa-duotone fa-folder-tree"></i></a>
-        </div>
+        <search>
+            <button type="button" class="inline-control toggle-search-mode icon {{ searchMode.icon }}"
+                    data-action="toggleSearch" data-tooltip aria-label="{{ localize searchMode.label }}"></button>
+            <input type="search" name="search" autocomplete="off" placeholder="{{ searchMode.placeholder }}"
+                   aria-label="{{ searchMode.placeholder }}">
+            <button type="button" class="inline-control toggle-sort icon {{ sortMode.icon }}" data-action="toggleSort"
+                    data-tooltip aria-label="{{ localize sortMode.label }}"></button>
+            <button type="button" class="inline-control collapse-all icon fa-duotone fa-folder-tree"
+                    data-action="collapseFolders" data-tooltip aria-label="{{ localize "FOLDER.Collapse" }}"></button>
+        </search>
     </header>
 
     <!-- Directories List -->
@@ -64,10 +81,20 @@
     </ol>
 
     <!-- Directory Footer -->
-    <footer class="directory-footer action-buttons {{#if unavailable}}warning{{/if}}">
-        {{~#if unavailable}}
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <a class="show-issues">{{localize "SUPPORT.UnavailableDocuments" count=unavailable document=label}}</a>
-        {{/if~}}
+    <footer class="directory-footer action-buttons">
+        {{~#each buttons as |button|}}
+        <button type="{{button.type}}"
+                {{#if button.name}} name="{{button.name}}" {{/if}}
+                {{#if button.cssClass}} class="{{button.cssClass}}" {{/if}}
+                {{#if button.action}} data-action="{{button.action}}" {{/if}}
+                {{disabled button.disabled}}>
+            {{~#if button.icon}}
+            <i class="{{button.icon}}" inert></i>
+            {{/if~}}
+            {{~#if button.label}}
+            <span>{{localize button.label}}</span>
+            {{/if~}}
+        </button>
+        {{/each~}}
     </footer>
 </section>

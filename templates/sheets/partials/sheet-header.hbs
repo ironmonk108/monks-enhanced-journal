@@ -1,0 +1,29 @@
+<header class="journal-sheet-header header-name flexrow">
+    <i class="fas {{icon}} sheet-icon"></i>
+    <input type="text" name="name" placeholder="{{localize placeholder}}" value="{{name}}" />
+    {{#if owner}}
+    {{#if hasRollTables}}
+    <button type="button" class="generate-name" data-tooltip="Generate Name" data-action="generateName">
+        <i class="fas fa-comment-lines" style="margin-left: 2px; margin-right: 1px;"></i>
+    </button>
+    {{/if}}
+    {{#if hasShowToPlayers}}
+    <button type="button" class="{{#if showingToPlayers}} active{{/if}}" data-tooltip="Grant Player Permission" data-action="changePlayerOwnership">
+        <i class="fas fa-person-walking-luggage" style="margin-left: 2px; margin-right: 1px;"></i>
+    </button>
+    {{/if}}
+    {{/if}}
+    {{#if sound.audiofile}}
+    <button type="button" class="play-journal-sound{{#if sound.playing}} active{{/if}}" data-action="playSound">
+        <i class="fas {{#if sound.playing}}fa-volume-up{{else}}fa-volume-off{{/if}}"></i>
+    </button>
+    {{/if}}
+    {{#if owner}}
+    {{#if playControls}}
+    <button class="nav-button play" type="button" data-tooltip="{{localize 'MonksEnhancedJournal.Play'}}" {{#if (eq data.flags.monks-enhanced-journal.playstate "playing")}} style="display:none;" {{/if}} data-action="play"><i class="fas fa-play"></i></button>
+    <button class="nav-button pause" type="button" data-tooltip="{{localize 'MonksEnhancedJournal.Pause'}}" {{#if (ne data.flags.monks-enhanced-journal.playstate "playing")}} style="display:none;" {{/if}} data-action="pause"><i class="fas fa-pause"></i></button>
+    <button class="nav-button stop" type="button" data-tooltip="{{localize 'MonksEnhancedJournal.Stop'}}" {{#if (eq data.flags.monks-enhanced-journal.playstate "stopped")}} style="display:none;" {{/if}} data-action="stop"><i class="fas fa-stop"></i></button>
+    {{/if}}
+    {{/if}}
+    <input type="text" style="display:none;" /><!--I can't figure out what's going on, but to avoid Enter causing a page submit a second text needs to be on the page-->
+</header>

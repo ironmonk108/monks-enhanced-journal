@@ -1,0 +1,101 @@
+{{#if nocharacter}}
+<div class="no-character-alert">You don't have a selected default character, and won't be able to automatically purchase items.  Please select a character <a data-target="openPlayerConfig">here</a></div>
+{{/if}}
+<div class="items-list shop-items{{#if @root.showrarity}} show-rarity{{/if}}{{#if @root.owner}} is-owner{{/if}}">
+    <header>
+        <div class="item-name noborder flexrow" sort="name" data-action="sortItem">{{localize 'MonksEnhancedJournal.Items'}}</div>
+        {{#if @root.showrarity}}<div class="item-detail item-rarity">{{localize 'MonksEnhancedJournal.Rarity'}}</div>{{/if}}
+        {{#if @root.owner}}
+        <div class="item-detail item-consumable owner-only" style="text-align: center;">{{localize 'MonksEnhancedJournal.Consume'}}</div>
+        {{/if}}
+        <div class="item-detail item-quantity" sort="quantity" style="text-align: center;" data-action="sortItem">{{localize 'MonksEnhancedJournal.Qty'}}</div>
+        <div class="item-detail item-price" sort="price" style="text-align: center;" data-action="sortItem">{{localize 'MonksEnhancedJournal.Price'}}</div>
+        {{#if @root.owner}}
+        <div class="item-detail item-cost owner-only" sort="cost" style="text-align: center;" data-action="sortItem">{{localize 'MonksEnhancedJournal.Cost'}} <i class="fas fa-question-circle" data-tooltip="Cost is the value that will be removed from the players currency"></i></div>
+        {{/if}}
+        <div class="item-controls flexrow">
+            {{#if @root.owner}}
+            <a class="item-control roll-table" data-tooltip="{{localize 'MonksEnhancedJournal.PopulateFromRollTable'}}" data-action="rollItem"><i class="fas fa-th-list"></i></a>
+            <a class="item-control adjust-price" data-tooltip="{{localize 'MonksEnhancedJournal.AdjustAllPrices'}}" data-action="adjustPrice"><i class="fas fa-donate"></i></a>
+            <a class="item-control clear-items" data-tooltip="{{localize 'MonksEnhancedJournal.ClearAllItems'}}" data-action="clearItems"><i class="fas fa-dumpster"></i></a>
+            {{/if}}
+        </div>
+    </header>
+
+    {{#unless hideitems}}
+    {{#if has.items}}
+    <ol class="item-list" data-container="items">
+        {{#each groups}}
+        {{#if this.id}}
+        <li data-id="{{this.id}}">
+            <header class="collapsible {{#if this.collapsed}} collapsed{{/if}}">
+                <div class="item-name noborder flexrow">{{localize this.name}} <span class="collapse-text item-count">({{this.items.length}} items)</span></div>
+            </header>
+        </li>
+        {{/if}}
+        <li {{#if this.collapsed}} style="display: none;" {{/if}}>
+            <ol>
+                {{#each this.items}}
+                <li class="item flexrow{{#if (eq this.quantity 0)}} empty{{/if}}" data-id="{{this._id}}" data-document="Item" draggable="false">
+                    <div class="item-name flexrow" data-action="itemSummary">
+                        <div class="item-image item-icon" style="background-image: url('{{this.img}}')"></div>
+                        <div style="margin: auto 0px;">
+                            {{this.name}}
+                            {{#if this.identifiedname}} <span class="identified-name" data-tooltip="{{this.identifiedname}}"><i class="fas fa-circle-question"></i></span>{{/if}}
+                            {{#if (gt this.qtyof 1)}} <span class="highlight-text groups-of">(in groups of {{this.qtyof}})</span>{{/if}}
+                        </div>
+                    </div>
+
+                    {{#if @root.showrarity}}
+                    <div class="item-detail item-rarity">
+                        <span style="text-transform: capitalize;">{{this.rarity}}</span>
+                    </div>
+                    {{/if}}
+
+                    {{#if @root.owner}}
+                    <div class="item-detail item-consumable" style="text-align: center;">
+                        <input type="checkbox" name="flags.monks-enhanced-journal.items.{{this._id}}.consumable" {{checked this.consumable}} style="display: none;" />
+                        <a class="item-control item-action" style="width: 100%;" data-action="toggleConsumable" data-tooltip="{{localize 'MonksEnhancedJournal.Consumable'}}"><i class="fas fa-utensils"></i></a>
+                    </div>
+                    {{/if}}
+
+                    <div class="item-detail item-quantity">
+                        <input type="number" min="0" name="flags.monks-enhanced-journal.items.{{this._id}}.flags.monks-enhanced-journal.quantity" placeholder="&infin;" value="{{this.quantity}}" style="text-align:center;" />
+                    </div>
+                    {{#if @root.owner}}
+                    <div class="item-detail item-price">
+                        <input type="text" name="flags.monks-enhanced-journal.items.{{this._id}}.flags.monks-enhanced-journal.price" value="{{this.price}}" style="text-align:center;" />
+                    </div>
+                    {{/if}}
+
+                    <div class="item-detail item-cost">
+                        <input type="text" name="flags.monks-enhanced-journal.items.{{this._id}}.flags.monks-enhanced-journal.cost" value="{{this.cost}}" style="text-align:center;" />
+                    </div>
+
+                    <div class="item-controls flexrow">
+                        {{#if @root.owner}}
+                        <input type="checkbox" name="flags.monks-enhanced-journal.items.{{this._id}}.lock" {{checked this.lock}} style="display: none;" />
+                        <a class="item-control item-action" data-action="lockItem" data-tooltip="{{#if this.lock}}{{localize 'MonksEnhancedJournal.UnlockItem'}}{{else}}{{localize 'MonksEnhancedJournal.LockItem'}}{{/if}}"><i class="fas fa-lock{{#unless this.lock}}-open{{/unless}}"></i></a>
+                        <input type="checkbox" name="flags.monks-enhanced-journal.items.{{this._id}}.hidden" {{checked this.hidden}} style="display:none;" />
+                        <a class="item-hide" data-tooltip="{{#if this.hidden}}{{localize 'MonksEnhancedJournal.ShowItem'}}{{else}}{{localize 'MonksEnhancedJournal.HideItem'}}{{/if}}" data-action="hideItem"><i class="fas fa-eye{{#if this.hidden}}-slash{{/if}}"></i></a>
+                        <a class="item-control item-edit" data-tooltip="{{localize 'MonksEnhancedJournal.EditItem'}}" data-action="editItem"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" data-tooltip="{{localize 'MonksEnhancedJournal.DeleteItem'}}" data-action="deleteItem"><i class="fas fa-trash"></i></a>
+                        {{else}}
+                        {{#if @root.showrequest}}
+                        <a class="item-control text request-item" {{#if (or this.lock (eq this.quantity 0))}} disabled{{/if}} data-action="requestItem"><i class="fas {{this.icon}}"></i> {{this.text}}</a>
+                        {{/if}}
+                        {{/if}}
+                    </div>
+                </li>
+                {{/each}}
+            </ol>
+        </li>
+        {{/each}}
+    </ol>
+    {{else}}
+    <div class="instruction">{{#if owner}}{{localize 'MonksEnhancedJournal.msg.DragItemsToAddToShop'}}{{else}}{{localize 'MonksEnhancedJournal.msg.NoItemsAtTheMoment'}}{{/if}}</div>
+    {{/if}}
+    {{else}}
+    <div class="instruction">{{localize 'MonksEnhancedJournal.msg.ShopCurrentlyClosed'}}</div>
+    {{/unless}}
+</div>

@@ -1,0 +1,9 @@
+<section class="journal-entry-content flexcol">
+    {{!-- Journal Entry Name --}}
+    <header class="journal-header">
+        <input class="title" name="name" type="text" value="{{ document.name }}"
+               placeholder="{{ localize "JOURNAL.EntryTitle" }}" aria-label="{{ localize "JOURNAL.EntryTitle" }}">
+    </header>
+
+    <div class="journal-entry-pages scrollable {{ ifThen editable "editable" "locked" }}"></div>
+</section>

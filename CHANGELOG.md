@@ -1,3 +1,7 @@
+# Version 13.01
+
+v13 compatibility
+
 # Version 12.02
 
 Fixing issues with unidentified items being revealed when purchased

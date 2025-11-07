@@ -1,45 +1,49 @@
-<div class="enhanced-journal flexrow{{#if collapsed}} collapse{{/if}}">
-    <section class="enhanced-journal-body flexcol">
-        <header class="enhanced-journal-header flexcol">
-            <div class="tab-bar flexrow">
-                <div class="tab-row flexrow">
-                    {{#each tabs}}
-                    <div class="journal-tab flexrow{{#if this.active}} active{{/if}}" title="{{this.text}}" data-tabid="{{this.id}}">
-                        <div class="tab-content">{{this.text}}</div>
-                        <div class="close"><i class="fas fa-times"></i></div>
+<div>
+    <div class="enhanced-journal flexrow{{#if collapsed}} collapse{{/if}}">
+        <section class="enhanced-journal-body flexcol">
+            <header class="enhanced-journal-header flexcol">
+                <div class="tab-bar flexrow">
+                    <div class="tab-row flexrow">
+                        {{#each tabs}}
+                        <div class="journal-tab flexrow{{#if this.active}} active{{/if}}" data-tooltip="{{this.text}}" data-tabid="{{this.id}}">
+                            <div class="tab-content">{{this.text}}</div>
+                            <div class="close"><i class="fas fa-times"></i></div>
+                        </div>
+                        {{/each}}
+                        <div class="tab-button tab-add"><i class="fas fa-plus"></i></div>
                     </div>
-                    {{/each}}
-                    <div class="tab-button tab-add"><i class="fas fa-plus"></i></div>
+                    <div class="tab-button sidebar-toggle" data-tooltip="{{#if collapsed}}{{localize 'MonksEnhancedJournal.ExpandDirectory'}}{{else}}{{localize 'MonksEnhancedJournal.CollapseDirectory'}}{{/if}}"><i class="fas {{#if collapsed}}fa-caret-left{{else}}fa-caret-right{{/if}}"></i></div>
                 </div>
-                <div class="tab-button sidebar-toggle" data-tooltip="{{#if collapsed}}{{localize 'MonksEnhancedJournal.ExpandDirectory'}}{{else}}{{localize 'MonksEnhancedJournal.CollapseDirectory'}}{{/if}}"><i class="fas {{#if collapsed}}fa-caret-left{{else}}fa-caret-right{{/if}}"></i></div>
-            </div>
-            <div class="bookmark-bar flexrow">
-                <div class="bookmark-button add-bookmark" title="{{localize 'MonksEnhancedJournal.AddBookmark'}}"><i class="fas fa-star"></i></div>
-                {{#each bookmarks}}
-                <div class="bookmark-button" title="{{this.text}}" data-bookmark-id="{{this.id}}" data-document-id="{{this.entityId}}"><div><i class="fas {{this.icon}}"></i> {{this.text}}</div></div>
-                {{/each}}
-            </div>
-            <div class="navigation flexrow">
-                <div class="nav-button history back-button{{#unless canBack}} disabled{{/unless}}" title="{{localize 'MonksEnhancedJournal.Back'}}" data-history="back"><i class="fas fa-chevron-left"></i></div>
-                <div class="nav-button history forward-button{{#unless canForward}} disabled{{/unless}}" title="{{localize 'MonksEnhancedJournal.Forward'}}" data-history="forward"><i class="fas fa-chevron-right"></i></div>
-                <hr class="vertical" />
-                <div class="toggle-menu nav-button" action="toggleCollapse" data-tooltip="{{localize 'JOURNAL.ViewCollapse'}}" style="margin-left: 4px;"><i class="fas fa-list"></i> <span></span></div>
-                <div class="button-group flexrow" id="journal-buttons"></div>
-            </div>
-        </header>
-        <div class="content flexcol editable">
-            <section>
-            </section>
-        </div>
-        <footer class="flexrow navigation enhanced-journal-footer">
-            <div class="navigate-prev nav-button navigate" title=""><i class="fas fa-angle-double-left"></i> <i class="fas fa-book-open"></i></div>
-            <div class="page-prev nav-button navigate"><i class="fas fa-chevron-left"></i> <i class="fas fa-page"></i></div>
-            <div class="flexrow" style="justify-content:center;">
+                <div class="bookmark-bar flexrow">
+                    <div class="bookmark-button add-bookmark" data-tooltip="{{localize 'MonksEnhancedJournal.AddBookmark'}}"><i class="fas fa-star"></i></div>
+                    {{#each bookmarks}}
+                    <div class="bookmark-button" data-tooltip="{{this.text}}" data-bookmark-id="{{this.id}}" data-document-id="{{this.entityId}}"><div><i class="fas {{this.icon}}"></i> {{this.text}}</div></div>
+                    {{/each}}
+                </div>
+                <div class="navigation flexrow">
+                    <div class="nav-button history back-button{{#unless canBack}} disabled{{/unless}}" data-tooltip="{{localize 'MonksEnhancedJournal.Back'}}" data-history="back"><i class="fas fa-chevron-left"></i></div>
+                    <div class="nav-button history forward-button{{#unless canForward}} disabled{{/unless}}" data-tooltip="{{localize 'MonksEnhancedJournal.Forward'}}" data-history="forward"><i class="fas fa-chevron-right"></i></div>
+                    <hr class="vertical" />
+                    <div class="button-group flexrow" id="left-journal-buttons" style="flex-grow: 0;"></div>
+                    <div class="button-group flexrow" id="right-journal-buttons"></div>
+                </div>
+            </header>
+            <form class="content flexcol editable {{contentClasses}}">
+                <section>
+                </section>
+            </form>
+            <footer class="flexrow navigation enhanced-journal-footer">
+                <div class="navigate-prev nav-button navigate" data-tooltip="" data-action="navigatePrevious"><i class="fas fa-angle-double-left"></i> <i class="fas fa-book-open"></i></div>
+                <div class="page-prev nav-button navigate" data-action="previousPage"><i class="fas fa-chevron-left"></i> <i class="fas fa-page"></i></div>
+                <div class="flexrow" style="justify-content:center;">
 
-            </div>
-            <div class="page-next nav-button navigate"><i class="fas fa-page"></i> <i class="fas fa-chevron-right"></i></div>
-            <div class="navigate-next nav-button navigate" title=""><i class="fas fa-book-open"></i> <i class="fas fa-angle-double-right"></i></div>
-        </footer>
-    </section>
-    <div class="directory-sidebar"></div>
+                </div>
+                <div class="page-next nav-button navigate" data-action="nextPage"><i class="fas fa-page"></i> <i class="fas fa-chevron-right"></i></div>
+                <div class="navigate-next nav-button navigate" data-tooltip="" data-action="navigateNext"><i class="fas fa-book-open"></i> <i class="fas fa-angle-double-right"></i></div>
+            </footer>
+        </section>
+        <div class="directory-sidebar">
+            {{> "modules/monks-enhanced-journal/templates/directory.html" }}
+        </div>
+    </div>
 </div>

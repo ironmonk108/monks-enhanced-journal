@@ -1,0 +1,18 @@
+<div>
+    <div class="flexcol" style="gap: 4px;">
+        {{#each names as |name i|}}
+        <button class="name-entry" data-index="{{i}}" data-action="selectName{{i}}">
+            {{name}}
+        </button>
+        {{/each}}
+    </div>
+    <hr />
+    <footer class="form-footer">
+        <button type="button" data-action="generate">
+            <i class="fa-solid fa-arrow-rotate-left" inert></i> Generate
+        </button>
+        <button type="button" data-action="cancel">
+            Cancel
+        </button>
+    </footer>
+</div>

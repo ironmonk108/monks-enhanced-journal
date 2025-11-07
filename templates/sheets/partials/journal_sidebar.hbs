@@ -1,0 +1,33 @@
+<aside class="sidebar journal-sidebar flexcol">
+
+    {{!-- Table of Contents --}}
+    <nav class="toc" data-tooltip-direction="RIGHT">
+        <ol>
+            {{#each toc}}
+
+            {{!-- Categories --}}
+            {{#if isCategory}}
+            <li class="category" data-category-id="{{ id }}" data-tooltip aria-label="{{ name }}">
+                <strong>{{ name }}</strong>
+            </li>
+
+            {{!-- Pages --}}
+            {{else}}
+            <li class="{{ tocClass }}" data-page-id="{{ id }}" {{#if hidden}}hidden{{/if}}>
+                <div class="page-heading" data-action="goToHeading" data-tooltip-text="{{ name }}">
+                    <span class="page-index" data-tooltip-text="{{ numberTooltip }}">{{#if numberIcon }}<i class="fas {{numberIcon}}"></i>{{else}}{{ number }}{{/if}}</span>
+                    <span class="page-title ellipsis">{{ name }}</span>
+                    <div class="page-ownership permissions flexrow">
+                        {{#if defaultOwnership}}<i class="{{ defaultOwnership.icon }}" data-tooltip="{{ defaultOwnership.tooltip }}"></i>{{/if}}
+                        {{#each userOwnerships}}
+                        <div style="background-color:{{this.color}}" data-tooltip="{{ this.tooltip }}">{{this.letter}}</div>
+                        {{/each}}
+                    </div>
+                </div>
+            </li>
+
+            {{/if}}
+            {{/each}}
+        </ol>
+    </nav>
+</aside>

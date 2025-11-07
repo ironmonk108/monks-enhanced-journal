@@ -1,0 +1,44 @@
+<div class="items-list shop-transactions">
+    <header>
+        <div class="item-name noborder flexrow">Name</div>
+        <div class="item-name noborder flexrow">Item</div>
+        <div class="item-detail noborder flexrow" style="justify-content: center;">Quantity</div>
+        <div class="item-detail noborder flexrow" style="justify-content: center;">Price</div>
+        <div class="item-detail noborder flexrow">Type</div>
+        <div class="item-detail noborder flexrow">Date </div>
+        <div>
+            <a class="item-control clear-log" data-tooltip="{{localize 'MonksEnhancedJournal.ClearAllItems'}}" data-action="clearLog"><i class="fas fa-dumpster"></i></a>
+        </div>
+    </header>
+    <ol class="item-list">
+        {{#each log}}
+        <li class="item flexrow" data-id="{{this.id}}" data-uuid="{{this.uuid}}" data-container="relationships" data-document="JournalEntry" draggable="false">
+            <div class="item-name">
+                <div>{{this.actor}}</div>
+            </div>
+
+            <div class="item-name">
+                <div>{{this.item}}</div>
+            </div>
+
+            <div class="item-detail" style="text-align: center;">
+                <div>{{this.quantity}}</div>
+            </div>
+
+            <div class="item-detail" style="text-align: center;">
+                <div>{{this.price}}</div>
+            </div>
+
+            <div class="item-detail">
+                <div>{{this.type}}</div>
+            </div>
+
+            <div class="item-detail">
+                <div>{{this.time}}</div>
+            </div>
+
+            <div class="item-control"></div>
+        </li>
+        {{/each}}
+    </ol>
+</div>

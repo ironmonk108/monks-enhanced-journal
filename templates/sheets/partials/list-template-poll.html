@@ -1,0 +1,48 @@
+<li class="list-item document item flexrow" data-document-id="{{item.id}}" data-dblclick-action="editItem">
+    <div class="flexrow">
+        <div class="poll-toggle" data-action="toggleBar">{{#if item.text}}<i class="fas fa-caret-up"></i>{{/if}}</div>
+        <div class="flexcol">
+            <div>{{item.title}}</div>
+            <div class="flexrow">
+                <div class="flexcol" style="margin-right: 8px;">
+                    <div class="progress flexrow">
+                        <div class="progress-bar" style="flex:0 0 {{percent}}%"></div>
+                        <div class="spacer"></div>
+                        <div class="progress-bar against" style="flex: 0 0 {{against}}%"></div>
+                    </div>
+                    <div class="flexrow">
+                        <div style="flex: 0 0 50px;font-size: 10px;line-height: 18px;">{{ localize "MonksEnhancedJournal.Votes" }}: {{votesFor}}</div>
+                        <ul class="players-voted">
+                            {{#each players as |user i|}}
+                            {{#unless user.against}}
+                            <li class="player-vote" data-tooltip="{{user.username}}" style="background-color: {{user.color}};">{{user.letter}}</li>
+                            {{/unless}}
+                            {{/each}}
+                        </ul>
+                        <ul class="players-voted against" style="text-align: right;">
+                            {{#each players as |user i|}}
+                            {{#if user.against}}
+                            <li class="player-vote" data-tooltip="{{user.username}}" style="background-color: {{user.color}};">{{user.letter}}</li>
+                            {{/if}}
+                            {{/each}}
+                        </ul>
+                        <div style="flex: 0 0 50px;font-size: 10px;line-height: 18px;text-align: right;">{{ localize "MonksEnhancedJournal.Against" }}: {{votesAgainst}}</div>
+                    </div>
+                </div>
+                <div class="vote-button-container flexrow">
+                    {{#if voted}}
+                    <button type="button" class="clear-vote" data-action="clearVote"><i class="fas fa-times"></i> {{ localize "MonksEnhancedJournal.Clear" }}</button>
+                    {{else}}
+                    <button type="button" class="vote-button" data-action="vote"><i class="fas fa-check"></i> {{ localize "MonksEnhancedJournal.Vote" }}</button>
+                    <button type="button" class="vote-button against" data-action="vote"><i class="fas fa-xmark"></i> {{ localize "MonksEnhancedJournal.Against" }}</button>
+                    {{/if}}
+                </div>
+            </div>
+            <div>
+                <div class="poll-description list-item-text collapsed">
+                    {{{item.text}}}
+                </div>
+            </div>
+        </div>
+    </div>
+</li> 

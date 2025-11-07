@@ -1,0 +1,54 @@
+<header class="journal-sheet-header flexrow">
+    <div class="sheet-image">
+        <img class="profile nopopout" src="{{data.src}}" data-action="addImage" data-dblclick-action="showImage" data-contextmenu-action="contextImage" data-edit="src" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/{{type}}.png' }">
+    </div>
+    <section class="header-details">
+        <h1 class="header-name flexrow">
+            <i class="fas {{icon}} sheet-icon"></i>
+            <input type="text" name="name" placeholder="{{localize placeholder}}" value="{{name}}" />
+            {{#if owner}}
+            {{#if hasRollTables}}
+            <button type="button" class="generate-name" data-tooltip="Generate Name" data-action="generateName">
+                <i class="fas fa-comment-lines" style="margin-left: 2px; margin-right: 1px;"></i>
+            </button>
+            {{/if}}
+            {{#if hasShowToPlayers}}
+            <button type="button" class="{{#if showingToPlayers}} active{{/if}}" data-tooltip="Grant Player Permission" data-action="changePlayerOwnership">
+                <i class="fas fa-person-walking-luggage" style="margin-left: 2px; margin-right: 1px;"></i>
+            </button>
+            {{/if}}
+            {{/if}}
+            {{#if sound.audiofile}}
+            <button type="button" class="play-journal-sound{{#if sound.playing}} active{{/if}}" data-action="playSound">
+                <i class="fas {{#if sound.playing}}fa-volume-up{{else}}fa-volume-off{{/if}}"></i>
+            </button>
+            {{/if}}
+        </h1>
+        {{#each fields as |field|}}
+        <div class="form-group">
+            <label>{{localize field.label}}</label>
+            {{#if field.id}}
+            {{#if (eq field.type "list")}}
+            <select name="flags.monks-enhanced-journal.status">
+                {{ selectOptions field.list selected=field.value localize=true }}
+            </select>
+            {{else if (eq field.type "checkbox")}}
+            <input type="checkbox" name="flags.monks-enhanced-journal.{{field.id}}" {{checked field.value}} />
+            {{else}}
+            <input type="text" name="flags.monks-enhanced-journal.{{field.id}}" value="{{ field.value }}" />
+            {{/if}}
+            {{else}}
+            <div>{{{ field.value }}}</div>
+            {{/if}}
+        </div>
+        {{/each}}
+    </section>
+    {{#if (and actor canViewActor)}}
+    <section class="flexcol actor-img-container">
+        <div class="actor-img">
+            <img src="{{actor.img}}" class="nopopout" data-action="openActor" data-uuid="{{actor.uuid}}" data-document="Actor" onerror="$(this).hide();">
+        </div>
+        <div class="actor-img-text">{{actor.name}}</div>
+    </section>
+    {{/if}}
+</header>

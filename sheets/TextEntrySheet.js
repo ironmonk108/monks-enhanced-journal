@@ -2,165 +2,122 @@ import { setting, i18n, log, makeid, MonksEnhancedJournal } from "../monks-enhan
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
 
 export class TextEntrySheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.journalentry",
+        },
+        actions: {
 
-        this.refresh();
-    }
+        },
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/sheets/textentry.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs",
+            ],
+            scrollable: [".editor-display"]
+        }
+    };
 
     static get type() {
         return 'text';
     }
 
-    _inferDefaultMode() {
-        if (super._inferDefaultMode() == undefined) return;
-        return 'text';
-    }
-
-    get template() {
-        return this.options.template;
-    }
-
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.journalentry"),
-            template: "modules/monks-enhanced-journal/templates/sheets/textentry.html",
-            tabs: [],
-            scrollY: [".editor-parent"]
-        });
-    }
-
-    refresh() {
-    }
-
     _documentControls() {
         let ctrls = [
-            { text: '<i class="fas fa-search"></i>', type: 'text' },
-            { id: 'search', type: 'input', text: i18n("MonksEnhancedJournal.SearchDescription"), callback: this.enhancedjournal.searchText },
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers },
-            { id: 'edit', text: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fa-pencil-alt', conditional: this.isEditable, callback: () => { this.onEditDescription(); } },
-            { id: 'sound', text: i18n("MonksEnhancedJournal.AddSound"), icon: 'fa-music', conditional: this.isEditable, callback: () => { this.onAddSound(); } },
-            { id: 'convert', text: i18n("MonksEnhancedJournal.Convert"), icon: 'fa-clipboard-list', conditional: (game.user.isGM && this.isEditable), callback: () => { } },
-            { id: 'split', text: i18n("MonksEnhancedJournal.Extract"), icon: 'fa-file-export', conditional: (game.user.isGM && this.isEditable), callback: this.enhancedjournal.splitJournal }
+            { label: '<i class="fas fa-search"></i>', type: 'text' },
+            { id: 'search', type: 'input', label: i18n("MonksEnhancedJournal.SearchDescription"), visible: !!this.enhancedjournal, callback: this.searchText },
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'edit', label: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fas fa-pencil-alt', visible: this.isEditable, action: "editDescription" },
+            { id: 'sound', label: i18n("MonksEnhancedJournal.AddSound"), icon: 'fas fa-music', visible: this.isEditable, action: "addSound" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" },
+            { id: 'split', label: i18n("MonksEnhancedJournal.Extract"), icon: 'fas fa-file-export', visible: (game.user.isGM && this.isEditable), action: "splitJournal" }
         ];
 
-        //this.addPolyglotButton(ctrls);
         return ctrls.concat(super._documentControls());
     }
 
-    async render(data) {
-        let element = await super.render(data);
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
 
-        return element;
+        context.placeholder = "MonksEnhancedJournal.JournalEntryName";
+
+        return foundry.utils.mergeObject(context, {
+            placeholder: i18n("MonksEnhancedJournal.JournalName"),
+        });
     }
 }
 
 export class TextImageEntrySheet extends TextEntrySheet {
-    constructor(data, options) {
-        super(data, options);
 
-        this.refresh();
-    }
-
-    _inferDefaultMode() {
-        if (super._inferDefaultMode() == undefined) return;
-        return (this.object.data.img != undefined && this.object.data.img != '' && this.object.data.content == '' ? 'image' : 'text');
-    }
-
-    get template() {
-        let mode = this.options.sheetMode || this._sheetMode;
-        if (!this.object.isOwner && mode === "image" && this.object.data.img && !setting("allow-player")) return ImagePopout.defaultOptions.template;
-        return this.options.template;
-    }
-
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.journalentry"),
+    static PARTS = {
+        main: {
+            root: true,
             template: "modules/monks-enhanced-journal/templates/sheets/textimageentry.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: 'description' }],
-            scrollY: [".editor-parent"]
-        });
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-image.hbs",
+                "templates/generic/tab-navigation.hbs",
+                ...super.PARTS.main.templates
+            ]
+        }
+    };
+
+    static TABS = {
+        primary: {
+            tabs: [
+                { id: "description", icon: "fa-solid fa-file-signature" },
+                { id: "picture", icon: "fa-solid fa-image" },
+            ],
+            initial: "description",
+            labelPrefix: "MonksEnhancedJournal.tabs"
+        }
+    };
+
+    _prepareTabs(group) {
+        let tabs = super._prepareTabs(group);
+
+        if (!game.user.isGM) {
+            let removedPicture = false;
+            if (this.document.src == undefined || this.document.src == '') {
+                delete tabs.picture;
+                removedPicture = true;
+                tabs.description.active = true;
+            }
+            if (this.document.text.content == '' && !removedPicture) {
+                delete tabs.description;
+                tabs.picture.active = true;
+            }
+        }
+
+        return tabs;
     }
 
-    getData() {
-        let data = super.getData();
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
 
-        let owner = this.object.isOwner;
-        data.hideTabs = (!owner && ((this.object.data.img != undefined && this.object.data.img != '' && this.object.data.content == '') || ((this.object.data.img == undefined || this.object.data.img == '') && this.object.data.content != '')));
+        let hideTabs = (!context.owner && ((this.document.src != undefined && this.document.src != '' && this.document.text.content == '') || ((this.document.src == undefined || this.document.src == '') && this.document.text.content != '')));
 
         if (game.modules.get('monks-common-display')?.active) {
             let playerdata = game.settings.get("monks-common-display", 'playerdata');
             let pd = playerdata[game.user.id] || { display: false, mirror: false, selection: false };
 
             if (pd.display)
-                data.hideTabs = true;
+                hideTabs = true;
         }
 
-        return data;
+        return foundry.utils.mergeObject(context, {
+            hideTabs
+        });
     }
 
-    refresh() {
-        let journaltype = (this.object.src != undefined && this.object.src != '' && this.object.text.content == '' ? 'picture' : 'description');
-        this.options.tabs[0].initial = journaltype;
-        this._tabs[0].active = journaltype;
-    }
+    _prepareSubmitData(event, form, formData, updateData) {
+        const submitData = super._prepareSubmitData(event, form, formData, updateData);
+        submitData.src = $('.picture-img', this.trueElement).attr('src');
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-
-        /*
-        const options = this._getContextOptions();
-        if (options) {
-            let context = new ContextMenu($(html), 'div[data-tab="picture"]', options);
-        }
-        */
-    }
-    /*
-    _getContextOptions() {
-        return [
-            {
-                name: "SIDEBAR.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM || this.object.isOwner,
-                callback: li => {
-                    Dialog.confirm({
-                        title: `${game.i18n.localize("SIDEBAR.Delete")} Picture`,
-                        content: i18n("MonksEnhancedJournal.ConfirmRemovePicture"),
-                        yes: this.removePicture.bind(this)
-                    });
-                }
-            },
-            {
-                name: "MonksEnhancedJournal.ShowToPlayers",
-                icon: '<i class="fas fa-eye"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
-                    if (this.enhancedjournal) {
-                        this.enhancedjournal.doShowPlayers.call(this, { ctrlKey: true });
-                    } else
-                        this.object.show('image', true);
-                }
-            }
-        ];
-    }
-
-    removePicture() {
-        $('[data-edit="src"]', this.element).css({ opacity: 0 });
-        $('.instruction', this.element).show();
-        this.object.update({ src: '' });
-    }*/
-
-    async render(data) {
-        let element = await super.render(data);
-
-        return element;
-    }
-
-    _getSubmitData() {
-        let data = foundry.utils.expandObject(super._getSubmitData());
-
-        data.src = $('.picture-img', this.element).attr('src');
-
-        return foundry.utils.flattenObject(data);
+        return submitData;
     }
 }

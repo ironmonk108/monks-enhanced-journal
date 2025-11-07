@@ -1,0 +1,8 @@
+{{#each context as |tab|}}
+<div class="form-group">
+    <label>{{ localize tab.name }}</label>
+    <div class="form-fields">
+        <input type="checkbox" name="sheetSettings.{{../type}}.tabs.{{@key}}.shown" data-dtype="Boolean" {{checked tab.shown}}>
+    </div>
+</div>
+{{/each}}

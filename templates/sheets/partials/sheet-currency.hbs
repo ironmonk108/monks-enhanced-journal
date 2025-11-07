@@ -1,0 +1,21 @@
+<div class="currency-group">
+    <header>
+        <div class="name">{{localize 'MonksEnhancedJournal.Currency'}}</div>
+        {{#if owner}}
+        {{#if canTransferCurrency}}
+        <a class="item-control" data-tooltip="{{localize 'MonksEnhancedJournal.TransferCurrency'}}" data-action="transferCurrency"><i class="fas fa-money-bill-transfer"></i></a>
+        {{/if}}
+        {{#if canSplitCurrency}}
+        <a class="item-control" data-tooltip="{{localize 'MonksEnhancedJournal.SplitBetweenPlayers'}}" data-action="splitCurrency"><i class="fas fa-dollar-sign"></i></a>
+        {{/if}}
+        {{/if}}
+    </header>
+    <div class="currency-row">
+        {{#each currency}}
+        <div class="form-fields flexrow">
+            <label data-tooltip="{{localize this.name}}">{{localize this.name}}</label>
+            <input type="text" name="flags.monks-enhanced-journal.currency.{{this.id}}" placeholder="0" value="{{this.value}}" data-dtype="Number" />
+        </div>
+        {{/each}}
+    </div>
+</div>

@@ -1,0 +1,56 @@
+<div class="adjust-price" style="height: 100%; overflow: hidden;">
+    <p class="notes" style="margin-bottom: 0px;">Change the rate this shop sells items and buys them back.</p>
+    <p class="notes" style="margin: 0px;">Leave the type field blank to use the default, or use -1 to prevent the shop from buying back that type of item.</p>
+    <div class="items-list">
+        <header>
+            <div></div>
+            <div style="text-align: right;">Sell</div>
+            <div style="text-align: right;">Buy Back</div>
+        </header>
+        <ol class="item-list" style="height: calc(var(--input-height) + 38px);">
+            <li>
+                <div>Default</div>
+                <div class="form-fields flexrow" style="justify-content: flex-end;">
+                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
+                    <input type="number" class="sell-field" style="flex: 0 0 60px;text-align:right;" name="sheetSettings.{{type}}.adjustment.default.sell" min="0" step="0.01" data-dtype="Number" placeholder="{{context.[0].default.sell}}" value="{{context.[0].sell}}" />
+                </div>
+                <div class="form-fields flexrow" style="justify-content: flex-end;">
+                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
+                    <input type="number" class="buy-field" style="flex: 0 0 60px;text-align:right;" name="sheetSettings.{{type}}.adjustment.default.buy" min="-1" step="0.01" data-dtype="Number" placeholder="{{context.[0].default.buy}}" value="{{context.[0].buy}}" />
+                </div>
+            </li>
+        </ol>
+        {{#if context}}
+        <header>
+            <div>Types</div>
+        </header>
+        <ol class="item-list" style="max-height: 300px;">
+            {{#each context as |adjustment|}}
+            {{#unless (eq @index 0)}}
+            <li>
+                <div>{{adjustment.name}}</div>
+                <div class="form-fields flexrow" style="justify-content: flex-end;">
+                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
+                    <input type="number" class="sell-field" style="flex: 0 0 60px;text-align:right;" name="sheetSettings.{{type}}.adjustment.{{adjustment.id}}.sell" step="any" data-dtype="Number" placeholder="{{adjustment.default.sell}}" value="{{adjustment.sell}}" />
+                </div>
+                <div class="form-fields flexrow" style="justify-content: flex-end;">
+                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
+                    <input type="number" class="buy-field" style="flex: 0 0 60px;text-align:right;" name="sheetSettings.{{type}}.adjustment.{{adjustment.id}}.buy" step="any" data-dtype="Number" placeholder="{{adjustment.default.buy}}" value="{{adjustment.buy}}" />
+                </div>
+            </li>
+            {{/unless}}
+            {{/each}}
+        </ol>
+        {{/if}}
+    </div>
+
+    {{#unless @root.generalEdit}}
+    <hr style="margin: 0px;" />
+    <div class="form-group">
+        <label>{{localize 'MonksEnhancedJournal.ConvertShopItems'}}</label>
+        <div class="form-fields" style="text-align:right;">
+            <button type="button" class="inline-control" data-action="convert"><i class="fas fa-donate"></i> {{localize 'MonksEnhancedJournal.Convert'}}</button>
+        </div>
+    </div>
+    {{/unless}}
+</div>

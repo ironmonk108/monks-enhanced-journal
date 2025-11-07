@@ -5,13 +5,46 @@ import { TransferCurrency } from "../apps/transfer-currency.js";
 import { getValue, setValue, MEJHelpers } from "../helpers.js";
 
 export class LootSheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
-    }
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.loot",
+            icon: "fa-solid fa-donate",
+        },
+        actions: {
+            transferCurrency: LootSheet.onTransferCurrency,
+            splitCurrency: LootSheet.onSplitCurrency,
+            addPlayers: LootSheet.onAddPlayers,
+            clearPlayers: LootSheet.onClearPlayers,
+            openActor: LootSheet.onOpenActor,
+            rollItem: LootSheet.onRollItem,
+            clearItems: LootSheet.clearAllItems,
+            editItem: LootSheet.editItem,
+            requestItem: LootSheet.onRequestItem,
+            grantItem: LootSheet.onGrantItem,
+            clickItem: LootSheet.onClickItem,
+            itemSummary: LootSheet.onItemSummary,
+        },
+    };
 
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/sheets/loot.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-currency.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-loot-items.hbs",
+            ],
+            scrollable: [
+                ".items-list .item-list",
+            ]
+        }
+    };
+
+    /*
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.loot"),
+            title: i18n("MonksEnhancedJournal.sheettype.loot"),
             template: "modules/monks-enhanced-journal/templates/sheets/loot.html",
             dragDrop: [
                 { dragSelector: ".document.item", dropSelector: ".loot-container" },
@@ -23,53 +56,46 @@ export class LootSheet extends EnhancedJournalSheet {
             scrollY: [".loot-items"]
         });
     }
+    */
 
     static get type() {
         return 'loot';
     }
 
-    async getData() {
-        let actors = [];
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
+
+        let actors = this.document.getFlag('monks-enhanced-journal', 'actors');
         let players = [];
-        for (let user of game.users) {
-            if (!user.isGM && this.object.testUserPermission(user, "OBSERVER") && (user.active || setting("loot-inactive-players"))) {
-                players.push(user.name);
-                if(user.character)
-                    actors.push(user.character.id); //, name: user.character.name, img: user.character.img });
-            }
-        }
-        if (this.object.getFlag('monks-enhanced-journal', 'actors') == undefined && game.user.isGM) {
-            if (actors.length == 0) {
-                for (let user of game.users) {
-                    if (user.character && (user.active || setting("loot-inactive-players"))) {
-                        actors.push(user.character.id); //, name: user.character.name, img: user.character.img });
-                    }
+
+        if (actors == undefined && game.user.isGM) {
+            actors = {};
+            for (let user of game.users) {
+                if (user.character && (user.active || setting("loot-inactive-players"))) {
+                    actors[user.character.id] = { id: user.character.id, uuid: user.character.uuid, name: user.character.name, img: user.character.img };
                 }
             }
-            await this.object.setFlag('monks-enhanced-journal', 'actors', actors);
+            await this.document.setFlag('monks-enhanced-journal', 'actors', actors);
         }
 
-        let data = await super.getData();
-        data.purchaseOptions = {
+        let actorIds = Object.keys(actors);
+
+        context.purchaseOptions = {
             locked: "MonksEnhancedJournal.purchasing.locked",
             free: "MonksEnhancedJournal.purchasing.free",
             confirm: "MonksEnhancedJournal.purchasing.confirm"
         };
 
-        let currency = (data.data.flags['monks-enhanced-journal'].currency || []);
-        data.currency = MonksEnhancedJournal.currencies.map(c => {
+        let currency = (context.data.flags['monks-enhanced-journal'].currency || []);
+        context.currency = MonksEnhancedJournal.currencies.map(c => {
             return { id: c.id, name: c.name, value: currency[c.id] ?? 0 };
         });
 
-        data.groups = this.getItemGroups(
-            foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.items"),
-            foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.type"),
-            foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.purchasing"));
+        context.groups = await this.getItemGroups(foundry.utils.getProperty(context, "data.flags.monks-enhanced-journal.purchasing"));
 
-        data.canGrant = game.user.isGM && ((data.data.flags['monks-enhanced-journal'].items || []).find(i => (Object.values(foundry.utils.getProperty(i, "flags.monks-enhanced-journal.requests") || {}).find(r => r) != undefined)) != undefined);
-        data.canRequest = (data.data.flags['monks-enhanced-journal'].purchasing == "locked");
+        context.canRequest = (context.data.flags['monks-enhanced-journal'].purchasing == "locked");
 
-        data.characters = (data.data.flags['monks-enhanced-journal'].actors || []).map(a => {
+        context.characters = actorIds.map(a => {
             let actor = game.actors.get(a);
             if (actor) {
                 let user = game.users.find(u => u.character?.id == actor.id);
@@ -84,14 +110,67 @@ export class LootSheet extends EnhancedJournalSheet {
             }
         }).filter(a => !!a);
 
-        data.purchasing = data.data.flags['monks-enhanced-journal'].purchasing || 'locked';
-        data.showrequest = !game.user.isGM;
+        context.purchasing = context.data.flags['monks-enhanced-journal'].purchasing || 'locked';
+        context.showrequest = !game.user.isGM;
 
-        data.players = players.join(", ");
+        context.players = players.join(", ");
 
-        data.canTransferCurrency = true;
+        context.canTransferCurrency = true;
+        context.canSplitCurrency = context.characters.length > 1;
 
-        return data;
+        context.has = {
+            items: Object.keys(context.groups || {})?.length > 0
+        }
+
+        context.placeholder = "MonksEnhancedJournal.Loot";
+
+        context.hasShowToPlayers = true;
+        context.showingToPlayers = this.document.parent.ownership["default"] >= CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
+
+        context.gridTemplate = `auto 150px${context.canRequest ? ' 100px' : ''}${context.canGrant ? ' 100px' : ''} 75px${context.showrequest ? ' 75px' : ''}${context.owner ? ' 40px' : ''}`;
+
+        return context;
+    }
+
+    _dragDrop(html) {
+        super._dragDrop(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".loot-items .items-list",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropLootItem.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".loot-characters .loot-character-list",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropActor.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dragSelector: ".loot-items .item-name",
+            permissions: {
+                dragstart: this._canDragItemStart.bind(this)
+            },
+            callbacks: {
+                dragstart: this._onDragItemsStart.bind(this)
+            }
+        }).bind(html);
+    }
+
+    _contextMenu(html) {
+        super._contextMenu(html);
+
+        const actorOptions = this._getActorContextOptions();
+        if (actorOptions) new foundry.applications.ux.ContextMenu(html, ".loot-character", actorOptions, { fixed: true, jQuery: false });
     }
 
     static get defaultObject() {
@@ -100,67 +179,44 @@ export class LootSheet extends EnhancedJournalSheet {
 
     _documentControls() {
         let ctrls = [
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers },
-            { id: 'sound', text: i18n("MonksEnhancedJournal.AddSound"), icon: 'fa-music', conditional: this.isEditable, callback: () => { this.onAddSound(); } },
-            { id: 'convert', text: i18n("MonksEnhancedJournal.Convert"), icon: 'fa-clipboard-list', conditional: (game.user.isGM && this.isEditable), callback: () => { } }
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'sound', label: i18n("MonksEnhancedJournal.AddSound"), icon: 'fas fa-music', visible: this.isEditable, action: "addSound" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" }
         ];
         return ctrls.concat(super._documentControls());
     }
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-
-        //item
-        $('.item-icon', html).click(this.clickItem.bind(this));
-        $('.item-edit', html).on('click', this.editItem.bind(this));
-        $('.item-delete', html).on('click', $.proxy(this._deleteItem, this));
-
-        $('.item-name h4', html).click(this._onItemSummary.bind(this));
-
-        $('.clear-items', html).click(this.clearAllItems.bind(this));
-        $('.split-money', html).click(this.splitMoney.bind(this));
-        $('.transfer-currency', html).click(this.transferCurrency.bind(this, null));
-        $('.add-players', html).click(this.addPlayers.bind(this));
-        $('.roll-table', html).click(this.rollTable.bind(this, "items", true));
-
-        $('.request-item', html).click(this.requestItem.bind(this));
-        $('.grant-item', html).click(this.grantItem.bind(this));
-
-        $('.loot-character', html).dblclick(this.openActor.bind(this));
-
-        $('.configure-permissions', html).click(this.configure.bind(this));
-
-        const actorOptions = this._getActorContextOptions();
-        if (actorOptions) new ContextMenu($(html), ".loot-character", actorOptions);
-    }
-
     configure() {
-        let object = this.object;
-        if (object instanceof JournalEntryPage)
-            object = object.parent;
-        new DocumentOwnershipConfig(object).render(true);
+        let document = this.document;
+        if (document instanceof JournalEntryPage)
+            document = document.parent;
+        new DocumentOwnershipConfig(document).render(true);
     }
 
-    async splitMoney() {
-        let actors = (this.object.getFlag('monks-enhanced-journal', 'actors') || []).map(a => {
+    static async onSplitCurrency(event, target) {
+        let characters = Object.keys(this.document.getFlag('monks-enhanced-journal', 'actors') || {}).map(a => {
             return game.actors.get(a);
         }).filter(a => !!a);
-        if (actors.length == 0) {
+        if (characters.length == 0) {
             ui.notifications.warn(i18n("MonksEnhancedJournal.msg.ThereAreNoCharactersToDistribute"));
             return;
         }
 
-        let currency = foundry.utils.duplicate(this.object.getFlag('monks-enhanced-journal', 'currency') || {});
+        let currency = foundry.utils.duplicate(this.document.getFlag('monks-enhanced-journal', 'currency') || {});
         if (Object.values(currency).find(v => v > 0) == undefined) {
             ui.notifications.warn(i18n("MonksEnhancedJournal.msg.ThereAreNoMoneyToDistribute"));
             return;
         }
 
-        new DistributeCurrency(actors, currency, this).render(true, { focus: true });
+        new DistributeCurrency({ characters, currency, loot: this }).render(true, { focus: true });
+    }
+
+    static onTransferCurrency(event, target) {
+        this.transferCurrency.call(this, null, event);
     }
 
     transferCurrency(actor, event) {
-        new TransferCurrency(this.object, actor, this).render(true, { focus: true });
+        new TransferCurrency({ document: this.document, actor, loot: this }).render(true, { focus: true });
     }
 
     async doSplitMoney(characters, remainder){
@@ -172,67 +228,64 @@ export class LootSheet extends EnhancedJournalSheet {
                 }
             }
         }
-        await this.object.setFlag('monks-enhanced-journal', 'currency', remainder);
+        await this.document.setFlag('monks-enhanced-journal', 'currency', remainder);
     }
 
-    async addPlayers() {
-        let actors = [];
+    static async onClearPlayers() {
+        await this.document.unsetFlag('monks-enhanced-journal', 'actors');
+        await this.document.setFlag('monks-enhanced-journal', 'actors', {});
+    }
+
+    static async onAddPlayers() {
+        let actors = {};
         for (let user of game.users) {
             if (user.character) {
-                actors.push(user.character.id);
+                actors[user.character.id] = { id: user.character.id, uuid: user.character.uuid, name: user.character.name, img: user.character.img };
             }
         }
-        await this.object.setFlag('monks-enhanced-journal', 'actors', actors);
+        await this.document.setFlag('monks-enhanced-journal', 'actors', actors);
     }
 
-    _getSubmitData(updateData = {}) {
-        let data = foundry.utils.expandObject(super._getSubmitData(updateData));
+    _prepareSubmitData(event, form, formData, updateData) {
+        let submitData = super._prepareSubmitData(event, form, formData, updateData);
 
-        if (this.object.isOwner) {
-            data.flags['monks-enhanced-journal'].items = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "items") || []);
-            for (let item of data.flags['monks-enhanced-journal'].items) {
-                let dataItem = data.items[item._id];
-                if (dataItem)
-                    item = foundry.utils.mergeObject(item, dataItem);
+        if (this.document.isOwner) {
+            // Clean out any items with a quantity of 0 or less
+            let items = foundry.utils.duplicate(submitData.flags['monks-enhanced-journal'].items || {});
+            for (let [key, item] of Object.entries(items)) {
+                let quantity = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity") ?? 0;
+                if (quantity <= 0) {
+                    delete items[key];
+                    items[`-=${key}`] = null;
+                }
             }
-            delete data.items;
-
-            data.flags['monks-enhanced-journal'].items = data.flags['monks-enhanced-journal'].items.filter(i => getValue(i, quantityname()) > 0);
+            submitData.flags['monks-enhanced-journal'].items = items;
         }
 
-        return foundry.utils.flattenObject(data);
+        return submitData;
     }
 
-    _canDragStart(selector) {
-        if (selector == ".sheet-icon") return game.user.isGM;
-        let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
-        return game.user.isGM || (['free', 'confirm'].includes(this.object.flags["monks-enhanced-journal"].purchasing) && hasGM);
+    _canDragItemStart(selector) {
+        return (game.user.isGM || this.document.testUserPermission(game.user, "OBSERVER"));
     }
 
-    _canDragDrop(selector) {
-        return (game.user.isGM || this.object.testUserPermission(game.user, "OBSERVER"));
-    }
+    async _onDragItemsStart(event) {
+        const li = event.target.closest("li");
 
-    async _onDragStart(event) {
-        if ($(event.currentTarget).hasClass("sheet-icon"))
-            return super._onDragStart(event);
+        const dragData = { from: this.document.uuid };
 
-        const li = $(event.currentTarget).closest("li")[0];
-
-        const dragData = { from: this.object.uuid };
-
-        if (!game.user.isGM && !['free', 'confirm'].includes(this.object.flags["monks-enhanced-journal"].purchasing)) {
+        if (!game.user.isGM && !['free', 'confirm'].includes(this.document.flags["monks-enhanced-journal"].purchasing)) {
             event.preventDefault();
             return;
         }
 
         let id = li.dataset.id;
-        let item = this.object.flags["monks-enhanced-journal"].items.find(i => i._id == id);
+        let item = (this.document.flags["monks-enhanced-journal"].items || {})[id];
         if (item == undefined || (!game.user.isGM && (item?.lock === true || getValue(item, quantityname()) <= 0)))
             return;
 
         dragData.itemId = id;
-        dragData.uuid = this.object.uuid;
+        dragData.uuid = this.document.uuid;
         dragData.type = "Item";
         dragData.data = foundry.utils.duplicate(item);
         MonksEnhancedJournal._dragItem = id;
@@ -244,14 +297,8 @@ export class LootSheet extends EnhancedJournalSheet {
         
     }
 
-    async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+    async _onDropLootItem(event, target) {
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == 'Item') {
             let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
@@ -261,12 +308,13 @@ export class LootSheet extends EnhancedJournalSheet {
                 entry = await fromUuid(data.from);
             } catch { }
 
-            if (data.from == this.object.uuid) {
-                if (!$(event.currentTarget).hasClass('loot-character'))
+            if (data.from == this.document.uuid) {
+                let lootCharacter = event.target.closest('.loot-character');
+                if (!lootCharacter)
                     return;
 
                 event.preventDefault();
-                let actor = game.actors.get(event.currentTarget.id);
+                let actor = game.actors.get(lootCharacter.id);
                 if (actor) {
                     let item = await this.getDocument(data);
                     let max = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity");
@@ -281,7 +329,7 @@ export class LootSheet extends EnhancedJournalSheet {
                         setValue(itemData, quantityname(), result.quantity * itemQty);
                         let sheet = actor.sheet;
                         if (sheet._onDropItem)
-                            sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, { type: "Item", uuid: `${this.object.uuid}.Items.${item._id}`, data: itemData });
+                            sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
                         else
                             actor.createEmbeddedDocuments("Item", [itemData]);
 
@@ -290,7 +338,7 @@ export class LootSheet extends EnhancedJournalSheet {
                     }
                 }
             } else {
-                if (!this.object.isOwner && !hasGM) {
+                if (!this.document.isOwner && !hasGM) {
                     return ui.notifications.warn("Cannot drop items on this sheet without a GM logged in");
                 }
                 if (data.groupSelect) {
@@ -307,12 +355,12 @@ export class LootSheet extends EnhancedJournalSheet {
 
                     //Don't transfer between Loot sheets unless purchasing is set to "Anyone" or the player owns the sheet
                     if (entry
-                        && !((this.object.flags["monks-enhanced-journal"].purchasing == "free" || this.object.isOwner)
-                            && ((entry.data.flags["monks-enhanced-journal"].purchasing == "free" || entry.isOwner))))
+                        && !((this.document.flags["monks-enhanced-journal"].purchasing == "free" || this.document.isOwner)
+                            && ((entry.flags["monks-enhanced-journal"].purchasing == "free" || entry.isOwner))))
                         return;
 
                     //Only allow players to drop things from their own player onto the loot sheet
-                    if (!this.object.isOwner && !(item.actor.id || entry))
+                    if (!this.document.isOwner && !(item.actor.id || entry))
                         return;
 
                     let result = await LootSheet.confirmQuantity(item, max, "transfer", false);
@@ -321,12 +369,12 @@ export class LootSheet extends EnhancedJournalSheet {
                         foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
                         setValue(itemData, quantityname(), 1);
 
-                        if (game.user.isGM || this.object.isOwner) {
+                        if (game.user.isGM || this.document.isOwner) {
                             this.addItem({ data: itemData });
                         } else {
                             MonksEnhancedJournal.emit("addItem",
                                 {
-                                    lootid: this.object.uuid,
+                                    lootid: this.document.uuid,
                                     itemdata: itemData
                                 });
                         }
@@ -360,7 +408,7 @@ export class LootSheet extends EnhancedJournalSheet {
                 }
             }
         } else if (data.type == 'Folder') {
-            if (!this.object.isOwner)
+            if (!this.document.isOwner)
                 return false;
             // Import items from the folder
             let folder = await fromUuid(data.uuid);
@@ -373,38 +421,46 @@ export class LootSheet extends EnhancedJournalSheet {
                     }
                 }
             }
-        } else if (data.type == 'Actor') {
+        }
+    }
+
+    async _onDropActor(event, target) {
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+
+        if (data.type == 'Actor') {
             //Add this actor to the list
             let hasChanged = false;
-            let actors = foundry.utils.duplicate(this.object.getFlag('monks-enhanced-journal', 'actors'));
+            let actors = foundry.utils.duplicate(this.document.getFlag('monks-enhanced-journal', 'actors') || {});
 
             if (data.groupSelect) {
                 for (let actor of data.groupSelect) {
-                    if (!actors.includes(actor)) {
-                        actors.push(actor);
+                    if (!actors[actor.id]) {
+                        actors[actor.id] = { id: actor.id, uuid: actor.uuid, name: actor.name, img: actor.img };
                         hasChanged = true;
                     }
                 }
             } else {
                 let actor = await fromUuid(data.uuid);
-                if (actor && !actors.includes(actor.id)) {
-                    actors.push(actor.id);
+                if (actor && !actors[actor.id]) {
+                    actors[actor.id] = { id: actor.id, uuid: actor.uuid, name: actor.name, img: actor.img };
                     hasChanged = true;
                 }
             }
 
             if (hasChanged)
-                this.object.setFlag('monks-enhanced-journal', 'actors', actors);
+                this.document.setFlag('monks-enhanced-journal', 'actors', actors);
+        } else if (data.type == 'Item') {
+            this._onDropLootItem(event, target);
         }
         log('drop data', event, data);
     }
 
-    async requestItem(event) {
-        let li = $(event.currentTarget).closest("li")[0];
+    static async onRequestItem(event, target) {
+        let li = target.closest("li");
 
         let item;
         let id = li.dataset.id;
-        item = this.object.flags['monks-enhanced-journal'].items.find(o => o._id == id);
+        item = (this.document.flags['monks-enhanced-journal'].items || {})[id];
 
         if (!item)
             return;
@@ -422,20 +478,20 @@ export class LootSheet extends EnhancedJournalSheet {
         }
 
         let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
-        if (!(this.object.isOwner && this.object.flags['monks-enhanced-journal'].purchasing == 'free') && !hasGM) {
+        if (!(this.document.isOwner && this.document.flags['monks-enhanced-journal'].purchasing == 'free') && !hasGM) {
             ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotTakeLootWithoutGM"));
             return false;
         }
 
-        if (this.object.flags['monks-enhanced-journal'].purchasing == 'locked') {
+        if (this.document.flags['monks-enhanced-journal'].purchasing == 'locked') {
             MonksEnhancedJournal.emit("requestLoot",
                 {
-                    shopid: this.object.uuid,
+                    shopid: this.document.uuid,
                     actorid: game.user.character.id,
                     itemid: id
                 }
             );
-        } else if (this.object.flags['monks-enhanced-journal'].purchasing == 'confirm') {
+        } else if (this.document.flags['monks-enhanced-journal'].purchasing == 'confirm') {
             let result = await LootSheet.confirmQuantity(item, max, "take", false);
             if ((result?.quantity ?? 0) > 0) {
                 //create the chat message informaing the GM that player is trying to sell an item.
@@ -444,10 +500,10 @@ export class LootSheet extends EnhancedJournalSheet {
                 foundry.utils.setProperty(item, "flags.monks-enhanced-journal.maxquantity", max);
                 foundry.utils.setProperty(item, "flags.monks-enhanced-journal.cost", null);
 
-                LootSheet.createRequestMessage.call(this, this.object, item, actor, false);
+                LootSheet.createRequestMessage.call(this, this.document, item, actor, false);
                 MonksEnhancedJournal.emit("notify", { actor: actor.name, item: item.name });
             }
-        } else if (this.object.flags['monks-enhanced-journal'].purchasing == 'free') {
+        } else if (this.document.flags['monks-enhanced-journal'].purchasing == 'free') {
             let result = await LootSheet.confirmQuantity(item, max, "take", false);
             if ((result?.quantity ?? 0) > 0) {
                 // Create the owned item
@@ -457,16 +513,16 @@ export class LootSheet extends EnhancedJournalSheet {
                 setValue(itemData, quantityname(), result.quantity * itemQty);
                 let sheet = actor.sheet;
                 if (sheet._onDropItem)
-                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, { type: "Item", uuid: `${this.object.uuid}.Items.${item._id}`, data: itemData });
+                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
                 else
                     actor.createEmbeddedDocuments("Item", [itemData]);
 
-                if (this.object.isOwner) {
-                    this.constructor.purchaseItem.call(this.constructor, this.object, item._id, result.quantity, { chatmessage: false });
+                if (this.document.isOwner) {
+                    this.constructor.purchaseItem.call(this.constructor, this.document, item._id, result.quantity, { chatmessage: false });
                 } else {
                     MonksEnhancedJournal.emit("purchaseItem",
                         {
-                            shopid: this.object.uuid,
+                            shopid: this.document.uuid,
                             itemid: item._id,
                             actorid: actor.id,
                             user: game.user.id,
@@ -477,19 +533,19 @@ export class LootSheet extends EnhancedJournalSheet {
         }
     }
 
-    async grantItem(event) {
-        let li = $(event.currentTarget).closest("li")[0];
+    static async onGrantItem(event, target) {
+        let userId = target.dataset.userId;
+        let li = target.closest("li.item");
 
         let item;
         let id = li.dataset.id;
-        let items = foundry.utils.duplicate(this.object.flags['monks-enhanced-journal'].items || []);
-        item = items.find(o => o._id == id);
+        let items = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal'].items) || {};
+        item = items[id];
 
         if (!item || foundry.utils.getProperty(item, "flags.monks-enhanced-journal.requests").length == 0)
             return;
 
-        let userid = Object.entries(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.requests") || {}).find(([k, v]) => v)[0];
-        let user = game.users.get(userid);
+        let user = game.users.get(userId);
         if (!user) return;
 
         const actor = user.character;
@@ -498,8 +554,8 @@ export class LootSheet extends EnhancedJournalSheet {
         let max = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity");
         let result = await LootSheet.confirmQuantity(item, max, format("MonksEnhancedJournal.GrantToActor", { name: actor.name }), false);
         if ((result?.quantity ?? 0) > 0) {
-            foundry.utils.setProperty(item, "flags.monks-enhanced-journal.requests." + userid, false);
-            await this.object.setFlag('monks-enhanced-journal', 'items', items);
+            foundry.utils.setProperty(item, "flags.monks-enhanced-journal.requests." + userId, false);
+            await this.document.setFlag('monks-enhanced-journal', 'items', items);
 
             // Create the owned item
             let itemData = foundry.utils.duplicate(item);
@@ -508,22 +564,23 @@ export class LootSheet extends EnhancedJournalSheet {
             setValue(itemData, quantityname(), result.quantity * itemQty);
             let sheet = actor.sheet;
             if (sheet._onDropItem)
-                sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, { type: "Item", uuid: `${this.object.uuid}.Items.${item._id}`, data: itemData });
+                sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
             else
                 actor.createEmbeddedDocuments("Item", [itemData]);
 
-            await this.constructor.purchaseItem.call(this.constructor, this.object, id, result.quantity, { actor, user });
+            await this.constructor.purchaseItem.call(this.constructor, this.document, id, result.quantity, { actor, user });
         } else if (result?.quantity === 0) {
-            foundry.utils.setProperty(item, "flags.monks-enhanced-journal.requests." + userid, false);
-            await this.object.setFlag('monks-enhanced-journal', 'items', items);
+            foundry.utils.setProperty(item, "flags.monks-enhanced-journal.requests." + userId, false);
+            await this.document.setFlag('monks-enhanced-journal', 'items', items);
         }
     }
 
+    /*
     async addItem(data) {
         let item = await this.getDocument(data);
 
         if (item) {
-            let items = foundry.utils.duplicate(this.object.flags["monks-enhanced-journal"].items || []);
+            let items = foundry.utils.duplicate(this.document.flags["monks-enhanced-journal"].items || []);
 
             let itemData = item.toObject();
             if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
@@ -541,20 +598,20 @@ export class LootSheet extends EnhancedJournalSheet {
                 foundry.utils.setProperty(update, "system.equipped", false);
             }
             items.push(foundry.utils.mergeObject(itemData, update));
-            this.object.flags["monks-enhanced-journal"].items = items;
-            await this.object.setFlag('monks-enhanced-journal', 'items', items);
+            this.document.flags["monks-enhanced-journal"].items = items;
+            await this.document.setFlag('monks-enhanced-journal', 'items', items);
             return true;
         }
     }
+    */
 
-    clickItem(event) {
-        let target = event.currentTarget;
+    static onClickItem(event, target) {
         let li = target.closest('li');
         event.currentTarget = li;
 
         let item = game.items.find(i => i.id == li.dataset.id)
-        if (item == undefined && this.object.flags["monks-enhanced-journal"].actor) {
-            let actorid = this.object.flags["monks-enhanced-journal"].actor.id;
+        if (item == undefined && this.document.flags["monks-enhanced-journal"].actor) {
+            let actorid = this.document.flags["monks-enhanced-journal"].actor.id;
             let actor = game.actors.get(actorid);
             if (actor)
                 item = actor.items.get(li.dataset.id);
@@ -564,24 +621,8 @@ export class LootSheet extends EnhancedJournalSheet {
             return item.sheet.render(true);
     }
 
-    /*
-    async alterItem(event) {
-        let target = event.currentTarget;
-        let li = target.closest('li');
-        let action = target.dataset.action;
-        $(target).toggleClass('active');
-
-        let items = foundry.utils.duplicate(this.object.flags["monks-enhanced-journal"]?.items || []);
-
-        let item = items.find(i => i._id == li.dataset.id);
-        if (item) {
-            item[action] = !item[action];
-            this.object.setFlag('monks-enhanced-journal', 'items', items);
-        }
-    }*/
-
     static async itemDropped(id, actor, entry) {
-        let item = (entry.getFlag('monks-enhanced-journal', 'items') || []).find(i => i._id == id);
+        let item = (entry.getFlag('monks-enhanced-journal', 'items') || {})[id];
         if (item) {
             let max = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity");
             if (!game.user.isGM && (max != null && max <= 0)) {
@@ -637,7 +678,7 @@ export class LootSheet extends EnhancedJournalSheet {
         let li = $(event.currentTarget).closest('li.item');
         const id = li.data("id");
 
-        let items = this.object.getFlag('monks-enhanced-journal', 'items');
+        let items = this.document.getFlag('monks-enhanced-journal', 'items');
         let itemData = items.find(i => i._id == id);
 
         const item = new CONFIG.Item.documentClass(itemData);
@@ -667,17 +708,18 @@ export class LootSheet extends EnhancedJournalSheet {
         }
     }*/
 
-    openActor(event) {
-        let actor = game.actors.get(event.currentTarget.id);
+    static onOpenActor(event, target) {
+        let actor = game.actors.get(target.id);
         if (actor)
             actor.sheet.render(true);
     }
 
     removeActor(id) {
         if (id) {
-            let actors = foundry.utils.duplicate(this.object.getFlag('monks-enhanced-journal', 'actors'));
-            actors.findSplice(a => a === id);
-            this.object.setFlag('monks-enhanced-journal', 'actors', actors);
+            let actors = foundry.utils.duplicate(this.document.getFlag('monks-enhanced-journal', 'actors') || {});
+            delete actors[id];
+            actors[`-=${id}`] = null;
+            this.document.setFlag('monks-enhanced-journal', 'actors', actors);
         }
     }
 
@@ -688,7 +730,7 @@ export class LootSheet extends EnhancedJournalSheet {
                 icon: '<i class="fas fa-user"></i>',
                 condition: () => game.user.isGM,
                 callback: li => {
-                    const id = li.attr('id');
+                    const id = li.id;
                     const actor = game.actors.get(id);
                     this.transferCurrency(actor);
                 }
@@ -698,14 +740,22 @@ export class LootSheet extends EnhancedJournalSheet {
                 icon: '<i class="fas fa-trash"></i>',
                 condition: () => game.user.isGM,
                 callback: li => {
-                    const id = li.attr('id');
-                    Dialog.confirm({
-                        title: i18n("MonksEnhancedJournal.RemoveActor"),
+                    const id = li.id;
+                    foundry.applications.api.DialogV2.confirm({
+                        window: {
+                            title: i18n("MonksEnhancedJournal.RemoveActor"),
+                        },
                         content: i18n("MonksEnhancedJournal.AreYouSureRemoveActor"),
-                        yes: this.removeActor.bind(this, id)
+                        yes: {
+                            callback: this.removeActor.bind(this, id)
+                        }
                     });
                 }
             }
         ];
+    }
+
+    static onRollItem(event, target) {
+        this.rollTable("items", false, event, target);
     }
 }

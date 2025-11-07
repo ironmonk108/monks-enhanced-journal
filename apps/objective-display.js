@@ -1,26 +1,64 @@
 import { MonksEnhancedJournal, log, setting, i18n, makeid } from '../monks-enhanced-journal.js';
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class ObjectiveDisplay extends Application {
-    constructor() {
-        super();
+export class ObjectiveDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
+
+    static DEFAULT_OPTIONS = {
+        id: "objective-display",
+        tag: "div",
+        classes: ["faded-ui"],
+        sheetConfig: false,
+        window: {
+            title: "MonksEnhancedJournal.Quests",
+            resizable: true,
+        },
+        actions: {
+            openQuest: ObjectiveDisplay.openQuest
+        },
+        position: { width: 600 },
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/objective-display.html"
+        }
+    };
+
+    nonDismissible = true;
+
+    persistPosition = foundry.utils.debounce(this.onPersistPosition.bind(this), 1000);
+
+    onPersistPosition(position) {
+        game.user.setFlag("monks-enhanced-journal", "objectivePos", { left: position.left, top: position.top });
     }
 
-    /** @override */
-    static get defaultOptions() {
+    _initializeApplicationOptions(options) {
+        options = super._initializeApplicationOptions(options);
+
         let pos = game.user.getFlag("monks-enhanced-journal", "objectivePos");
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "objective-display",
-            title: i18n("MonksEnhancedJournal.Quests"),
-            template: "modules/monks-enhanced-journal/templates/objective-display.html",
+        options.position = {
             width: pos?.width || 500,
             height: pos?.height || 300,
             top: pos?.top || 75,
             left: pos?.left || 120,
-            resizable: true
-        });
+        }
+
+        return options;
     }
 
-    getData(options) {
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "main":
+                this._prepareBodyContext(context, options);
+                break;
+        }
+
+        return context;
+    }
+
+    _prepareBodyContext(context, options) {
         let icons = {
             inactive: "fa-ban",
             available: "fa-file-circle-plus",
@@ -48,7 +86,7 @@ export class ObjectiveDisplay extends Application {
             };
 
             if (setting('use-objectives')) {
-                data.objectives = (page.getFlag('monks-enhanced-journal', 'objectives') || [])
+                data.objectives = Object.values(page.getFlag('monks-enhanced-journal', 'objectives') || {})
                     .filter(o => o.available)
                     .map(o => {
                         return {
@@ -68,25 +106,50 @@ export class ObjectiveDisplay extends Application {
             return indexA - indexB;
         });
 
-        return foundry.utils.mergeObject(super.getData(options), { quests: quests } );
-    }
-
-    async _render(force, options) {
-        let that = this;
-        return super._render(force, options).then((html) => {
-            $('h4', this.element).addClass('flexrow')
-            delete ui.windows[that.appId];
+        return foundry.utils.mergeObject(context, {
+            quests
         });
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
-
-        $('li[data-document-id]', html).on("click", this.openQuest.bind(this));
+    async _onRender(context, options) {
+        await super._onRender(context, options);
+        $('h1', this.element).addClass('flexrow')
+        delete ui.windows[this.appId];
     }
 
-    async openQuest(event) {
-        let id = event.currentTarget.dataset.documentId;
+    getPos() {
+        this.pos = game.user.getFlag("monks-enhanced-journal", "objectivePos");
+
+        if (this.pos == undefined) {
+            this.pos = {
+                width: 500,
+                height: 300,
+                top: 75,
+                left: 120,
+            };
+            game.user.setFlag("monks-enhanced-journal", "objectivePos", this.pos);
+        }
+
+        let result = '';
+        if (this.pos != undefined) {
+            result = Object.entries(this.pos).filter(k => {
+                return k[1] != null;
+            }).map(k => {
+                return k[0] + ":" + k[1] + 'px';
+            }).join('; ');
+        }
+
+        return result;
+    }
+
+    setPosition(position) {
+        position = super.setPosition(position);
+        this.persistPosition(position);
+        return position;
+    }
+
+    static async openQuest(event, target) {
+        let id = target.dataset.documentId;
         let page = await fromUuid(id);
         MonksEnhancedJournal.openJournalEntry(page);
     }

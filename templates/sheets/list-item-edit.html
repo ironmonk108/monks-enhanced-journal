@@ -1,0 +1,80 @@
+<div id="document-create">
+    {{#if hasFolders}}
+    <div class="form-group">
+        <label>{{localize 'DOCUMENT.Folder'}}</label>
+        <div class="form-fields">
+            <select name="folder">
+                <option value=""></option>
+                {{selectOptions folders selected=folder valueAttr="id" labelAttr="name"}}
+            </select>
+        </div>
+    </div>
+    {{/if}}
+
+    <div class="form-group">
+        <label>{{ localize "MonksEnhancedJournal.Title"}}</label>
+        <div class="form-fields">
+            <input type="text" name="title" value="{{title}}" />
+        </div>
+    </div>
+
+    {{#if (eq subtype "progress")}}
+    <div class="form-group">
+        <label>{{ localize "MonksEnhancedJournal.Count"}}</label>
+        <div class="form-fields">
+            <input type="number" name="count" style="max-width:100px;text-align: right;" value="{{count}}" />
+        </div>
+        <label>{{ localize "MonksEnhancedJournal.Max"}}</label>
+        <div class="form-fields">
+            <input type="number" name="max" style="max-width: 100px; text-align: right;" value="{{max}}" />
+        </div>
+    </div>
+    {{/if}}
+
+    {{#if (eq subtype "poll")}}
+    <div class="form-group">
+        <label>{{ localize "MonksEnhancedJournal.For"}}</label>
+        <div class="form-fields">
+            <input type="number" name="votefor" style="max-width:100px;text-align: right;" value="{{voteFor}}" />
+        </div>
+        <label>{{ localize "MonksEnhancedJournal.Against"}}</label>
+        <div class="form-fields">
+            <input type="number" name="against" style="max-width: 100px; text-align: right;" value="{{voteAgainst}}" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="form-fields">
+            <div class="items-list">
+                <header>
+                    <div class="item-name">Player</div>
+                    <div class="item-vote">Vote</div>
+                </header>
+
+                <ol class="item-list" data-container="items">
+
+                    {{#each this.players}}
+                    <li class="item flexrow" data-id="{{this.id}}" draggable="false">
+                        <div class="item-name flexrow">
+                            {{this.name}}
+                        </div>
+
+                        <div class="item-vote">
+                            <select name="players.{{this.id}}">
+                                <option value="true" {{#if (eq this.vote "for")}} selected{{/if}}>{{ localize "MonksEnhancedJournal.VoteFor"}}</option>
+                                <option value="false" {{#if (eq this.vote "against")}} selected{{/if}}>{{ localize "MonksEnhancedJournal.VoteAgainst"}}</option>
+                                <option value="" {{#if (eq this.vote "")}} selected{{/if}}>{{ localize "MonksEnhancedJournal.NoVote"}}</option>
+                            </select>
+                        </div>
+                    </li>
+                    {{/each}}
+                </ol>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    <div style="height: 302px; border: 1px solid rgb(var(--mej-light-6)); border-radius: 4px;">
+        <prose-mirror name="text" value="{{ text }}"></prose-mirror>
+    </div>
+</div>

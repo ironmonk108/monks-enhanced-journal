@@ -29,10 +29,7 @@ section.readaloud {
     border-left: 2px solid #37161a;
     position: relative;
     width: calc(100% - 12px);
-}
-
-#tinymce section.readaloud {
-    width: calc(100% - 32px);
+    color: rgb(var(--mej-dark-2));
 }
 
 section.readaloud:before, section.readaloud:after {
@@ -52,40 +49,6 @@ section.readaloud:before {
 }
 
 section.readaloud:after {
-    right: -11px;
-}
-
-section.readaloud2 {
-    padding: 5px 10px;
-    margin: 8px 2px;
-    background: #f7efdb;
-    border-right: 2px solid #37161a;
-    border-left: 2px solid #37161a;
-    position: relative;
-    width: calc(100% - 12px);
-}
-
-#tinymce section.readaloud2 {
-    width: calc(100% - 32px);
-}
-
-section.readaloud2:before, section.readaloud2:after {
-    content: "";
-    position: absolute;
-    height: calc(100% + 10px);
-    width: 20px;
-    top: -5px;
-    background-image: linear-gradient(135deg, transparent 0%,transparent 50%,#37161A 51%,#37161A 100%), linear-gradient(45deg, transparent 0%,transparent 50%,#37161A 51%,#37161A 100%);
-    background-size: 5px 10px;
-    background-position: top center, bottom center;
-    background-repeat: no-repeat;
-}
-
-section.readaloud2:before {
-    left: -11px;
-}
-
-section.readaloud2:after {
     right: -11px;
 }
 
