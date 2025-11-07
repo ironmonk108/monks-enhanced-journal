@@ -1,85 +1,95 @@
-<form class="slide-text" autocomplete="off" onsubmit="event.preventDefault();">
-    <div class="form-group">
-        <label for="top">{{localize 'MonksEnhancedJournal.Top'}}</label>
-        <div class="form-fields">
-            <input type="number" name="top" step="any" data-dtype="Number" value="{{object.top}}" style="max-width:100px;text-align:right;">
+<div class="slide-text" autocomplete="off" onsubmit="event.preventDefault();">
+    {{> "templates/generic/tab-navigation.hbs" tabs=subtabs}}
+    <section class="sheet-body">
+        <div class="tab {{#if subtabs.text.active}} active{{/if}}" data-group="primary" data-tab="text">
+            <div class="form-group">
+                <label for="text">{{localize 'MonksEnhancedJournal.Text'}}</label>
+                <div class="form-fields">
+                    <textarea name="text">{{document.text}}</textarea>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="top">{{localize 'MonksEnhancedJournal.Left'}}</label>
-        <div class="form-fields">
-            <input type="number" name="left" step="any" data-dtype="Number" value="{{object.left}}" style="max-width: 100px; text-align: right;">
+        <div class="tab {{#if subtabs.position.active}} active{{/if}}" data-group="primary" data-tab="position">
+            <div class="form-group">
+                <label for="top">{{localize 'MonksEnhancedJournal.Top'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="top" step="any" data-dtype="Number" value="{{document.top}}" style="max-width:100px;text-align:right;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="top">{{localize 'MonksEnhancedJournal.Left'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="left" step="any" data-dtype="Number" value="{{document.left}}" style="max-width: 100px; text-align: right;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="top">{{localize 'MonksEnhancedJournal.Right'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="right" step="any" data-dtype="Number" value="{{document.right}}" style="max-width: 100px; text-align: right;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="top">{{localize 'MonksEnhancedJournal.Bottom'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="bottom" step="any" data-dtype="Number" value="{{document.bottom}}" style="max-width: 100px; text-align: right;">
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="top">{{localize 'MonksEnhancedJournal.Right'}}</label>
-        <div class="form-fields">
-            <input type="number" name="right" step="any" data-dtype="Number" value="{{object.right}}" style="max-width: 100px; text-align: right;">
+        <div class="tab {{#if subtabs.appearance.active}} active{{/if}}" data-group="primary" data-tab="appearance">
+            <div class="form-group">
+                <label for="font">{{localize 'MonksEnhancedJournal.Font'}}</label>
+                <div class="form-fields">
+                    <select name="font">
+                        {{ selectOptions fontOptions selected=document.font localize=true }}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="size">{{localize 'MonksEnhancedJournal.Size'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="size" step="any" data-dtype="Number" placeholder="{{fontPlaceholder}}" value="{{document.size}}" style="max-width: 100px; text-align: right;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="align">{{localize 'MonksEnhancedJournal.Justification'}}</label>
+                <div class="form-fields">
+                    <select name="align">
+                        {{ selectOptions alignOptions selected=document.align localize=true }}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="color">{{localize 'MonksEnhancedJournal.TextColour'}}</label>
+                <div class="form-fields">
+                    <color-picker name="color" placeholder="{{colorPlaceholder}}" value="{{document.color}}" style="flex: 0 0 140px;"></color-picker>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="color">{{localize 'MonksEnhancedJournal.BackgroundColour'}}</label>
+                <div class="form-fields">
+                    <color-picker name="background" value="{{document.background}}" style="flex: 0 0 140px;"></color-picker>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="top">{{localize 'MonksEnhancedJournal.BackgroundOpacity'}}</label>
+                <div class="form-fields">
+                    <range-picker name="opacity" min="0" max="1" step="0.05" value="{{ document.opacity }}"></range-picker>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="top">{{localize 'MonksEnhancedJournal.Bottom'}}</label>
-        <div class="form-fields">
-            <input type="number" name="bottom" step="any" data-dtype="Number" value="{{object.bottom}}" style="max-width: 100px; text-align: right;">
+        <div class="tab {{#if subtabs.transition.active}} active{{/if}}" data-group="primary" data-tab="transition">
+            <div class="form-group">
+                <label for="fadein">{{localize 'MonksEnhancedJournal.DelayVisible'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="fadein" step="any" data-dtype="Number" value="{{document.fadein}}" style="max-width: 100px; text-align: right;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="fadeout">{{localize 'MonksEnhancedJournal.TextDuration'}}</label>
+                <div class="form-fields">
+                    <input type="number" name="fadeout" step="any" data-dtype="Number" value="{{document.fadeout}}" style="max-width: 100px; text-align: right;">
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="font">{{localize 'MonksEnhancedJournal.Font'}}</label>
-        <div class="form-fields">
-            <select name="font">
-                {{ selectOptions fontOptions selected=object.font localize=true }}
-            </select>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="size">{{localize 'MonksEnhancedJournal.Size'}}</label>
-        <div class="form-fields">
-            <input type="number" name="size" step="any" data-dtype="Number" placeholder="{{fontPlaceholder}}" value="{{object.size}}" style="max-width: 100px; text-align: right;">
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="align">{{localize 'MonksEnhancedJournal.Justification'}}</label>
-        <div class="form-fields">
-            <select name="align">
-                {{ selectOptions alignOptions selected=object.align localize=true }}
-            </select>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="color">{{localize 'MonksEnhancedJournal.TextColour'}}</label>
-        <div class="form-fields">
-            <input type="text" name="color" data-dtype="String" placeholder="{{colorPlaceholder}}" value="{{object.color}}">
-            <input type="color" data-edit="color" value="{{object.color}}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="color">{{localize 'MonksEnhancedJournal.BackgroundColour'}}</label>
-        <div class="form-fields">
-            <input type="text" name="background" data-dtype="String" value="{{object.background}}">
-            <input type="color" data-edit="background" value="{{object.background}}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="top">{{localize 'MonksEnhancedJournal.BackgroundOpacity'}}</label>
-        <div class="form-fields">
-            <input type="range" name="opacity" data-dtype="String" min="0" max="1" step="0.05" value="{{object.opacity}}">
-            <span class="range-value">{{object.opacity}}</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="fadein">{{localize 'MonksEnhancedJournal.FadeIn'}}</label>
-        <div class="form-fields">
-            <input type="number" name="fadein" step="any" data-dtype="Number" value="{{object.fadein}}" style="max-width: 100px; text-align: right;">
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="fadeout">{{localize 'MonksEnhancedJournal.TextDuration'}}</label>
-        <div class="form-fields">
-            <input type="number" name="fadeout" step="any" data-dtype="Number" value="{{object.fadeout}}" style="max-width: 100px; text-align: right;">
-        </div>
-    </div>
-    <footer class="sheet-footer flexrow">
-        <button type="submit" name="submit"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.Save"}}</button>
-        <button type="button" name="cancel"><i class="far fa-ban"></i> {{localize "MonksEnhancedJournal.Cancel"}}</button>
-    </footer>
-</form>
+    </section>
+</div>  

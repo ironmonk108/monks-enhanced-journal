@@ -1,47 +1,37 @@
-<div class="monks-journal-sheet sheet flexcol editcurrency">
-    <form>
-        <p class="notes">{{localize 'MonksEnhancedJournal.msg.SetTheConversionToZero'}}</p>
-        <div class="dialog-content">
-            <div class="items-list">
-                <div class="item-header flexrow">
-                    <div class="item-detail" style=" text-align:left;padding-left:8px">{{localize 'MonksEnhancedJournal.Code'}}</div>
-                    <div class="item-name">{{localize 'MonksEnhancedJournal.Name'}}</div>
-                    <div class="item-detail">{{localize 'MonksEnhancedJournal.Convert'}}</div>
-                    <div class="item-controls flexrow">
-                        <a class="item-control text item-add"><i class="fas fa-plus"></i> {{localize 'MonksEnhancedJournal.Add'}}</a>
-                    </div>
+<div>
+    <p class="notes">{{localize 'MonksEnhancedJournal.msg.SetTheConversionToZero'}}</p>
+    <div class="dialog-content">
+        <div class="items-list">
+            <header>
+                <div class="item-detail" style=" text-align:left;padding-left:8px">{{localize 'MonksEnhancedJournal.Code'}}</div>
+                <div class="item-name">{{localize 'MonksEnhancedJournal.Name'}}</div>
+                <div class="item-detail">{{localize 'MonksEnhancedJournal.Convert'}}</div>
+                <div class="item-controls flexrow">
+                    <a class="item-control text item-add" data-action="addCurrency"><i class="fas fa-plus"></i> {{localize 'MonksEnhancedJournal.Add'}}</a>
                 </div>
+            </header>
 
-                <ol class="item-list">
-                    {{#each currency}}
-                    <li class="item flexrow" data-id="{{this.id}}">
-                        <div class="item-detail" style="text-align:left;">
-                            <input type="text" name="id" autocomplete="off" value="{{this.id}}" />
-                        </div>
+            <ol class="item-list">
+                {{#each currency}}
+                <li class="item flexrow" data-id="{{this.id}}">
+                    <div class="item-detail" style="text-align:left;">
+                        <input type="text" name="id" autocomplete="off" value="{{this.id}}" />
+                    </div>
 
-                        <div class="item-name">
-                            <input type="text" name="name" autocomplete="off" value="{{this.name}}" />
-                        </div>
+                    <div class="item-name">
+                        <input type="text" name="name" autocomplete="off" value="{{this.name}}" />
+                    </div>
 
-                        <div class="item-detail">
-                            <input type="number" name="convert" class="currency-conversion" style="text-align: right;padding-right: 8px;" autocomplete="off" value="{{this.convert}}" />
-                        </div>
+                    <div class="item-detail">
+                        <input type="number" name="convert" class="currency-conversion" style="text-align: right;padding-right: 8px;" autocomplete="off" value="{{this.convert}}" step="any" />
+                    </div>
 
-                        <div class="item-controls flexrow">
-                            <a class="item-control item-delete"><i class="fas fa-trash"></i></a>
-                        </div>
-                    </li>
-                    {{/each}}
-                </ol>
-            </div>
+                    <div class="item-controls flexrow" style="justify-content: center;">
+                        <a class="item-control item-delete" data-action="removeCurrency" style="flex: 0 0 20px;"><i class="fas fa-trash"></i></a>
+                    </div>
+                </li>
+                {{/each}}
+            </ol>
         </div>
-        <footer class="sheet-footer flexrow">
-            <button type="button" name="submit">
-                <i class="far fa-save"></i> {{localize 'MonksEnhancedJournal.SaveChanges'}}
-            </button>
-            <button type="button" name="reset">
-                <i class="fas fa-undo"></i> {{localize 'MonksEnhancedJournal.ResetDefaults'}}
-            </button>
-        </footer>
-    </form>
+    </div>
 </div>

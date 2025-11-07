@@ -1,11 +1,10 @@
 {{#*inline "folderPartial"}}
-<li class="list-item folder flexcol {{#unless folder.data.expanded}}collapsed{{/unless}}"
-    data-folder-id="{{folder.data.id}}" data-folder-depth="{{folder.depth}}">
-    <header class="folder-header flexrow">
-        <h3 class="noborder"><i class="fas fa-folder-open fa-fw"></i>{{folder.data.name}}</h3>
+<li class="list-item folder flexcol {{#if (lookup @root.folders folder.id)}}expanded{{/if}}" data-folder-id="{{folder.id}}" data-folder-depth="{{folder.depth}}">
+    <header class="folder-header flexrow" data-action="toggleFolder">
+        <div><i class="fas fa-folder-closed fa-fw"></i> {{folder.document.name}}</div>
         {{#if @root.owner}}
-        <a class="create-folder" data-parent-folder="{{folder.data.id}}"><i class="fas fa-folder-plus fa-fw"></i></a>
-        <a class="create-item" data-folder="{{folder.data.id}}"><i class="fas fa-feather-alt fa-fw"></i></a>
+        <a class="create-folder" data-parent-folder="{{folder.id}}" data-action="createFolder" data-tooltip="{{localize "SIDEBAR.ACTIONS.CREATE.Folder"}}"><i class="fas fa-folder-plus fa-fw"></i></a>
+        <a class="create-item" data-folder="{{folder.id}}" data-action="createItem" data-tooltip="{{localize "SIDEBAR.ACTIONS.CREATE.JournalEntry"}}"><i class="fas fa-feather-alt fa-fw"></i></a>
         {{/if}}
     </header>
 
@@ -13,50 +12,39 @@
         {{~#each folder.children as |child i|}}
         {{> folderPartial folder=child}}
         {{/each}}
-        {{#each folder.content}}
-        {{> documentPartial}}
+        {{#each folder.content as |item|}}
+        {{> (lookup @root "documentPartial") item=item.document noprogress=item.noprogress percent=item.percent valueText=item.valueText voted=item.voted players=item.players}}
         {{/each~}}
     </ol>
 </li>
 {{/inline}}
 
-{{#*inline "documentPartial"}}
-{{> listItemTemplate}}
-{{/inline}}
-
 <form class="flexcol journal-subsheet {{entrytype}}" editable="{{editable}}">
     <div class="sheet-container list-container flexcol">
-        <header class="journal-sheet-header header-name flexrow">
-            <i class="fas {{data.icon}} sheet-icon"></i>
-            <input name="name" type="text" value="{{data.name}}" placeholder="{{localize 'MonksEnhancedJournal.JournalEntryName'}}">
+        {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs"}}
+        <section class="flexrow page-controls">
+            <button type="button" class="header-control collapse-all" data-tooltip="{{localize 'FOLDER.Collapse'}}" data-action="collapseAll">
+                <i class="fas fa-duotone fa-folder-tree fa-fw"></i>
+            </button>
+            <button type="button" class="create-item" data-action="createItem">
+                <i class="fas fa-feather"></i> {{localize "SIDEBAR.ACTIONS.CREATE.JournalEntry"}}
+            </button>
+            <button type="button" class="create-folder" data-action="createFolder">
+                <i class="fas fa-folder"></i> {{localize "SIDEBAR.ACTIONS.CREATE.Folder"}}
+            </button>
+            <div class="spacer" style="flex-grow: 1;"></div>
             <div class="header-search flexrow">
                 <i class="fas fa-search"></i>
-                <input type="text" name="search" placeholder="{{localize 'MonksEnhancedJournal.SearchList'}}" autocomplete="off">
+                <input type="text" class="searchList" placeholder="{{localize 'MonksEnhancedJournal.SearchList'}}" autocomplete="off">
             </div>
-        </header>
-        <section class="flexrow page-controls">
-            <button type="button" class="header-control collapse-all" title="{{localize 'FOLDER.Collapse'}}">
-                <i class="fas fa-sort-amount-up fa-fw"></i>
-            </button>
-            <button type="button" class="create-item">
-                <i class="fas fa-feather"></i> {{localize 'MonksEnhancedJournal.CreateEntry'}}
-            </button>
-            <button type="button" class="create-folder">
-                <i class="fas fa-folder"></i> {{localize 'FOLDER.Create'}}
-            </button>
-            {{#if owner}}
-            <span style="text-align: right; overflow: hidden; white-space: nowrap; color: var(--color-text-dark-secondary); line-height: 32px;margin-right: 5px;">
-                You can change to a different list type using the <span style="border:1px solid #333;padding: 4px; margin: 2px;"><i class="fas fa-cog"></i>Sheet</span> configuration
-            </span>
-            {{/if}}
         </section>
         <section class="flexcol sheet-body">
             <ol class="list-list">
                 {{~#each tree.children as |f fi|}}
                 {{> folderPartial folder=f}}
                 {{/each}}
-                {{#each tree.content}}
-                {{> documentPartial}}
+                {{#each tree.content as |item|}}
+                {{> (lookup @root "documentPartial") item=item.document noprogress=item.noprogress percent=item.percent valueText=item.valueText voted=item.voted players=item.players}}
                 {{/each~}}
             </ol>
         </section>

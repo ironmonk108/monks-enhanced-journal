@@ -1,22 +1,22 @@
 <form id="{{id}}" class="{{classes}}" data-appid="{{appId}}" autocomplete="off" onsubmit="event.preventDefault();">
     <div class="col left" style="justify-content: center;">
         {{#if (eq type "encounter")}}
-        <div class="control-icon" data-action="start-encounter">
-            <i class="fas fa-fist-raised" title="{{localize 'MonksEnhancedJournal.StartEncounter'}}"></i>
-        </div>
+        <button class="control-icon" data-action="encounter">
+            <i class="fas fa-fist-raised" data-tooltip="{{localize 'MonksEnhancedJournal.StartEncounter'}}"></i>
+        </button>
 
-        <div class="control-icon" data-action="select-encounter">
-            <i class="fas fa-expand" title="{{localize 'MonksEnhancedJournal.SelectEncounter'}}"></i>
-        </div>
+        <button class="control-icon" data-action="select">
+            <i class="fas fa-expand" data-tooltip="{{localize 'MonksEnhancedJournal.SelectEncounter'}}"></i>
+        </button>
 
-        <div class="control-icon" data-action="assign-items">
-            <i class="fas fa-suitcase" title="{{localize 'MonksEnhancedJournal.AssignItems'}}"></i>
-        </div>
+        <button class="control-icon" data-action="assign">
+            <i class="fas fa-suitcase" data-tooltip="{{localize 'MonksEnhancedJournal.AssignItems'}}"></i>
+        </button>
         {{/if}}
         {{#if (eq type "quest")}}
-        <div class="control-icon" data-action="assign-items">
-            <i class="fas fa-suitcase" title="{{localize 'MonksEnhancedJournal.AssignItems'}}"></i>
-        </div>
+        <button class="control-icon" data-action="assign">
+            <i class="fas fa-suitcase" data-tooltip="{{localize 'MonksEnhancedJournal.AssignItems'}}"></i>
+        </button>
         {{/if}}
     </div>
 
@@ -26,9 +26,9 @@
     <div class="col right" style="justify-content: center;">
 
         {{#if isGM}}
-        <div class="control-icon {{visibilityClass}}" data-action="visibility">
-            <img src="{{icons.visibility}}" width="36" height="36" title="{{localize "HUD.ToggleVis"}}">
-        </div>
+        <button class="control-icon {{visibilityClass}}" data-action="visibility">
+            <img src="{{icons.visibility}}" width="36" height="36" data-tooltip="{{localize "HUD.ToggleVis"}}">
+        </button>
         {{/if}}
     </div>
 </form>

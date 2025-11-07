@@ -1,4 +1,4 @@
-<form class="flexcol">
+<div>
     <div class="flexcol make-offer-container">
         <p class="notes" style="flex: 0 0 20px;">Drop an Actor or an Item here to select which character is making the offering</p>
         <div class="document-details">
@@ -12,11 +12,11 @@
             </div>
         </div>
         {{#if currency}}
-        <div class="items-list currency-group">
-            <div class="item-header flexrow">
-                <h3 class="item-name noborder">{{localize 'MonksEnhancedJournal.Currency'}}</h3>
-            </div>
-            <div class="flexrow currency-row">
+        <div class="currency-group">
+            <header>
+                <div class="name">{{localize 'MonksEnhancedJournal.Currency'}}</div>
+            </header>
+            <div class="currency-row">
                 {{#each currency}}
                 <div class="form-fields flexrow">
                     <label data-tooltip="{{localize this.name}}">{{localize this.name}}</label>
@@ -27,35 +27,36 @@
         </div>
         {{/if}}
         <div class="items-list offering-items">
-            <div class="item-header flexrow">
-                <h3 class="item-name noborder">{{localize 'MonksEnhancedJournal.Items'}}</h3>
-                <div class="item-detail">
+            <header>
+                <div class="item-name">{{localize 'MonksEnhancedJournal.Items'}}</div>
+                <div></div>
+                <div class="quantity">
                     {{localize 'MonksEnhancedJournal.Quantity'}}
                 </div>
-                <div class="item-controls"></div>
-            </div>
+                <div class="controls"></div>
+            </header>
+            {{#if (gt items.length 0)}}
             <ol class="item-list min-height">
                 {{#each items}}
-                <li class="item offering-item flexrow" data-id="{{this.id}}">
-                    <h3 class="item-name noborder flexrow">
+                <li class="item offering-item" data-id="{{this.id}}">
+                    <div>
                         <img class="item-image" src="{{this.img}}" />
-                        {{this.name}}
-                    </h3>
-                    <div class="item-detail">
-                        <div class="offering-qty">{{this.qty}}</div>
                     </div>
-                    <div class="item-controls">
-                        <a class="item-control item-delete" title="{{localize 'MonksEnhancedJournal.RemoveOffering'}}"><i class="fas fa-trash"></i></a>
+                    <div class="item-name">
+                        {{this.name}}
+                    </div>
+                    <div class="quantity">
+                        <span class="offering-qty">{{this.qty}}</span>
+                    </div>
+                    <div class="controls">
+                        <button type="button" class="inline-control icon fas fa-trash" data-tooltip="{{localize 'MonksEnhancedJournal.RemoveOffering'}}" data-action="removeOffering"></button>
                     </div>
                 </li>
-                {{else}}
-                <li class="instruction">Drag items here, from a player's inventory, to make an offer</li>
                 {{/each}}
             </ol>
+            {{else}}
+            <div class="instruction">Drag items here, from a player's inventory, to make an offer</div>
+            {{/if}}
         </div>
     </div>
-    <div class="offering-buttons flexrow" style="flex: 0 0 30px;">
-        <button type="submit" class="submit-offer"><i class="fas fa-hand-holding-usd"></i> Offer</button>
-        <button type="button" class="cancel-offer"><i class="fas fa-times"></i> Cancel</button>
-    </div>
-</form>
+</div>

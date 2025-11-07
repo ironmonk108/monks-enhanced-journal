@@ -1,145 +1,16 @@
-<form class="flexcol journal-subsheet {{entrytype}}">
+<form class="flexcol journal-subsheet {{entrytype}}" editable="{{editable}}">
     <div class="sheet-container slideshow-container flexcol{{#if playing}} playing{{/if}}">
-        <header class="journal-sheet-header header-name flexrow">
-            <i class="fas {{data.icon}} sheet-icon"></i>
-            <input name="name" type="text" value="{{data.name}}" placeholder="{{localize 'MonksEnhancedJournal.SlideshowName'}}">
-            <button class="nav-button play" type="button" title="{{localize 'MonksEnhancedJournal.Play'}}" {{#if (eq data.flags.monks-enhanced-journal.state "playing")}} style="display:none;" {{/if}}><i class="fas fa-play"></i></button>
-            <button class="nav-button pause" type="button" title="{{localize 'MonksEnhancedJournal.Pause'}}" {{#if (ne data.flags.monks-enhanced-journal.state "playing")}} style="display:none;" {{/if}}><i class="fas fa-pause"></i></button>
-            <button class="nav-button stop" type="button" title="{{localize 'MonksEnhancedJournal.Stop'}}" {{#if (eq data.flags.monks-enhanced-journal.state "stopped")}} style="display:none;" {{/if}}><i class="fas fa-stop"></i></button>
-        </header>
-        <nav class="sheet-navigation tabs" data-group="primary">
-            <a class="item" data-tab="entry-details">{{localize 'MonksEnhancedJournal.Details'}}</a>
-            <a class="item" data-tab="slides">{{localize 'MonksEnhancedJournal.Slides'}}</a>
-        </nav>
+        {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs"}}
+        {{> "templates/generic/tab-navigation.hbs" tabs=subtabs}}
         <section class="sheet-body">
-            <div class="tab entry-details active" data-group="primary" data-tab="entry-details">
+            <div class="tab {{#if subtabs.slide-details.active}} active{{/if}}" data-group="primary" data-tab="slide-details">
                 <div class="tab-inner slide-details flexcol">
-                    <div class="form-group">
-                        <label for="flags.monks-enhanced-journal.showas">{{localize 'MonksEnhancedJournal.ShowAs'}}</label>
-                        <div class="form-fields">
-                            <select name="flags.monks-enhanced-journal.showas">
-                                {{ selectOptions showasOptions selected=data.flags.monks-enhanced-journal.showas }}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{localize 'MonksEnhancedJournal.Loop'}}</label>
-                        <div class="form-fields" style="justify-content:flex-end;">
-                            <input type="checkbox" name="flags.monks-enhanced-journal.loop" {{checked data.flags.monks-enhanced-journal.loop}}>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="canvascolor">{{localize 'MonksEnhancedJournal.CanvasColour'}}</label>
-                        <div class="form-fields" style="justify-content: flex-end;">
-                            <input type="text" name="flags.monks-enhanced-journal.canvascolor" data-dtype="String" value="{{data.flags.monks-enhanced-journal.canvascolor}}" style="flex: 0 0 100px;">
-                            <input type="color" data-edit="flags.monks-enhanced-journal.canvascolor" value="{{data.flags.monks-enhanced-journal.canvascolor}}" style="flex: 0 0 100px;">
-                        </div>
-                    </div>
-                    <header class="form-header" style="font-size:16px;">
-                        <h3 class="noborder"><i class="fas fa-music"></i> {{localize 'MonksEnhancedJournal.Audio'}}</h3>
-                    </header>
-                    <div class="form-group">
-                        <label for="audiofile">{{localize 'MonksEnhancedJournal.Playlist'}}</label>
-                        <div class="form-fields">
-                            <select name="flags.monks-enhanced-journal.playlist">
-                                {{ selectOptions playlists selected=data.flags.monks-enhanced-journal.playlist blank="" valueAttr="id" labelAttr="name" }}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="audiofile">{{localize 'MonksEnhancedJournal.AudioFile'}}</label>
-                        <div class="form-fields">
-                            <file-picker class="image" style="border-color:#7a7971;" type="audio" name="flags.monks-enhanced-journal.audiofile" placeholder="path/audio.mp3" value="{{data.flags.monks-enhanced-journal.audiofile}}"></file-picker>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{localize 'MonksEnhancedJournal.PausePlaylists'}}</label>
-                        <div class="form-fields" style="justify-content:flex-end;">
-                            <input type="checkbox" name="flags.monks-enhanced-journal.pauseplaylist" {{checked data.flags.monks-enhanced-journal.pauseplaylist}}>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{localize 'MonksEnhancedJournal.Loop'}}</label>
-                        <div class="form-fields" style="justify-content:flex-end;">
-                            <input type="checkbox" name="flags.monks-enhanced-journal.loopaudio" {{checked data.flags.monks-enhanced-journal.loopaudio}}>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="volume">{{localize 'MonksEnhancedJournal.Volume'}}</label>
-                        <div class="form-fields">
-                            <input type="range" name="flags.monks-enhanced-journal.volume" min="0" max="1" step="0.1" value="{{ data.flags.monks-enhanced-journal.volume }}">
-                            <span class="range-value" style="flex: 0 1 48px;min-height: 22px;">{{ data.flags.monks-enhanced-journal.volume }}</span>
-                        </div>
-                    </div>
-                    <header class="form-header" style="font-size:16px;">
-                        <h3 class="noborder"><i class="fas fa-running"></i> {{localize 'MonksEnhancedJournal.Transition'}}</h3>
-                    </header>
-                    <div class="form-group">
-                        <label for="transition.effect">{{localize 'MonksEnhancedJournal.Effect'}}</label>
-                        <div class="form-fields">
-                            <select name="flags.monks-enhanced-journal.transition.effect">
-                                {{ selectOptions effectOptions selected=data.flags.monks-enhanced-journal.transition.effect localize=true }}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="transition.duration">{{localize 'MonksEnhancedJournal.Duration'}}</label>
-                        <div class="form-fields" style="justify-content:flex-end;">
-                            <input type="number" name="flags.monks-enhanced-journal.transition.duration" value="{{data.flags.monks-enhanced-journal.transition.duration}}" style="height: 28px; flex: 0 0 60px; text-align: right;">
-                            <label style="flex: 0 0 60px;">{{localize 'MonksEnhancedJournal.seconds'}}</label>
-                        </div>
-                    </div>
-                    <header class="form-header" style="font-size:16px;">
-                        <h3 class="noborder"><i class="fas fa-font"></i> {{localize 'MonksEnhancedJournal.Font'}}</h3>
-                    </header>
-                    <div class="form-group">
-                        <label for="font.name">{{localize 'MonksEnhancedJournal.Font'}}</label>
-                        <div class="form-fields">
-                            <select name="flags.monks-enhanced-journal.font.name">
-                                {{ selectOptions fontOptions selected=data.flags.monks-enhanced-journal.font.name localize=true }}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="flags.monks-enhanced-journal.font.color">{{localize 'MonksEnhancedJournal.TextColour'}}</label>
-                        <div class="form-fields">
-                            <input type="text" name="flags.monks-enhanced-journal.font.color" data-dtype="String" value="{{data.flags.monks-enhanced-journal.font.color}}">
-                            <input type="color" data-edit="flags.monks-enhanced-journal.font.color" value="{{data.flags.monks-enhanced-journal.font.color}}">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="font.size">{{localize 'MonksEnhancedJournal.Size'}}</label>
-                        <div class="form-fields" style="justify-content:flex-end;">
-                            <input type="number" name="flags.monks-enhanced-journal.font.size" value="{{data.flags.monks-enhanced-journal.font.size}}" style="height: 28px; flex: 0 0 60px; text-align: right;">
-                        </div>
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-slide-details.hbs"}}
                 </div>
             </div>
-            <div class="tab slides" data-group="primary" data-tab="slides">
+            <div class="tab slides{{#if subtabs.slides.active}} active{{/if}}" data-group="primary" data-tab="slides">
                 <div class="tab-inner flexcol">
-                    <div class="slide-showing">
-                        <div class="duration"></div>
-                    </div>
-                    <div class="slideshow-body-outer">
-                        <div class="slideshow-body">
-                            {{#each slides}}
-                            <div class="slide{{#if this.active}} active{{/if}}" data-slide-id="{{this.id}}">
-                                <div class="slide-inner">
-                                    <div class="slide-background"><div style="{{this.background}}"></div></div>
-                                    <img class="slide-image" src="{{this.thumbnail}}" style="object-fit:{{this.sizing}};{{#unless this.thumbnail}}display:none;{{/unless}}" />
-                                    <div class="slide-textarea flexcol">
-                                        {{#each this.texts}}
-                                        <div class="slide-text" data-id="{{this.id}}" style="{{this.style}}">{{this.text}}</div>
-                                        {{/each}}
-                                    </div>
-                                </div>
-                            </div>
-                            {{/each}}
-                            <div class="add-slide">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-slides.hbs"}}
                 </div>
             </div>
         </section>

@@ -1,48 +1,76 @@
 import { MonksEnhancedJournal, log, setting, i18n, makeid } from '../monks-enhanced-journal.js';
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class Objectives extends FormApplication {
-    constructor(object, journalentry, options = {}) {
-        super(object, options);
-        this.journalentry = journalentry;
-    }
+export class Objectives extends HandlebarsApplicationMixin(ApplicationV2) {
 
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "objectives",
-            classes: ["form", "objective-sheet"],
-            title: i18n("MonksEnhancedJournal.Objectives"),
-            template: "modules/monks-enhanced-journal/templates/objectives.html",
-            width: 500,
+    static DEFAULT_OPTIONS = {
+        id: "objectives",
+        tag: "form",
+        classes: ["objective-sheet"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            //icon: "fa-solid fa-align-justify",
+            title: "MonksEnhancedJournal.Objectives",
             resizable: true
-        });
-    }
+        },
+        position: { width: 600 },
+        form: {
+            handler: Objectives.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
 
-    async getData() {
-        let data = await super.getData();
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
+            template: "modules/monks-enhanced-journal/templates/objectives.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs",
+            ]
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
 
-        //this._convertFormats(data);
-        data.enrichedText = await TextEditor.enrichHTML(data.object.content, {
-            relativeTo: this.journalentry.object,
-            secrets: this.journalentry.object.isOwner,
-            async: true
-        });
-
-        return data;
-    }
-
-    /* -------------------------------------------- */
-
-    /** @override */
-    async _updateObject(event, formData) {
-        log('updating objective', event, formData, this.object);
-        foundry.utils.mergeObject(this.object, formData);
-        let objectives = foundry.utils.duplicate(this.journalentry.object.flags["monks-enhanced-journal"].objectives || []);
-        if (this.object.id == undefined) {
-            this.object.id = makeid();
-            objectives.push(this.object);
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                await this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
         }
 
-        this.journalentry.object.setFlag('monks-enhanced-journal', 'objectives', objectives);
+        return context;
+    }
+
+    async _prepareBodyContext(context, options) {
+        context.document = this.options.document;
+
+        return context;
+    }
+
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-save",
+                label: "MonksEnhancedJournal.Update",
+            },
+        ];
+    }
+
+    static async onSubmitForm(event, form, formData) {
+        foundry.utils.mergeObject(this.options.document, formData.object);
+        let objectives = foundry.utils.duplicate(this.options.journalentry.document.flags["monks-enhanced-journal"].objectives || {});
+        if (this.options.document.id == undefined) {
+            this.options.document.id = makeid();
+        }
+        objectives[this.options.document.id] = this.options.document;
+
+        this.options.journalentry.document.setFlag('monks-enhanced-journal', 'objectives', objectives);
     }
 }

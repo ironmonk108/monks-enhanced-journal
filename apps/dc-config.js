@@ -1,20 +1,76 @@
 import { MonksEnhancedJournal, log, setting, i18n, makeid } from '../monks-enhanced-journal.js';
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class DCConfig extends FormApplication {
-    constructor(object, journalentry, options = {}) {
-        super(object, options);
-        this.journalentry = journalentry;
+export class DCConfig extends HandlebarsApplicationMixin(ApplicationV2) {
+    constructor(options = {}) {
+        super(options);
+        this.document = foundry.utils.mergeObject({
+            dc: 10,
+            attribute: "ability:str"
+        }, options.document || {});
     }
 
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "dc-config",
-            classes: ["form", "dc-sheet"],
-            title: i18n("MonksEnhancedJournal.DCConfiguration"),
-            template: "modules/monks-enhanced-journal/templates/dc-config.html",
-            width: 400
+    static DEFAULT_OPTIONS = {
+        id: "dc-config",
+        tag: "form",
+        classes: ["dc-sheet"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            //icon: "fa-solid fa-align-justify",
+            title: "MonksEnhancedJournal.DCConfiguration"
+        },
+        actions: {
+            cancel: DCConfig.onClose
+        },
+        position: { width: 400 },
+        form: {
+            handler: DCConfig.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
+
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
+            template: "modules/monks-enhanced-journal/templates/dc-config.html"
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
+        }
+
+        return context;
+    }
+
+    _prepareBodyContext(context, options) {
+        return foundry.utils.mergeObject(context, {
+            name: this.document.name,
+            img: this.document.img,
+            dc: this.document.dc,
+            attribute: this.document.attribute,
+            attributeOptions: DCConfig.optionList()
         });
+    }
+
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-save",
+                label: "MonksEnhancedJournal.Update",
+            },
+        ];
     }
 
     static optionList() {
@@ -45,38 +101,28 @@ export class DCConfig extends FormApplication {
         return attributeOptions;
     }
 
-    getData(options) {
-        return foundry.utils.mergeObject(super.getData(options),
-            {
-                attributeOptions: DCConfig.optionList()
-            }, { recursive: false }
-        );
-    }
+    static async onSubmitForm(event, form, formData) {
+        let fd = foundry.utils.expandObject(formData.object);
 
-    /* -------------------------------------------- */
-
-    /** @override */
-    async _updateObject(event, formData) {
-        log('updating dc', event, formData, this.object);
-
-        foundry.utils.mergeObject(this.object, formData);
-        let dcs = foundry.utils.duplicate(this.journalentry.object.flags["monks-enhanced-journal"].dcs || []);
-        if (this.object.id == undefined) {
-            this.object.id = makeid();
-            dcs.push(this.object);
+        foundry.utils.mergeObject(this.document, fd);
+        if (this.document.id == undefined) {
+            this.document.id = makeid();
         }
-            
-        this.journalentry.object.setFlag('monks-enhanced-journal', 'dcs', dcs);
-    }
 
-    activateListeners(html) {
-        super.activateListeners(html);
+        let dcs = foundry.utils.duplicate(this.options.journalentry.document.flags["monks-enhanced-journal"].dcs || {});
+        dcs[this.document.id] = this.document;
+
+        this.options.journalentry.document.setFlag('monks-enhanced-journal', 'dcs', dcs);
     }
 
     async close(options) {
-        if (this.object.id && (this.object.attribute == 'undefined' || this.object.attribute.indexOf(':') < 0)) {
-           this.journalentry.deleteItem(this.object.id, 'dcs');    //delete it if it wasn't created properly
+        if (this.document.id && (this.document.attribute == 'undefined' || this.document.attribute.indexOf(':') < 0)) {
+            this.options.journalentry.deleteItem(this.document.id, 'dcs');    //delete it if it wasn't created properly
         }
         return super.close(options);
+    }
+
+    static onClose(event, form) {
+        this.close();
     }
 }

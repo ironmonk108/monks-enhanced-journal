@@ -1,66 +1,57 @@
-<form>
-    <p class="notes">Change the rate this shop sells items and buys them back.</p>
-    <p class="notes">Leave the type field blank to use the default, or use -1 to prevent the shop from buying back that type of item.</p>
-    <table>
-        <tr>
-            <td></td>
-            <td style="text-align:right;">Sell</td>
-            <td style="text-align:right;">Buy Back</td>
-        </tr>
-        <tr>
-            <td>Default</td>
-            <td>
+<div>
+    <p class="notes" style="margin-bottom: 0px;">Change the rate this shop sells items and buys them back.</p>
+    <p class="notes" style="margin: 0px;">Leave the type field blank to use the default, or use -1 to prevent the shop from buying back that type of item.</p>
+    <div class="items-list">
+        <header>
+            <div></div>
+            <div style="text-align: right;">Sell</div>
+            <div style="text-align: right;">Buy Back</div>
+        </header>
+        <ol class="item-list">
+            <li>
+                <div>Default</div>
                 <div class="form-fields flexrow" style="justify-content: flex-end;">
                     <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
-                    <input type="number" class="sell-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.default.sell" min="0" step="0.01" data-dtype="Number" placeholder="{{defaultAdjustment.default.sell}}" value="{{adjustment.default.sell}}" />
+                    <input type="number" class="sell-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.default.sell" min="0" step="0.01" data-dtype="Number" placeholder="{{adjustments.[0].default.sell}}" value="{{adjustments.[0].sell}}" />
                 </div>
-            </td>
-            <td>
                 <div class="form-fields flexrow" style="justify-content: flex-end;">
                     <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
-                    <input type="number" class="buy-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.default.buy" min="-1" step="0.01" data-dtype="Number" placeholder="{{defaultAdjustment.default.buy}}" value="{{adjustment.default.buy}}" />
+                    <input type="number" class="buy-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.default.buy" min="-1" step="0.01" data-dtype="Number" placeholder="{{adjustments.[0].default.buy}}" value="{{adjustments.[0].buy}}" />
                 </div>
-            </td>
-        </tr>
-        {{#if types}}
-        <tr>
-            <td colspan="3">
-                <hr />
-                Types
-                <hr />
-            </td>
-        </tr>
+            </li>
+        </ol>
+        {{#if adjustments}}
+        <header>
+            <div>Types</div>
+        </header>
+
+        <ol class="item-list" style="max-height: 300px;">
+            {{#each adjustments as |adjustment|}}
+            {{#unless (eq @index 0)}}
+            <li>
+                <div>{{adjustment.name}}</div>
+                <div class="form-fields flexrow" style="justify-content: flex-end;">
+                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
+                    <input type="number" class="sell-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.{{adjustment.id}}.sell" step="any" data-dtype="Number" placeholder="{{adjustment.default.sell}}" value="{{adjustment.sell}}" />
+                </div>
+                <div class="form-fields flexrow" style="justify-content: flex-end;">
+                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
+                    <input type="number" class="buy-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.{{adjustment.id}}.buy" step="any" data-dtype="Number" placeholder="{{adjustment.default.buy}}" value="{{adjustment.buy}}" />
+                </div>
+            </li>
+            {{/unless}}
+            {{/each}}
+        </ol>
         {{/if}}
-        {{#each types}}
-        <tr>
-            <td>{{this}}</td>
-            <td>
-                <div class="form-fields flexrow" style="justify-content: flex-end;">
-                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
-                    <input type="number" class="sell-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.{{@key}}.sell" step="any" data-dtype="Number" placeholder="{{lookup (lookup @root.defaultAdjustment @key) 'sell'}}" value="{{lookup (lookup @root.adjustment @key) 'sell'}}" />
-                </div>
-            </td>
-            <td>
-                <div class="form-fields flexrow" style="justify-content: flex-end;">
-                    <span style="font-size:20px;margin-left:10px;flex: 0 0 20px;text-align:left;">&times;</span>
-                    <input type="number" class="buy-field" style="flex: 0 0 60px;text-align:right;" name="adjustment.{{@key}}.buy" step="any" data-dtype="Number" placeholder="{{lookup (lookup @root.defaultAdjustment @key) 'buy'}}" value="{{lookup (lookup @root.adjustment @key) 'buy'}}" />
-                </div>
-            </td>
-        </tr>
-        {{/each}}
-    </table>
+    </div>
+    
     {{#if showConvert}}
-    <hr />
+    <hr style="margin: 0px;" />
     <div class="form-group">
         <label>{{localize 'MonksEnhancedJournal.ConvertShopItems'}}</label>
         <div class="form-fields" style="text-align:right;">
-            <a class="convert-button"><i class="fas fa-donate"></i> {{localize 'MonksEnhancedJournal.Convert'}}</a>
+            <button type="button" class="inline-control" data-action="convert"><i class="fas fa-donate"></i> {{localize 'MonksEnhancedJournal.Convert'}}</button>
         </div>
     </div>
     {{/if}}
-    <div class="flexrow" style="flex: 0 0 30px;">
-        {{#if showConvert}}<button type="button" class="reset"><i class="fas fa-undo"></i> Reset</button>{{/if}}
-        <button type="submit"><i class="fas fa-check"></i> Save</button>
-        <button type="button" class="cancel"><i class="fas fa-times"></i> Cancel</button>
-    </div>
-</form>
+</div>

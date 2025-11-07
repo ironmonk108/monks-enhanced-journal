@@ -1,86 +1,110 @@
-<form class="slide-config monks-journal-sheet" autocomplete="off" onsubmit="event.preventDefault();">
-    <header class="form-header">
-        <h3 class="noborder"><i class="far fa-image"></i> {{localize 'MonksEnhancedJournal.Details'}}</h3>
-    </header>
-    <div class="form-group">
-        <label for="img">{{localize 'MonksEnhancedJournal.SlideImage'}}</label>
-        <div class="form-fields">
-            <file-picker class="image" type="imagevideo" name="img" placeholder="path/image.png" value="{{object.img}}" ></file-picker>
+<div class="slide-config monks-journal-sheet" autocomplete="off">
+    {{> "templates/generic/tab-navigation.hbs" tabs=subtabs}}
+    <section class="sheet-body">
+        <div class="tab {{#if subtabs.details.active}} active{{/if}}" data-group="primary" data-tab="details">
+            <div class="tab-inner flexcol">
+                <div class="form-group">
+                    <label for="img">{{localize 'MonksEnhancedJournal.SlideImage'}}</label>
+                    <div class="form-fields">
+                        <file-picker class="image" type="imagevideo" name="img" placeholder="path/image.png" value="{{document.img}}"></file-picker>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sizing">{{localize 'MonksEnhancedJournal.Sizing'}}</label>
+                    <div class="form-fields">
+                        <select name="sizing">
+                            {{ selectOptions sizingOptions selected=document.sizing localize=true }}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="font">{{localize 'MonksEnhancedJournal.Font'}}</label>
+                    <div class="form-fields">
+                        <select name="font.name">
+                            {{ selectOptions fontOptions selected=document.font.name localize=true }}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="size">{{localize 'MonksEnhancedJournal.Size'}}</label>
+                    <div class="form-fields" style="justify-content:flex-end;">
+                        <input type="number" name="font.size" value="{{document.font.size}}" placeholder="{{fontSizePlaceholder}}" style="height: 28px; flex: 0 0 60px; text-align: right;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="color">{{localize 'MonksEnhancedJournal.TextColour'}}</label>
+                    <div class="form-fields">
+                        <color-picker name="font.color" value="{{document.font.color}}" placeholder="{{colorPlaceholder}}" style="flex: 0 0 140px;"></color-picker>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="background.color">{{localize 'MonksEnhancedJournal.BackgroundColour'}}</label>
+                    <div class="form-fields" style="justify-content: flex-end;">
+                        <color-picker name="background.color" value="{{document.background.color}}" style="flex: 0 0 140px;"></color-picker>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="sizing">{{localize 'MonksEnhancedJournal.Sizing'}}</label>
-        <div class="form-fields">
-            <select name="sizing">
-                {{ selectOptions sizingOptions selected=object.sizing localize=true }}
-            </select>
+        <div class="tab {{#if subtabs.audio.active}} active{{/if}}" data-group="primary" data-tab="audio">
+            <div class="tab-inner flexcol">
+                <div class="form-group">
+                    <label for="audiofile">{{localize 'MonksEnhancedJournal.AudioFile'}}</label>
+                    <div class="form-fields">
+                        <file-picker class="image" style="border-color:#7a7971;" type="audio" name="audiofile" placeholder="path/audio.mp3" value="{{document.audiofile}}"></file-picker>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="volume">{{localize 'MonksEnhancedJournal.Volume'}}</label>
+                    <div class="form-fields">
+                        <range-picker name="volume" min="0" max="1" step="0.1" value="{{ volume }}"></range-picker>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="background.color">{{localize 'MonksEnhancedJournal.BackgroundColour'}}</label>
-        <div class="form-fields" style="justify-content: flex-end;">
-            <input type="text" name="background.color" data-dtype="String" value="{{object.background.color}}" style="flex: 0 0 100px;">
-            <input type="color" data-edit="background.color" value="{{object.background.color}}" style="flex: 0 0 100px;">
+        <div class="tab {{#if subtabs.transition.active}} active{{/if}}" data-group="primary" data-tab="transition">
+            <div class="tab-inner flexcol">
+                <p class="notes">{{localize 'MonksEnhancedJournal.msg.SetDurationToZero'}}</p>
+                <div class="form-group">
+                    <label for="transition.effect">{{localize 'MonksEnhancedJournal.Effect'}}</label>
+                    <div class="form-fields">
+                        <select name="transition.effect">
+                            {{ selectOptions effectOptions selected=document.transition.effect localize=true }}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="transition.duration">{{localize 'MonksEnhancedJournal.Duration'}}</label>
+                    <div class="form-fields">
+                        <input type="number" name="transition.duration" placeholder="seconds" value="{{document.transition.duration}}" style="flex: 0 0 60px; text-align:right;">
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <header class="form-header">
-        <h3 class="noborder"><i class="fas fa-music"></i> {{localize 'MonksEnhancedJournal.Audio'}}</h3>
-    </header>
-    <div class="form-group">
-        <label for="audiofile">{{localize 'MonksEnhancedJournal.AudioFile'}}</label>
-        <div class="form-fields">
-            <file-picker class="image" style="border-color:#7a7971;" type="audio" name="audiofile" placeholder="path/audio.mp3" value="{{object.audiofile}}" ></file-picker>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="volume">{{localize 'MonksEnhancedJournal.Volume'}}</label>
-        <div class="form-fields">
-            <input type="range" name="volume" min="0" max="1" step="0.1" value="{{ volume }}">
-            <span class="range-value">{{ volume }}</span>
-        </div>
-    </div>
-    <header class="form-header">
-        <h3 class="noborder"><i class="fas fa-running"></i> {{localize 'MonksEnhancedJournal.Transition'}}</h3>
-    </header>
-    <div class="form-group">
-        <label for="transition.effect">{{localize 'MonksEnhancedJournal.Effect'}}</label>
-        <div class="form-fields">
-            <select name="transition.effect">
-                {{ selectOptions effectOptions selected=object.transition.effect localize=true }}
-            </select>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="transition.duration">{{localize 'MonksEnhancedJournal.Duration'}}</label>
-        <div class="form-fields">
-            <input type="number" name="transition.duration" placeholder="seconds" value="{{object.transition.duration}}" style="flex: 0 0 60px; text-align:right;">
-        </div>
-    </div>
-    <p class="notes">{{localize 'MonksEnhancedJournal.msg.SetDurationToZero'}}</p>
-    <header class="form-header">
-        <h3 class="noborder"><i class="fas fa-book-open"></i> {{localize 'MonksEnhancedJournal.Text'}}</h3>
-    </header>
-    <div class="slide">
-        <div class="slide-inner">
-            <div class="slide-background"><div style="{{background}}"></div></div>
-            <img class="slide-image" {{#if thumbnail}} src="{{thumbnail}}" {{/if}} style="object-fit:{{object.sizing}}" />
-            <div class="slide-textarea">
-                {{#each this.texts}}
-                <textarea class="slide-text" data-id="{{this.id}}" style="{{this.style}}">{{this.text}}</textarea>
-                {{/each}}
-                <div class="slide-hud" tabindex="-1">
-                    <div class="mover"></div>
-                    <div class="control-column">
-                        <div class="control-icon" data-action="edit" tabindex="-1">
-                            <i class="fas fa-pencil" title="Edit"></i>
-                        </div>
-                        <div class="control-icon" data-action="delete" tabindex="-1">
-                            <i class="fas fa-trash" title="Delete"></i>
+        <div class="tab {{#if subtabs.texts.active}} active{{/if}}" data-group="primary" data-tab="texts">
+            <div class="tab-inner flexcol">
+                <div class="slide">
+                    <div class="slide-inner">
+                        <div class="slide-background"><div style="{{background}}"></div></div>
+                        <img class="slide-image" {{#if thumbnail}} src="{{thumbnail}}" {{/if}} style="object-fit:{{document.sizing}}" />
+                        <div class="slide-textarea">
+                            {{#each this.texts as |text|}}
+                            <textarea class="slide-text" data-id="{{text.id}}" style="{{text.style}}">{{text.text}}</textarea>
+                            {{/each}}
+                            <div class="slide-hud" tabindex="-1">
+                                <div class="mover"></div>
+                                <div class="control-column">
+                                    <div class="control-icon" data-action="edit" tabindex="-1">
+                                        <i class="fas fa-pencil" data-tooltip="Edit"></i>
+                                    </div>
+                                    <div class="control-icon" data-action="delete" tabindex="-1">
+                                        <i class="fas fa-trash" data-tooltip="Delete"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <button type="submit" name="submit" value="1"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.Update"}}</button>
-</form>
+    </section>    
+</div>

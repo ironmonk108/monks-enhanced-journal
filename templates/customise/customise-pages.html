@@ -1,72 +1,28 @@
-<form class="monks-journal-sheet sheet" autocomplete="off" onsubmit="event.preventDefault();">
-    <div class="flexrow" style="height: 100%;">
-        <aside class="sidebar flexcol">
-            <nav class="page-tabs" aria-label="PACKAGECONFIG.NavLabel">
-                <a class="item category-tab" data-tab="encounter">
-                    {{ localize 'MonksEnhancedJournal.encounter' }}
-                </a>
-                <a class="item category-tab" data-tab="event">
-                    {{ localize 'MonksEnhancedJournal.event' }}
-                </a>
-                <a class="item category-tab" data-tab="organization">
-                    {{ localize 'MonksEnhancedJournal.organization' }}
-                </a>
-                <a class="item category-tab" data-tab="person">
-                    {{ localize 'MonksEnhancedJournal.person' }}
-                </a>
-                <a class="item category-tab" data-tab="picture">
-                    {{ localize 'MonksEnhancedJournal.picture' }}
-                </a>
-                <a class="item category-tab" data-tab="place">
-                    {{ localize 'MonksEnhancedJournal.place' }}
-                </a>
-                <a class="item category-tab" data-tab="poi">
-                    {{ localize 'MonksEnhancedJournal.poi' }}
-                </a>
-                <a class="item category-tab" data-tab="quest">
-                    {{ localize 'MonksEnhancedJournal.quest' }}
-                </a>
-                <a class="item category-tab" data-tab="shop">
-                    {{ localize 'MonksEnhancedJournal.shop' }}
-                </a>
-            </nav>
-            <button class="reset-all" type="button">
-                <i class="fas fa-undo"></i> Reset Defaults
-            </button>
-        </aside>
-        <div class="categories flexcol" autocomplete="off">
-            <div style="flex: 1; padding: 0px; overflow: hidden; min-height: 400px;">
-                <section class="tab category active" data-tab="encounter" data-category="encounter">
-                    {{> encounter}}
-                </section>
-                <section class="tab category" data-tab="event" data-category="event">
-                    {{> event}}
-                </section>
-                <section class="tab category" data-tab="organization" data-category="organization">
-                    {{> organization}}
-                </section>
-                <section class="tab category" data-tab="person" data-category="person">
-                    {{> person}}
-                </section>
-                <section class="tab category" data-tab="picture" data-category="picture">
-                    {{> picture}}
-                </section>
-                <section class="tab category" data-tab="place" data-category="place">
-                    {{> place}}
-                </section>
-                <section class="tab category" data-tab="poi" data-category="poi">
-                    {{> poi}}
-                </section>
-                <section class="tab category" data-tab="quest" data-category="quest">
-                    {{> quest}}
-                </section>
-                <section class="tab category" data-tab="shop" data-category="shop">
-                    {{> shop}}
-                </section>
-            </div>
-            <footer>
-                <button type="submit"><i class="fas fa-save"></i> Save Changes</button>
-            </footer>
-        </div>
+<aside class="sidebar flexcol">
+    <nav class="tabs vertical scrollable page-tabs">
+        {{#each sheettypes as |type|}}
+        <button type="button" data-action="tab" data-group="sheet-settings" class="plain category-tab{{#if (eq type @root.activePage)}} active{{/if}}" data-tab="{{type}}">
+            <span>{{ localize (concat 'MonksEnhancedJournal.sheettype.' type) }}</span>
+        </button>
+        {{/each}}
+    </nav>
+    <footer class="form-footer">
+        <button class="reset-all" type="button" data-action="reset">
+            <i class="fa-solid fa-arrow-rotate-left" inert></i> Reset Defaults
+        </button>
+    </footer>
+</aside>
+<div class="main flexcol">
+    <div class="categories flexcol" autocomplete="off">
+        {{#each sheettypes as |type|}}
+        <section class="tab category{{#if (eq type @root.activePage)}} active{{/if}}" data-group="sheet-settings" data-tab="{{type}}" data-category="{{type}}">
+            {{> "modules/monks-enhanced-journal/templates/customise/customise-page.html" settings=(lookup @root.sheetSettings type)}}
+        </section>
+        {{/each}}
     </div>
-</form>
+    <footer class="form-footer">
+        <button type="submit">
+            <i class="fa-solid fa-floppy-disk" inert></i> Save Changes
+        </button>
+    </footer>
+</div>

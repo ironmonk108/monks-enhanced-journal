@@ -1,24 +1,10 @@
-<form class="flexcol journal-subsheet {{entrytype}}" editable="{{editable}}">
-    <div class="sheet-container picture-container flexcol">
-        <header class="journal-sheet-header header-name flexrow">
-            <i class="fas {{data.icon}} sheet-icon"></i>
-            <input type="text" name="name" placeholder="{{localize 'MonksEnhancedJournal.PersonName'}}" value="{{data.name}}" />
-            {{#if sound.audiofile}}
-            <button type="button" class="play-journal-sound{{#if sound.playing}} active{{/if}}">
-                <i class="fas {{#if sound.playing}}fa-volume-up{{else}}fa-volume-off{{/if}}"></i>
-            </button>
-            {{/if}}
-            <input type="text" style="display:none;" /><!--I can't figure out what's going on, but to avoid Enter causing a page submit a second text needs to be on the page-->
-        </header>
-        <section class="sheet-body flexcol">
-            <!--<div class="img-background" style="background-image: url('{{data.src}}')"></div>-->
-            <div class="picture-outer">
-                <div class="picture-img lightbox-image" name="src" src="{{data.src}}" style="background-image: url('{{data.src}}')" data-edit="src" onerror="$(this).css({ backgroundImage: 'url(icons/svg/mystery-man.svg)' }"></div>
-            </div>
-            {{#if owner}}
-            <div class="instruction" style="{{#if data.src}}display:none;{{/if}}">Click to add an Image</div>
-            {{/if}}
-            <div class="reset-scale" title="Clear scaling"><i class="fas fa-eraser"></i></div>
-        </section>
+<div>
+    <div class="flexcol journal-subsheet {{entrytype}}" editable="{{editable}}">
+        <div class="sheet-container picture-container flexcol">
+            {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs"}}
+            <section class="sheet-body flexcol">
+                {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-image.hbs"}}
+            </section>
+        </div>
     </div>
-</form>
+</div>

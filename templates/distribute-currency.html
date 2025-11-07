@@ -1,65 +1,62 @@
-<div class="distribute-container">
-    <form autocomplete="off" onsubmit="event.preventDefault();">
-        <p class="notes">{{localize 'MonksEnhancedJournal.msg.ClearTheValueToRemoveCharacterFromSplit'}}</p>
+<div>
+    <p class="notes">{{localize 'MonksEnhancedJournal.msg.ClearTheValueToRemoveCharacterFromSplit'}}</p>
 
-        <div class="items-list">
-            <ul class="item-list">
-                <li class="item flexrow" data-id="{{this.id}}" draggable="false">
-                    <h3 class="item-name noborder flexrow">{{localize "MonksEnhancedJournal.Currency"}}</h3>
-                    {{#each currencies}}
-                    <div class="item-detail">
-                        <input type="text" class="currency-amount" data-currency="{{this.id}}" name="currency.{{this.id}}" placeholder="0" value="{{lookup ../currency this.id}}" data-dtype="Number" />
-                    </div>
-                    {{/each}}
-                    <div class="item-controls"></div>
-                </li>
-            </ul>
-            <div class="item-header flexrow">
-                <h3 class="item-name noborder flexrow"></h3>
-                <a class="item-control text split" title="{{localize 'MonksEnhancedJournal.SplitBetweenPlayers'}}">
-                    <i class="fas fa-dollar-sign"></i> {{localize 'MonksEnhancedJournal.Split'}}
-                </a>
-                <a class="item-control text reset" title="{{localize 'MonksEnhancedJournal.ResetAllTheValues'}}">
-                    <i class="fas fa-trash"></i> {{localize 'MonksEnhancedJournal.Clear'}}
-                </a>
+    <div class="items-list">
+        <header style="grid-template-columns: 150px repeat({{currencies.length}}, 1fr) 50px; padding-right: 0px;">
+            <div class="item-name">{{localize 'MonksEnhancedJournal.Character'}}</div>
+            {{#each currencies}}
+            <div class="item-detail">{{localize this.name}}</div>
+            {{/each}}
+            <div class="item-controls" style="justify-self: center;">
+                <button type="button" class="inline-control icon fas fa-arrows-rotate" data-tooltip="{{localize 'MonksEnhancedJournal.ResetAllTheValues'}}" data-action="clear">
+                </button>
             </div>
-            <div class="item-header flexrow">
-                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Character'}}</h3>
+        </header>
+        <ol class="item-list" style="grid-template-columns: 150px repeat({{currencies.length}}, 1fr) 50px;">
+            <li class="item" data-id="{{this.id}}" draggable="false">
+                <div class="item-name noborder flexrow">{{localize "MonksEnhancedJournal.Currency"}}</div>
                 {{#each currencies}}
-                <div class="item-detail">{{localize this.name}}</div>
+                <div class="item-detail">
+                    <input type="text" class="currency-amount" data-currency="{{this.id}}" name="currency.{{this.id}}" placeholder="0" value="{{lookup ../currency this.id}}" data-dtype="Number" />
+                </div>
                 {{/each}}
                 <div class="item-controls"></div>
+            </li>
+        </ol>
+        <header style="grid-template-columns: auto 34px;">
+            <div class="item-name"></div>
+            <div class="item-controls" style="justify-self: center;">
+                <button type="button" class="inline-control icon fas fa-hand-holding-dollar" data-tooltip="{{localize 'MonksEnhancedJournal.SplitBetweenPlayers'}}" data-action="split">
+                </button>
             </div>
-            <ul class="item-list min-height">
-                {{#each characters}}
-                <li class="item flexrow" data-id="{{this.id}}" draggable="false">
-                    <div class="item-name flexrow">
-                        <img class="item-image" src="{{this.img}}" title="{{this.name}}" />
-                        <h4>{{this.name}}</h4>
-                    </div>
+        </header>
+        <ol class="item-list min-height" style="grid-template-columns: 150px repeat({{currencies.length}}, 1fr) 50px;">
+            {{#each characters}}
+            <li class="item" data-id="{{this.id}}" draggable="false">
+                <div class="item-name">
+                    <img class="item-image" src="{{this.img}}" data-tooltip="{{this.name}}" />
+                    <div>{{this.name}}</div>
+                </div>
 
-                    {{#each @root.currencies}}
-                    <div class="item-detail">
-                        <input type="number" class="player-amount" data-currency="{{this.id}}" data-character="{{../id}}" charactername="character.{{../id}}.currency.{{this.id}}" placeholder="-" value="{{lookup ../currency this.id}}" data-dtype="Number" />
-                    </div>
-                    {{/each}}
+                {{#each @root.currencies}}
+                <div class="item-detail">
+                    <input type="number" class="player-amount" data-currency="{{this.id}}" data-character="{{../id}}" charactername="character.{{../id}}.currency.{{this.id}}" placeholder="-" value="{{lookup ../currency this.id}}" data-dtype="Number" />
+                </div>
+                {{/each}}
 
-                    <div class="item-controls">
-                        <a class="assign" data-character="{{this.id}}" title="{{localize 'MonksEnhancedJournal.msg.AssignRemainderToCharacter'}}">
-                            <i class="fas fa-dollar-sign"></i> {{localize 'MonksEnhancedJournal.Assign'}}
-                        </a>
-                    </div>
-                </li>
-                {{/each}}
-            </ul>
-            <div class="item-header flexrow">
-                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Totals'}}</h3>
-                {{#each currencies}}
-                <div class="item-detail total-amount{{#if (gt (lookup ../totals this.id) 0)}} more{{/if}}{{#if (lt (lookup ../totals this.id) 0)}} less{{/if}}" data-currency="{{this.id}}" name="totalcurrency.{{this.id}}">{{lookup ../totals this.id}}</div>
-                {{/each}}
-                <div class="item-controls"></div>
-            </div>
-        </div>
-        <button type="submit" name="submit" value="1"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.Distribute"}}</button>
-    </form>
+                <div class="item-controls" style="justify-self: center;">
+                    <button type="button" class="inline-control icon fas fa-circle-dollar-to-slot" data-character="{{this.id}}" data-tooltip="{{localize 'MonksEnhancedJournal.msg.AssignRemainderToCharacter'}}" data-action="assign">
+                    </button>
+                </div>
+            </li>
+            {{/each}}
+        </ol>
+        <header style="grid-template-columns: 140px repeat({{currencies.length}}, 1fr) 45px; ">
+            <div class="item-name">{{localize 'MonksEnhancedJournal.Totals'}}</div>
+            {{#each currencies}}
+            <div class="item-detail total-amount{{#if (gt (lookup ../totals this.id) 0)}} more{{/if}}{{#if (lt (lookup ../totals this.id) 0)}} less{{/if}}" data-currency="{{this.id}}" name="totalcurrency.{{this.id}}">{{lookup ../totals this.id}}</div>
+            {{/each}}
+            <div class="item-controls"></div>
+        </header>
+    </div>
 </div>

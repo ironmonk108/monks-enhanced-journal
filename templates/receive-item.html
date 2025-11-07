@@ -1,26 +1,26 @@
-<div class="monks-enhanced-journal request-item item-card monks-journal-sheet sheet">
+<div class="monks-enhanced-journal request-item item-card">
     <div class="flexrow">
         <div class="flexrow">
-            <img src="{{actor.img}}" class="reqest-chat-icon chat-actor-icon" />
-            <h4>{{actor.name}}</h4>
+            <img src="{{actor.img}}" class="reqest-chat-icon chat-actor-icon" style="width: 30px; height: 30px; flex: 0 0 30px; object-fit: contain;" />
+            <div style="margin-bottom:0px;">{{actor.name}}</div>
         </div>
     </div>
-    <div class="items-list receive-items" style="overflow-y: visible;">
-        <div class="item-header flexrow">
-            <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Items'}}</h3>
+    <div class="items-list receive-items"  style="overflow-x: hidden; overflow-y: visible; height: 100%; display: flex; flex-direction: column; margin-top: 8px;">
+        <header style="font-family: var(--mej-font-family); align-items: center; display: grid; grid-template-columns: auto 30px; gap: 0.25rem; margin: 0; padding: 2px; position: relative; text-align: left; background: rgba(0, 0, 0, 0.2); border: 2px groove #eeede0; ">
+            <div class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Items'}}</div>
 
             <div class="item-detail item-quantity">{{localize 'MonksEnhancedJournal.Qty'}}</div>
-        </div>
+        </header>
 
-        <ol class="item-list" style="overflow-y: visible;">
+        <ol class="item-list" style="align-items: center; display: grid; gap: 0.25rem; margin: 0; padding: 2px; position: relative; text-align: left; overflow-y: visible; height: 100%; max-height: 200px; margin: 0px;">
             {{#each items}}
-            <li class="item flexrow" data-id="{{this.id}}" draggable="false">
+            <li class="item flexrow" data-id="{{this.id}}" draggable="false" style="display: flex;">
                 <div class="item-name flexrow">
-                    <div class="item-image" style="background-image: url('{{this.img}}')"></div>
-                    <h4>{{this.name}}</h4>
+                    <div class="item-image" style="background-image: url('{{this.img}}'); width: 30px; height: 30px; flex: 0 0 30px; margin-right: 8px; background-size: contain;"></div>
+                    <div>{{this.name}}</div>
                 </div>
 
-                <div class="item-detail item-quantity">
+                <div class="item-detail item-quantity" style="flex: 0 0 30px;">
                     <span>{{this.quantity}}</span>
                 </div>
             </li>

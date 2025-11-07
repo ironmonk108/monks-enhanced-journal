@@ -1,212 +1,34 @@
 <form class="flexcol journal-subsheet {{entrytype}}" editable="{{editable}}">
     <div class="sheet-container detailed place-container flexcol">
-        <header class="journal-sheet-header flexrow">
-            <div class="sheet-image">
-                <img class="profile nopopout" src="{{data.src}}" data-edit="src" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/place.png' }">
-            </div>
-            <section class="header-details">
-                <h1 class="placename header-name flexrow">
-                    <i class="fas {{data.icon}} sheet-icon"></i>
-                    <input name="name" type="text" value="{{data.name}}" placeholder="{{localize 'MonksEnhancedJournal.PlaceName'}}" />
-                    {{#if sound.audiofile}}
-                    <button type="button" class="play-journal-sound{{#if sound.playing}} active{{/if}}">
-                        <i class="fas {{#if sound.playing}}fa-volume-up{{else}}fa-volume-off{{/if}}"></i>
-                    </button>
-                    {{/if}}
-                </h1>
-                <div class="form-group">
-                    <label>{{localize 'MonksEnhancedJournal.Type'}}</label>
-                    <input type="text" name="flags.monks-enhanced-journal.placetype" value="{{data.flags.monks-enhanced-journal.placetype}}" />
-                </div>
-                <div class="form-group">
-                    <label>{{localize 'MonksEnhancedJournal.Location'}}</label>
-                    <input type="text" name="flags.monks-enhanced-journal.location" value="{{data.flags.monks-enhanced-journal.location}}" />
-                </div>
-            </section>
-        </header>
-        <nav class="sheet-navigation tabs" data-group="primary">
-            {{#if sheetSettings.tabs.description.shown}}<a class="item" data-tab="description">{{localize 'MonksEnhancedJournal.Description'}}</a>{{/if}}
-            {{#if sheetSettings.tabs.entry-details.shown}}<a class="item" data-tab="entry-details">{{localize 'MonksEnhancedJournal.Details'}}</a>{{/if}}
-            {{#if sheetSettings.tabs.townsfolk.shown}}<a class="item{{#if has.townsfolk}} hasitems{{/if}}" data-tab="townsfolk">{{localize 'MonksEnhancedJournal.Townsfolk'}}</a>{{/if}}
-            {{#if sheetSettings.tabs.shops.shown}}<a class="item{{#if has.shops}} hasitems{{/if}}" data-tab="shops">{{localize 'MonksEnhancedJournal.Shops'}}</a>{{/if}}
-            {{#if sheetSettings.tabs.relationships.shown}}<a class="item{{#if has.relationships}} hasitems{{/if}}" data-tab="relationships">{{localize 'MonksEnhancedJournal.Relationships'}}</a>{{/if}}
-            {{#if sheetSettings.tabs.notes.shown}}<a class="item" data-tab="notes">{{localize 'MonksEnhancedJournal.Notes'}}</a>{{/if}}
-        </nav>
+        {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-detailed-header.hbs"}}
+        {{> "templates/generic/tab-navigation.hbs" tabs=subtabs}}
         <section class="sheet-body">
-            <div class="tab entry-details active" data-group="primary" data-tab="entry-details">
+            <div class="tab{{#if subtabs.description.active}} active{{/if}}" data-group="primary" data-tab="description">
+                {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs"}}
+            </div>
+            <div class="tab{{#if subtabs.entry-details.active}} active{{/if}}" data-group="primary" data-tab="entry-details">
                 <div class="tab-inner flexcol">
-                    <div class="details-section flexrow">
-                        <div class="document-details">
-                            <ul>
-                                {{#each fields}}
-                                {{#unless this.full}}
-                                <li {{#if this.hidden}} style="display:none;" {{/if}}>
-                                    <label>{{localize this.name}}</label>
-                                    <input type="text" name="flags.monks-enhanced-journal.attributes.{{this.id}}" value="{{ this.value }}" />
-                                </li>
-                                {{/unless}}
-                                {{/each}}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="details-section scrollable flexcol">
-                        {{#each fields}}
-                        {{#if this.full}}
-                        <div class="form-group" {{#if this.hidden}} style="display:none;" {{/if}}>
-                            <label>{{localize this.name}}</label>
-                            <textarea name="flags.monks-enhanced-journal.attributes.{{this.id}}">{{this.value}}</textarea>
-                        </div>
-                        {{/if}}
-                        {{/each}}
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-details.hbs"}}
                 </div>
             </div>
-            <div class="tab townsfolk" data-group="primary" data-tab="townsfolk">
+            <div class="tab{{#if subtabs.townsfolk.active}} active{{/if}}" data-group="primary" data-tab="townsfolk">
                 <div class="tab-inner flexcol">
-                    <div class="townsfolk flexrow">
-                        <div class="items-list">
-                            <div class="item-header flexrow">
-                                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Name'}}</h3>
-                                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Role'}}</h3>
-                                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Relationship'}}</h3>
-                                {{#if @root.owner}}<div class="item-controls flexrow" buttons="2"></div>{{/if}}
-                            </div>
-                            <ol class="item-list">
-                                {{#each townsfolk}}
-                                <li class="item flexrow" data-id="{{this.id}}" data-uuid="{{this.uuid}}" data-container="relationships" data-document="Person" draggable="false">
-                                    <div class="item-name clickable flexrow">
-                                        <img class="item-image large actor-icon" src="{{this.img}}" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/{{this.type}}.png' }" />
-                                        <h4><a>{{#if this.pack}}<i class="fas fa-atlas" title="{{localize 'MonksEnhancedJournal.FromCompendium'}}"></i> {{/if}}{{this.name}}</a></h4>
-                                    </div>
-
-                                    <div class="item-name flexrow">
-                                        {{this.role}}
-                                    </div>
-
-                                    <div class="item-name item-relationship flexrow">
-                                        <input type="text" class="item-field" name="relationships.{{this.id}}.relationship" value="{{this.relationship}}" />
-                                    </div>
-
-                                    {{#if @root.owner}}
-                                    <div class="item-controls flexrow owner" buttons="2">
-                                        <input type="checkbox" name="relationships.{{this.id}}.hidden" {{checked this.hidden}} style="display:none;" />
-                                        <a class="item-control item-hide" title="{{localize 'MonksEnhancedJournal.HideShowRelationship'}}"><i class="fas fa-eye-slash"></i></a>
-                                        <a class="item-control item-delete" title="{{localize 'MonksEnhancedJournal.RemoveActor'}}"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                    {{/if}}
-                                </li>
-                                {{else}}
-                                {{#if owner}}
-                                <li class="instruction">Drag a Person journal entry here to create townsfolk</li>
-                                {{else}}
-                                <li class="instruction">No townsfolk at the moment</li>
-                                {{/if}}
-                                {{/each}}
-                            </ol>
-                        </div>
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-relationships.hbs" groups=townsfolk hasRelationship=has.townsfolk additionalField=townsfolkAdditional}}
                 </div>
             </div>
-            <div class="tab shops" data-group="primary" data-tab="shops">
+            <div class="tab{{#if subtabs.shops.active}} active{{/if}}" data-group="primary" data-tab="shops">
                 <div class="tab-inner flexcol">
-                    <div class="shops flexrow">
-                        <div class="items-list">
-                            <div class="item-header flexrow">
-                                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Name'}}</h3>
-                                <h3 class="item-name noborder item-title">{{localize 'MonksEnhancedJournal.ShopType'}}</h3>
-                                <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Relationship'}}</h3>
-                                {{#if @root.owner}}<div class="item-controls flexrow" buttons="2"></div>{{/if}}
-                            </div>
-                            <ol class="item-list">
-                                {{#each shops}}
-                                <li class="item flexrow" data-id="{{this.id}}" data-uuid="{{this.uuid}}" data-container="relationships" data-document="Shop" draggable="false">
-                                    <div class="item-name clickable flexrow">
-                                        <img class="item-image large shop-icon" src="{{this.img}}" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/{{this.type}}.png' }" />
-                                        <h4><a>{{#if this.pack}}<i class="fas fa-atlas" title="{{localize 'MonksEnhancedJournal.FromCompendium'}}"></i> {{/if}}{{this.name}}</a></h4>
-                                    </div>
-
-                                    <div class="item-name flexrow">
-                                        {{this.shoptype}}
-                                    </div>
-
-                                    <div class="item-name item-relationship flexrow">
-                                        <input type="text" class="item-field" name="relationships.{{this.id}}.relationship" value="{{this.relationship}}" />
-                                    </div>
-
-                                    {{#if @root.owner}}
-                                    <div class="item-controls flexrow owner" buttons="2">
-                                        <input type="checkbox" name="relationships.{{this.id}}.hidden" {{checked this.hidden}} style="display:none;" />
-                                        <a class="item-control item-hide" title="{{localize 'MonksEnhancedJournal.HideShowRelationship'}}"><i class="fas fa-eye-slash"></i></a>
-                                        <a class="item-control item-delete" title="{{localize 'MonksEnhancedJournal.RemoveShop'}}"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                    {{/if}}
-                                </li>
-                                {{else}}
-                                {{#if owner}}
-                                <li class="instruction">{{localize 'MonksEnhancedJournal.msg.DragJournalEntryHereToCreateShop'}}</li>
-                                {{else}}
-                                <li class="instruction">{{localize 'MonksEnhancedJournal.msg.NoShopsAtTheMoment'}}</li>
-                                {{/if}}
-                                {{/each}}
-                            </ol>
-                        </div>
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-relationships.hbs" groups=shops hasRelationship=has.shops additionalField=shopAdditional}}
                 </div>
             </div>
-            <div class="tab relationships" data-group="primary" data-tab="relationships">
+            <div class="tab{{#if subtabs.relationships.active}} active{{/if}}" data-group="primary" data-tab="relationships">
                 <div class="tab-inner flexcol">
-                    <div class="relationships flexrow">
-                        <div class="items-list">
-                            <ol class="item-list">
-                                {{#each relationships}}
-                                <li class="item-header flexrow">
-                                    <h3 class="item-name noborder flexrow">{{this.name}}</h3>
-                                    <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Relationship'}}</h3>
-                                    {{#if @root.owner}}<div class="item-controls flexrow" buttons="2"></div>{{/if}}
-                                </li>
-                                {{#each documents}}
-                                <li class="item flexrow" data-id="{{this.id}}" data-uuid="{{this.uuid}}" data-container="relationships" data-document="JournalEntry" draggable="false">
-                                    <div class="item-name clickable flexrow">
-                                        <img class="item-image large actor-icon" src="{{this.img}}" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/{{this.type}}.png' }" />
-                                        <h4><a>{{#if this.pack}}<i class="fas fa-atlas" title="{{localize 'MonksEnhancedJournal.FromCompendium'}}"></i> {{/if}}{{this.name}}</a></h4>
-                                    </div>
-
-                                    <div class="item-name item-relationship flexrow">
-                                        <input type="text" class="item-field" name="relationships.{{this.id}}.relationship" value="{{this.relationship}}" />
-                                    </div>
-
-                                    {{#if @root.owner}}
-                                    <div class="item-controls flexrow owner" buttons="2">
-                                        <input type="checkbox" name="relationships.{{this.id}}.hidden" {{checked this.hidden}} style="display:none;" />
-                                        <a class="item-control item-hide" title="{{localize 'MonksEnhancedJournal.HideShowRelationship'}}"><i class="fas fa-eye-slash"></i></a>
-                                        <a class="item-control item-delete" title="{{localize 'MonksEnhancedJournal.RemoveRelationship'}}"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                    {{/if}}
-                                </li>
-                                {{/each}}
-                                {{else}}
-                                {{#if owner}}
-                                <li class="instruction">{{localize 'MonksEnhancedJournal.msg.DragToMakeRelationship'}}</li>
-                                {{else}}
-                                <li class="instruction">{{localize 'MonksEnhancedJournal.msg.NoRelationshipsAtTheMoment'}}</li>
-                                {{/if}}
-                                {{/each}}
-                            </ol>
-                        </div>
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-relationships.hbs" groups=relationships hasRelationship=has.relationships}}
                 </div>
             </div>
-            <div class="tab description" data-group="primary" data-tab="description">
+            <div class="tab notes{{#if subtabs.notes.active}} active{{/if}}" data-group="primary" data-tab="notes">
                 <div class="tab-inner flexcol">
-                    {{editor enrichedText target="text.content" editable=true button=true owner=owner engine=editor.engine collaborate=editor.collaborate }}
-                </div>
-            </div>
-            <div class="tab notes" data-group="primary" data-tab="notes">
-                <div class="tab-inner flexcol">
-                    <div style="flex-grow: 0;">{{localize 'MonksEnhancedJournal.OnlyViewable'}}{{#unless hasGM}}<span style="color:darkred;font-weight:bold;"> {{localize 'MonksEnhancedJournal.msg.CannotEditNotesWithoutGM'}}</span>{{/unless}}</div>
-                    <div class="notes-container">
-                        {{editor userdata.enrichedText target=notesTarget editable=true button=true engine=editor.engine collaborate=editor.collaborate }}
-                    </div>
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-notes.hbs"}}
                 </div>
             </div>
         </section>

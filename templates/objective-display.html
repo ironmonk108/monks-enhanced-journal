@@ -1,19 +1,21 @@
-<ul class="objective-list">
-    {{#each quests}}
-    <li data-document-id="{{this.uuid}}" status="{{this.status}}">
-        <div class="quest-name"><i class="fas {{this.icon}}"></i> {{this.name}}</div>
-        {{#if this.objectives}}
-        <ul>
-            {{#each objectives}}
-            <li class="flexrow" completed="{{this.completed}}">
-                <span>{{{this.content}}}</span>
-                {{#if this.required}}
-                <span style="flex: 0 0 50px; text-align: right;">{{this.done}}/{{this.required}}</span>
-                {{/if}}
-            </li>
-            {{/each}}
-        </ul>
-        {{/if}}
-    </li>
-    {{/each}}
-</ul>
+<div>
+    <ul class="objective-list">
+        {{#each quests}}
+        <li data-document-id="{{this.uuid}}" status="{{this.status}}" data-action="openQuest">
+            <div class="quest-name"><i class="fas {{this.icon}}"></i> {{this.name}}</div>
+            {{#if this.objectives}}
+            <ul>
+                {{#each objectives}}
+                <li class="flexrow" completed="{{this.completed}}">
+                    <span>{{{this.content}}}</span>
+                    {{#if this.required}}
+                    <span style="flex: 0 0 50px; text-align: right;">{{this.done}}/{{this.required}}</span>
+                    {{/if}}
+                </li>
+                {{/each}}
+            </ul>
+            {{/if}}
+        </li>
+        {{/each}}
+    </ul>
+</div>

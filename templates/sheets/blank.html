@@ -1,16 +1,18 @@
-<div class="flexcol journal-subsheet {{entrytype}} blank-body">
-    <div class="message">
-        <div style="transform: translateY(50%);">{{localize content}}</div>
+<div>
+    <div class="flexcol journal-subsheet blank-body">
+        <div class="message">
+            <div style="transform: translateY(50%);">{{localize content}}</div>
+        </div>
+        <section style="flex:2;">
+            <div class="flexrow" style="margin-bottom: 20px;">
+                <div class="new-link" data-action="newLink"><div><i class="fas fa-book-open"></i></div>Create New Entry</div>
+            </div>
+            <div class="recently-viewed">{{localize 'MonksEnhancedJournal.RecentlyViewed'}}</div>
+            <div class="flexrow">
+                {{#each recent}}
+                <div class="recent-link" data-action="recentLink" data-document-id="{{this.id}}" data-document-uuid="{{this.uuid}}"><div><i class="fas {{this.img}}"></i></div>{{this.name}}</div>
+                {{/each}}
+            </div>
+        </section>
     </div>
-    <section style="flex:2;">
-        <div class="flexrow" style="margin-bottom: 20px;">
-            <div class="new-link"><div><i class="fas fa-book-open"></i></div>Create New Entry</div>
-        </div>
-        <div class="recently-viewed">{{localize 'MonksEnhancedJournal.RecentlyViewed'}}</div>
-        <div class="flexrow">
-            {{#each recent}}
-            <div class="recent-link" data-document-id="{{this.id}}" data-document-uuid="{{this.uuid}}"><div><i class="fas {{this.img}}"></i></div>{{this.name}}</div>
-            {{/each}}
-        </div>
-    </section>
 </div>

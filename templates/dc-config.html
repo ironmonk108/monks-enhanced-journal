@@ -1,29 +1,28 @@
-<form class="dc-config" autocomplete="off" onsubmit="event.preventDefault();">
+<div>
     <div class="form-group">
         <label for="name">{{localize 'MonksEnhancedJournal.Name'}}</label>
         <div class="form-fields">
-            <input type="text" name="name" value="{{object.name}}">
+            <input type="text" name="name" value="{{name}}">
         </div>
     </div>
     <div class="form-group">
         <label for="img">{{localize 'MonksEnhancedJournal.Image'}}</label>
         <div class="form-fields">
-            <file-picker type="image" name="img" placeholder="path/image.png" value="{{object.img}}" ></file-picker>
+            <file-picker type="image" name="img" placeholder="path/image.png" value="{{img}}" ></file-picker>
         </div>
     </div>
     <div class="form-group">
         <label for="attribute">{{localize 'MonksEnhancedJournal.Attribute'}}</label>
         <div class="form-fields">
             <select name="attribute">
-                {{ selectGroups attributeOptions selected=object.attribute localize=true }}
+                {{ selectGroups attributeOptions selected=attribute localize=true }}
             </select>
         </div>
     </div>
     <div class="form-group">
         <label for="dc">{{localize 'MonksEnhancedJournal.DC'}}</label>
         <div class="form-fields">
-            <input type="number" name="dc" value="{{object.dc}}">
+            <input type="number" name="dc" value="{{dc}}">
         </div>
     </div>
-    <button type="submit" name="submit" value="1"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.Update"}}</button>
-</form>
+</div>

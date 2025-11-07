@@ -7,7 +7,7 @@
     <hr />
     <div class="flexrow" style="align-items: center;">
         <div></div>
-        <div class="flexcol">
+        <div class="flexcol" style="flex: 0 0 200px;">
             <div class="flexrow">
                 <span><b>{{localize 'MonksEnhancedJournal.Quantity'}}:</b>{{#if maxquantity}}<i><small>({{localize 'MonksEnhancedJournal.Max'}}: {{maxquantity}})</small></i>{{/if}}</span>
                 <input type="number" min="1" {{#if maxquantity}} max="{{maxquantity}}" {{/if}} step="1" name="quantity" style="flex:0 0 75px;text-align:right;" value="{{quantity}}" />

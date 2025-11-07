@@ -1,13 +1,10 @@
-<form class="monks-journal-sheet sheet" autocomplete="off" onsubmit="event.preventDefault();">
-    <div class="flexcol">
-        {{> page}}
+<div>
+    <div class="sheet-content">
+        {{> "templates/generic/tab-navigation.hbs" tabs=settings}}
+        {{#each settings as |subtab|}}
+        <div class="tab{{#if subtab.active}} active{{/if}}" data-group="{{subtab.group}}" data-tab="{{subtab.id}}">
+            {{> (lookup subtab "partial") context=subtab.context type=subtab.group }}
+        </div>
+        {{/each}}
     </div>
-    <footer class="flexrow" style="flex-grow: 0">
-        <button class="reset-all" type="button">
-            <i class="fas fa-undo"></i> Reset Defaults
-        </button>
-        <button type="submit">
-            <i class="fas fa-save"></i> Save Changes
-        </button>
-    </footer>
-</form>
+</div>

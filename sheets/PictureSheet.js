@@ -2,51 +2,53 @@ import { setting, i18n, log, makeid, MonksEnhancedJournal } from "../monks-enhan
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
 
 export class PictureSheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
-    }
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.picture",
+            icon: "fa-solid fa-image",
+        },
+        actions: {
+        },
+    };
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.picture"),
-            template: "modules/monks-enhanced-journal/templates/sheets/picture.html"
-        });
-    }
-
-    async getData() {
-        let data = await super.getData();
-
-        return data;
-    }
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/sheets/picture.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-image.hbs",
+            ]
+        }
+    };
 
     static get type() {
         return 'picture';
     }
 
-    _inferDefaultMode() {
-        return "image";
-    }
-
-    get template() {
-        //let settings = this.sheetSettings();
-        //if (!this.object.isOwner && foundry.utils.getProperty(settings, "settings.open.value") === true) return ImagePopout.defaultOptions.template;
-        return this.options.template;
-    }
-
     _documentControls() {
         let ctrls = [
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers },
-            { id: 'sound', text: i18n("MonksEnhancedJournal.AddSound"), icon: 'fa-music', conditional: this.isEditable, callback: () => { this.onAddSound(); } },
-            { id: 'convert', text: i18n("MonksEnhancedJournal.Convert"), icon: 'fa-clipboard-list', conditional: (game.user.isGM && this.isEditable), callback: () => { } }
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'sound', label: i18n("MonksEnhancedJournal.AddSound"), icon: 'fas fa-music', visible: this.isEditable, action: "addSound" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" }
         ];
         return ctrls.concat(super._documentControls());
     }
 
-    _getSubmitData() {
-        let data = foundry.utils.expandObject(super._getSubmitData());
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
 
-        data.src = $('.picture-img', this.element).attr('src');
+        context.placeholder = "MonksEnhancedJournal.Picture";
 
-        return foundry.utils.flattenObject(data);
+        return foundry.utils.mergeObject(context, {
+            placeholder: i18n("MonksEnhancedJournal.PictureName"),
+        });
+    }
+
+    _prepareSubmitData(event, form, formData, updateData) {
+        const submitData = super._prepareSubmitData(event, form, formData, updateData);
+        submitData.src = $('.picture-img', this.trueElement).attr('src');
+
+        return submitData;
     }
 }

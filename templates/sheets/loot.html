@@ -1,155 +1,51 @@
 <form class="flexcol journal-subsheet sheet-body {{entrytype}}{{#if isGM}} gm{{/if}}{{#if owner}} owner{{/if}}" editable="{{editable}}">
-    <div class="sheet-container detailed loot-container flexcol">
-        <header class="journal-sheet-header flexrow">
+    <div class="sheet-container loot-container flexrow" style=" flex-wrap: nowrap;">
+        <div class="flexcol" style="height: 100%; flex-grow: 0;padding: 4px;">
             <div class="sheet-image">
-                <img class="profile nopopout" src="{{data.src}}" data-edit="src" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/loot.png' }">
+                <img class="profile nopopout" src="{{data.src}}" data-action="addImage" data-dblclick-action="showImage" data-contextmenu-action="contextImage" data-edit="src" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/loot.png' }">
             </div>
-            <section class="header-details">
-                <h1 class="lootname header-name flexrow">
-                    <i class="fas {{data.icon}} sheet-icon"></i>
-                    <input name="name" type="text" value="{{data.name}}" placeholder="{{localize 'MonksEnhancedJournal.LootName'}}">
-                    {{#if sound.audiofile}}
-                    <button type="button" class="play-journal-sound{{#if sound.playing}} active{{/if}}">
-                        <i class="fas {{#if sound.playing}}fa-volume-up{{else}}fa-volume-off{{/if}}"></i>
-                    </button>
-                    {{/if}}
-                </h1>
-                <div class="form-group owner-only">
-                    <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.PlayerReceiving'}}</label>
-                    <select class="shop-state" name="flags.monks-enhanced-journal.purchasing">
-                        {{ selectOptions purchaseOptions selected=data.flags.monks-enhanced-journal.purchasing localize=true }}
-                    </select>
-                </div>
-                {{#if isGM }}
-                <div class="loot-characters" style="">
-                    <ol class="loot-character-list flexrow">
-                        {{#each characters}}
-                        <li class="loot-character" title="{{this.name}}" id="{{this.id}}">
-                            <img class="nopopout" src="{{this.img}}" />
-                            <div class="character-name">{{this.name}}</div>
-                            {{#if this.letter}}<div class="loot-player" title="{{this.username}}" style="background-color: {{this.color}};">{{this.letter}}</div>{{/if}}
-                        </li>
-                        {{else}}
-                        {{#if owner}}
-                        <li class="instruction" style="height: 90px;">{{localize 'MonksEnhancedJournal.msg.DragActorsHere'}}</li>
-                        {{/if}}
-                        {{/each}}
-                    </ol>
-                </div>
+            <div class="loot-characters">
+                {{#if owner}}
+                <header class="flexrow">
+                    <a class="item-control" data-tooltip="Add Players" data-action="addPlayers"><i class="fas fa-users"></i></a>
+                    <a class="item-control" data-tooltip="Clear Players" data-action="clearPlayers"><i class="fas fa-dumpster"></i></a>
+                </header>
                 {{/if}}
-            </section>
-        </header>
-        <section class="sheet-body flexcol">
-            {{#if currency}}
-            <div class="items-list loot-items currency-group">
-                <div class="item-header flexrow">
-                    <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Currency'}}</h3>
-                    <div class="item-controls flexrow">
-                        {{#if canTransferCurrency}}
-                        <a class="item-control text transfer-currency" title="{{localize 'MonksEnhancedJournal.TransferCurrency'}}">
-                            <i class="fas fa-money-bill-transfer"></i> {{localize 'MonksEnhancedJournal.Transfer'}}
-                        </a>
-                        {{/if}}
-                    </div>
-                    <div class="item-controls flexrow owner-only">
-                        <a class="item-control text split-money" title="{{localize 'MonksEnhancedJournal.SplitBetweenPlayers'}}">
-                            <i class="fas fa-dollar-sign"></i> {{localize 'MonksEnhancedJournal.Distribute'}}
-                        </a>
-                    </div>
-                </div>
-                <div class="flexrow currency-row">
-                    {{#each currency}}
-                    <div class="form-fields flexrow">
-                        <label data-tooltip="{{localize this.name}}">{{localize this.name}}</label>
-                        <input type="text" name="flags.monks-enhanced-journal.currency.{{this.id}}" placeholder="0" value="{{this.value}}" data-dtype="Number" />
-                    </div>
-                    {{/each}}
-                </div>
-            </div>
-            {{/if}}
-            <div class="items-list loot-items">
-                <div class="item-header flexrow">
-                    <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Items'}}</h3>
-                    <div class="item-detail item-from">{{localize 'MonksEnhancedJournal.From'}}</div>
-                    {{#if canRequest}}
-                    <div class="item-detail item-requests">{{localize 'MonksEnhancedJournal.Requests'}}</div>
-                    {{#if canGrant}}<div class="item-controls item-grant">{{localize 'MonksEnhancedJournal.Grant'}}</div>{{/if}}
-                    {{/if}}
-                    <div class="item-detail item-quantity">{{localize 'MonksEnhancedJournal.Qty'}}</div>
-                    {{#if showrequest}}<div class="item-controls flexrow"></div>{{/if}}
-                    <div class="item-controls flexrow owner-only" buttons="2">
-                        <a class="item-control roll-table" title="{{localize 'MonksEnhancedJournal.PopulateFromRollTable'}}"><i class="fas fa-th-list"></i></a>
-                        <a class="item-control clear-items" title="{{localize 'MonksEnhancedJournal.ClearAllItems'}}"><i class="fas fa-trash"></i></a>
-                    </div>
-                </div>
-
-                <ol class="item-list">
-                    {{#each groups}}
-                    <li class="item-header collapsible flexrow{{#if this.collapsed}} collapsed{{/if}}" data-id="{{this.id}}">
-                        <h3 class="item-name noborder flexrow">{{localize this.name}} <span class="collapse-text item-count">({{this.items.length}} {{localize 'MonksEnhancedJournal.items'}})</span></h3>
-                    </li>
-                    <li {{#if this.collapsed}} style="display: none;" {{/if}}>
-                        <ul>
-                            {{#each this.items}}
-                            <li class="item flexrow" data-id="{{this.id}}" data-container="items" data-document="Item" draggable="false">
-                                <div class="item-name flexrow">
-                                    <div class="item-image item-icon" style="background-image: url('{{this.img}}')"></div>
-                                    <h4>
-                                        {{this.name}}
-                                        {{#if this.identifiedname}} <span class="identified-name" data-tooltip="{{this.identifiedname}}"><i class="fas fa-circle-question"></i></span>{{/if}}
-                                        {{#if (gt this.qtyof 1)}} <span class="highlight-text groups-of">(in groups of {{this.qtyof}})</span>{{/if}}
-                                    </h4>
-                                </div>
-
-                                <div class="item-detail item-from flexrow">
-                                    <input type="text" name="items.{{this.id}}.flags.monks-enhanced-journal.from" value="{{this.from}}" />
-                                </div>
-
-                                {{#if @root.canRequest}}
-                                <div class="item-detail item-requests">
-                                    <ul class="request-players">
-                                        {{#each this.requests as |user i|}}
-                                        <li class="loot-player" title="{{user.name}}" style="background-color: {{user.color}};border-color: {{user.border}};">{{user.letter}}</li>
-                                        {{/each}}
-                                    </ul>
-                                </div>
-
-                                {{#if @root.canGrant}}
-                                <div class="item-detail item-grant">
-                                    {{#if (and @root.owner (eq this.requests.length 1))}}
-                                    <a class="item-control text grant-item"><i class="fas fa-user-check"></i> {{localize 'MonksEnhancedJournal.Grant'}}</a>
-                                    {{/if}}
-                                </div>
-                                {{/if}}
-                                {{/if}}
-
-                                <div class="item-detail item-quantity">
-                                    <input type="number" min="0" name="items.{{this.id}}.flags.monks-enhanced-journal.quantity" value="{{this.quantity}}" style="text-align:center;" />
-                                </div>
-
-                                {{#if @root.showrequest}}
-                                <div class="item-detail item-request" style="text-align:center;">
-                                    <a class="item-control request-item"><i class="fas {{this.icon}}"></i> {{this.text}}</a>
-                                </div>
-                                {{/if}}
-
-                                <div class="item-controls flexrow owner-only" buttons="2">
-                                    <a class="item-control item-edit" title="{{localize 'MonksEnhancedJournal.EditItem'}}"><i class="fas fa-edit"></i></a>
-                                    <a class="item-control item-delete" title="{{localize 'MonksEnhancedJournal.DeleteItem'}}"><i class="fas fa-trash"></i></a>
-                                </div>
-                            </li>
-                            {{/each}}
-                        </ul>
+                <ol class="loot-character-list flexcol">
+                    {{#each characters}}
+                    <li class="loot-character" data-tooltip="{{this.name}}" id="{{this.id}}" data-dblclick-action="openActor">
+                        <img class="nopopout" src="{{this.img}}" />
+                        <div class="character-name">{{this.name}}</div>
+                        {{#if this.letter}}<div class="loot-player" data-tooltip="{{this.username}}" style="background-color: {{this.color}};">{{this.letter}}</div>{{/if}}
                     </li>
                     {{else}}
-                        {{#if owner}}
-                        <li class="instruction">{{localize 'MonksEnhancedJournal.msg.DragItemsHereToAddToLoot'}}</li>
-                        {{else}}
-                        <li class="instruction">{{localize 'MonksEnhancedJournal.msg.NoLootAtTheMoment'}}</li>
-                        {{/if}}
+                    {{#if owner}}
+                    <li class="instruction" style="height: 90px;">{{localize 'MonksEnhancedJournal.msg.DragActorsHere'}}</li>
+                    {{/if}}
                     {{/each}}
                 </ol>
             </div>
-        </section>
+        </div>
+        <div class="flexcol" style="height: 100%;">
+            {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs"}}
+            <header class="journal-sheet-header flexrow">
+                <section class="header-details">
+                    <div class="form-group owner-only">
+                        <label style="background: none; border: none;">{{localize 'MonksEnhancedJournal.PlayerReceiving'}}</label>
+                        <select class="shop-state" name="flags.monks-enhanced-journal.purchasing">
+                            {{ selectOptions purchaseOptions selected=data.flags.monks-enhanced-journal.purchasing localize=true }}
+                        </select>
+                    </div>
+                </section>
+            </header>
+            <section class="sheet-body flexcol">
+                {{#if currency}}
+                {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-currency.hbs"}}
+                {{/if}}
+                <div class="loot-items" style="flex: 1; overflow: hidden;">
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-loot-items.hbs"}}
+                </div>
+            </section>
+        </div>
     </div>
 </form>

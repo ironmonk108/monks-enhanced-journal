@@ -1,9 +1,9 @@
 import { MonksEnhancedJournal, log, setting, i18n, makeid } from '../monks-enhanced-journal.js';
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class CustomisePages extends FormApplication {
-
-    constructor(object, options) {
-        super(object, options);
+export class CustomisePages extends HandlebarsApplicationMixin(ApplicationV2) {
+    constructor(options = {}) {
+        super(options);
 
         this.sheetSettings = {};
         let types = MonksEnhancedJournal.getDocumentTypes();
@@ -17,73 +17,124 @@ export class CustomisePages extends FormApplication {
             }
         }
     }
-    get activeCategory() {
-        return this._tabs[0].active;
+
+    static DEFAULT_OPTIONS = {
+        id: "customise-pages",
+        tag: "form",
+        classes: ["customise-page", "sheet"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            //icon: "fa-solid fa-align-justify",
+            title: "Customise Pages"
+        },
+        actions: {
+            reset: CustomisePages.onResetDefaults,
+            addAttribute: CustomisePages.onAddAttribute,
+            removeAttribute: CustomisePages.onRemoveAttribute
+        },
+        position: { width: 800 },
+        form: {
+            handler: CustomisePages.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
+            template: "modules/monks-enhanced-journal/templates/customise/customise-pages.html",
+            templates: [
+                "modules/monks-enhanced-journal/templates/customise/customise-page.html",
+                "templates/generic/tab-navigation.hbs",
+                "modules/monks-enhanced-journal/templates/customise/adjustment.hbs",
+                "modules/monks-enhanced-journal/templates/customise/attributes.hbs",
+                "modules/monks-enhanced-journal/templates/customise/tabs.hbs"
+            ],
+            scrollable: [
+                ".sidebar .tabs",
+                ".item-list"
+            ]
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "main":
+                this._prepareBodyContext(context, options);
+                break;
+        }
+
+        return context;
+    }
+
+    _prepareBodyContext(context, options) {
+        context.generalEdit = true;
+        context.sheettypes = CustomisePages.typeList;
+        context.sheetSettings = foundry.utils.duplicate(this.sheetSettings);
+
+        for (let page of CustomisePages.typeList) {
+            let index = 0;
+            context.sheetSettings[page] = Object.entries(context.sheetSettings[page]).map(([key, value]) => {
+
+                if (!["adjustment", "attributes", "tabs"].includes(key)) return;
+
+                let contextValue = foundry.utils.duplicate(value);
+                if (key == "attributes") {
+                    contextValue = MonksEnhancedJournal.convertObjectToArray(contextValue);
+                } else if (key == "adjustment") {
+                    let defaultAdjustment = setting("adjustment-defaults");
+                    contextValue = foundry.utils.mergeObject(foundry.utils.duplicate(defaultAdjustment), contextValue);
+
+                    contextValue = MonksEnhancedJournal.convertObjectToArray(contextValue).sort((a, b) => {
+                        if (a.id === "default") return -1;
+                        if (b.id === "default") return 1;
+                        return a.name.localeCompare(b.name);
+                    });
+                }
+
+                return {
+                    id: key,
+                    group: page,
+                    active: this.tabGroups[page] ? this.tabGroups[page] == key : (index++ == 0),
+                    label: i18n(`MonksEnhancedJournal.setting.${key}`),
+                    icon: (key === "adjustments" ? "fas fa-coins" : (key === "attributes" ? "fas fa-list" : (key === "tabs" ? "fas fa-folder-closed" : ""))),
+                    partial: `modules/monks-enhanced-journal/templates/customise/${key}.hbs`,
+                    context: contextValue
+                }
+            }).filter(s => !!s);
+        }
+
+        context.activePage = this.tabGroups["sheet-settings"] ?? Object.keys(context.sheetSettings)[0];
+
+        return context;
     }
 
     static get typeList() {
-        return ["encounter", "event", "organization", "person", "picture", "place", "poi", "quest", "shop"];
-    }
-    static get defaultOptions() {
-        let tabs = [{ navSelector: ".page-tabs", contentSelector: ".categories > div", initial: "encounter" }];
-        for (let page of CustomisePages.typeList) {
-            tabs.push({ navSelector: `.${page}-tabs`, contentSelector: `.${page}-body`, initial: "tabs" });
-        }
-
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "customise-pages",
-            classes: ["form"],
-            title: "Customise Pages",
-            template: "modules/monks-enhanced-journal/templates/customise/customise-pages.html",
-            tabs,
-            width: 800,
-            resizable: true,
-            scrollY: [".sidebar .tabs", ".item-list"],
-            dragDrop: [{ dragSelector: ".reorder-attribute", dropSelector: ".item-list" }]
-        });
+        return ["encounter", "event", "organization", "person", "place", "poi", "quest", "shop"];
     }
 
-    async _renderInner(...args) {
-        let load_templates = {};
-        for (let page of CustomisePages.typeList) {
-            let template = `modules/monks-enhanced-journal/templates/customise/${page}.html`;
-            load_templates[page] = template;
-            delete Handlebars.partials[template];
-        }
-        await loadTemplates(load_templates);
-        const html = await super._renderInner(...args);
-        return html;
-    }
+    async _onRender(context, options) {
+        super._onRender(context, options);
 
-    getData(options) {
-        let data = super.getData(options);
-        data.generalEdit = true;
-        data.sheetSettings = foundry.utils.duplicate(this.sheetSettings);
+        new foundry.applications.ux.DragDrop.implementation({
+            dragSelector: ".reorder-attribute",
+            dropSelector: ".items-list",
+            permissions: {
+                dragstart: this._canDragStart.bind(this)
+            },
+            callbacks: {
+                dragstart: this._onDragStart.bind(this),
+                drop: this._onDrop.bind(this)
+            }
+        }).bind(this.element);
 
-        for (let page of CustomisePages.typeList) {
-            data.sheetSettings[page] = MonksEnhancedJournal.convertObjectToArray(data.sheetSettings[page]);
-        }
-
-        return data;
-    }
-
-    activateListeners(html) {
-        super.activateListeners(html);
-
-        html.find("button.reset-all").click(this._onResetDefaults.bind(this));
-
-        $('input[name]', html).change(this.changeData.bind(this));
-
-        $('.item-delete-attribute', html).click(this.removeAttribute.bind(this));
-        $('.item-add-attribute', html).click(this.addAttribute.bind(this));
+        $('input[name]', this.element).change(this.changeData.bind(this));
     };
 
-    get currentType() {
-        return this._tabs[0].active;
-    }
-
-    addAttribute(event) {
-        let attribute = event.currentTarget.dataset.attribute;
+    static onAddAttribute(event, target) {
+        let attribute = target.dataset.attribute;
         let attributes = foundry.utils.getProperty(this, attribute);
 
         if (!attributes) return;
@@ -94,7 +145,41 @@ export class CustomisePages extends FormApplication {
             maxOrder = Math.max(maxOrder, attr.order);
         }
 
-        attributes[foundry.utils.randomID()] = { id: foundry.utils.randomID(), name: "", shown: true, full: false, order: maxOrder + 1 };
+        let newId = foundry.utils.randomID();
+        attributes[newId] = { id: newId, name: "", shown: true, full: false, order: maxOrder + 1 };
+
+        this.render(true);
+    }
+
+    static onRemoveAttribute(event, target) {
+        let key = target.closest('li.item').dataset.id;
+
+        let attribute = key.substring(0, key.lastIndexOf('.'));
+        let attributeId = key.substring(key.lastIndexOf('.') + 1);
+
+        let attributes = foundry.utils.getProperty(this, attribute);
+
+        if (!attributes) return;
+
+        delete attributes[attributeId];
+
+        /*
+        let parts = key.split('.');
+        for (let i = 0; i < parts.length; i++) {
+            let p = parts[i];
+            const t = getType(this);
+            if (!((t === "Object") || (t === "Array"))) break;
+            if (i === parts.length - 1) {
+                delete this[p];
+                break;
+            }
+            if (p in this) this = this[p];
+            else {
+                this = undefined;
+                break;
+            }
+        }
+        */
 
         this.render(true);
     }
@@ -105,29 +190,6 @@ export class CustomisePages extends FormApplication {
             let val = $(event.currentTarget).attr("type") == "checkbox" ? $(event.currentTarget).prop('checked') : $(event.currentTarget).val();
             foundry.utils.setProperty(this, prop, val);
         }
-    }
-
-    removeAttribute(event) {
-        let key = event.currentTarget.closest('li.item').dataset.id;
-
-        let target = this;
-        let parts = key.split('.');
-        for (let i = 0; i < parts.length; i++) {
-            let p = parts[i];
-            const t = getType(target);
-            if (!((t === "Object") || (t === "Array"))) break;
-            if (i === parts.length - 1) {
-                delete target[p];
-                break;
-            }
-            if (p in target) target = target[p];
-            else {
-                target = undefined;
-                break;
-            }
-        }
-
-        this.render(true);
     }
 
     _onDragStart(event) {
@@ -142,13 +204,7 @@ export class CustomisePages extends FormApplication {
 
     _onDrop(event) {
         // Try to extract the data
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         // Identify the drop target
         const target = event.target.closest(".item") || null;
@@ -183,11 +239,11 @@ export class CustomisePages extends FormApplication {
         }
     }
 
-    _updateObject(event, formData) {
+    static async onSubmitForm(event, form, formData) {
         game.settings.set("monks-enhanced-journal", "sheet-settings", this.sheetSettings, { diff: false });
     }
 
-    async _onResetDefaults(event) {
+    static async onResetDefaults(event) {
         let sheetSettings = game.settings.settings.get("monks-enhanced-journal.sheet-settings");
         await game.settings.set("monks-enhanced-journal", "sheet-settings", sheetSettings.default);
         this.sheetSettings = sheetSettings.default;

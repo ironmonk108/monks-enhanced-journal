@@ -1,6 +1,6 @@
 export class MEJFontHelper {
     static loadFonts() {
-        FontConfig.loadFont('Anglo Text', {
+        foundry.applications.settings.menus.FontConfig.loadFont('Anglo Text', {
             editor: true,
             fonts: [
                 {
@@ -11,7 +11,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('Bookinsanity', {
+        foundry.applications.settings.menus.FontConfig.loadFont('Bookinsanity', {
             editor: true,
             fonts: [
                 {
@@ -41,7 +41,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('DungeonDropCase', {
+        foundry.applications.settings.menus.FontConfig.loadFont('DungeonDropCase', {
             editor: true,
             fonts: [
                 {
@@ -52,7 +52,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('Lovers Quarrel', {
+        foundry.applications.settings.menus.FontConfig.loadFont('Lovers Quarrel', {
             editor: true,
             fonts: [
                 {
@@ -63,7 +63,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('Montserrat', {
+        foundry.applications.settings.menus.FontConfig.loadFont('Montserrat', {
             editor: true,
             fonts: [
                 {
@@ -74,7 +74,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('MrEaves', {
+        foundry.applications.settings.menus.FontConfig.loadFont('MrEaves', {
             editor: true,
             fonts: [
                 {
@@ -85,7 +85,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('Play', {
+        foundry.applications.settings.menus.FontConfig.loadFont('Play', {
             editor: true,
             fonts: [
                 {
@@ -96,7 +96,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('ScalySans', {
+        foundry.applications.settings.menus.FontConfig.loadFont('ScalySans', {
             editor: true,
             fonts: [
                 {
@@ -126,7 +126,7 @@ export class MEJFontHelper {
             ],
         });
 
-        FontConfig.loadFont('ScalySansCaps', {
+        foundry.applications.settings.menus.FontConfig.loadFont('ScalySansCaps', {
             editor: true,
             fonts: [
                 {

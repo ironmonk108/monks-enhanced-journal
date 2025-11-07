@@ -1,6 +1,7 @@
 import { MonksEnhancedJournal, log, setting, i18n } from '../monks-enhanced-journal.js';
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class SelectPlayer extends FormApplication {
+export class SelectPlayer extends HandlebarsApplicationMixin(ApplicationV2) {
     users = [];
     showpic = false;
     updatepermission = false;
@@ -13,18 +14,68 @@ export class SelectPlayer extends FormApplication {
         this.journalsheet = sheet;
     }
 
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "select-player",
-            classes: ["form", "select-sheet"],
-            title: i18n("MonksEnhancedJournal.SelectPlayer"),
-            template: "modules/monks-enhanced-journal/templates/selectplayer.html",
-            width: 400,
+    static DEFAULT_OPTIONS = {
+        id: "select-player",
+        tag: "form",
+        classes: ["select-sheet"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            //icon: "fa-solid fa-align-justify",
+            title: "MonksEnhancedJournal.SelectPlayer"
+        },
+        actions: {
+        },
+        position: { width: 400 },
+        form: {
+            handler: SelectPlayer.onSubmitForm,
             closeOnSubmit: true,
             submitOnClose: false,
             submitOnChange: false
+        }
+    };
+
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
+            template: "modules/monks-enhanced-journal/templates/selectplayer.html"
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
+        }
+
+        return context;
+    }
+
+    _prepareBodyContext(context, options) {
+        return foundry.utils.mergeObject(context, {
         });
+    }
+
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-save",
+                label: "MonksEnhancedJournal.ShowAll",
+            },
+            {
+                type: "button",
+                icon: "fas fa-save",
+                label: "MonksEnhancedJournal.Show",
+            },
+        ];
     }
 
     getData(options) {
@@ -48,14 +99,7 @@ export class SelectPlayer extends FormApplication {
 
     canShowPic() {
         let type = this.journalsheet.object?.flags["monks-enhanced-journal"]?.type || 'oldentry';
-        return ((["person", "place", "poi", "event", "quest", "oldentry", "organization", "shop", "oldentry", "journalentry", "base"].includes(type) || this.object.documentName == 'Actor') && this.object.img);
-    }
-
-    /* -------------------------------------------- */
-
-    /** @override */
-    async _updateObject(event, formData) {
-
+        return ((["person", "place", "poi", "event", "quest", "oldentry", "organization", "shop", "oldentry", "journalentry", "base"].includes(type) || this.document.documentName == 'Actor') && this.document.img);
     }
 
     updateSelection(event) {
@@ -94,14 +138,14 @@ export class SelectPlayer extends FormApplication {
         this.journalsheet._onShowPlayers.call(this.journalsheet, event);
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
+    async _onRender(context, options) {
+        super._onRender(context, options);
 
-        html.find('button[name="showall"]').click(this.showPlayers.bind(this, 'all'));
-        html.find('button[name="show"]').click(this.showPlayers.bind(this, 'players'));
+        this.element.find('button[name="showall"]').click(this.showPlayers.bind(this, 'all'));
+        this.element.find('button[name="show"]').click(this.showPlayers.bind(this, 'players'));
 
-        html.find('input[type="checkbox"].user-select').change(this.updateSelection.bind(this));
-        html.find('input[type="checkbox"].pic-select').change(this.updateShowPic.bind(this));
-        html.find('input[type="checkbox"].update-permission').change(this.updatePermission.bind(this));
+        this.element.find('input[type="checkbox"].user-select').change(this.updateSelection.bind(this));
+        this.element.find('input[type="checkbox"].pic-select').change(this.updateShowPic.bind(this));
+        this.element.find('input[type="checkbox"].update-permission').change(this.updatePermission.bind(this));
     }
 }

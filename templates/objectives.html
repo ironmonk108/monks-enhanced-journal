@@ -1,33 +1,34 @@
-<form class="objectives flexcol" autocomplete="off" onsubmit="event.preventDefault();">
+<div class="objectives flexcol" autocomplete="off">
     <div class="form-group">
         <label for="content">{{localize 'MonksEnhancedJournal.Name'}}</label>
         <div class="form-fields">
-            <input type="text" name="title" placeholder="{{localize 'MonksEnhancedJournal.Name'}}" value="{{object.title}}" />
+            <input type="text" name="title" placeholder="{{localize 'MonksEnhancedJournal.Name'}}" value="{{document.title}}" />
         </div>
     </div>
     <div class="form-group">
         <label for="content">{{localize 'MonksEnhancedJournal.Available'}}</label>
         <div class="form-fields">
-            <input type="checkbox" name="available" {{checked object.available}} />
+            <input type="checkbox" name="available" {{checked document.available}} />
         </div>
     </div>
     <div class="form-group">
         <label for="content">{{localize 'MonksEnhancedJournal.Completed'}}</label>
         <div class="form-fields">
-            <input type="checkbox" name="complete" {{checked object.status}} />
+            <input type="checkbox" name="complete" {{checked document.status}} />
         </div>
     </div>
     <div class="form-group">
         <label for="content">{{localize 'MonksEnhancedJournal.Counter'}}</label>
         <div class="form-fields">
             <label for="content">{{localize 'MonksEnhancedJournal.completed'}}</label>
-            <input type="number" name="done" value="{{object.done}}" />
+            <input type="number" name="done" value="{{document.done}}" />
             <label for="content">{{localize 'MonksEnhancedJournal.required'}}</label>
-            <input type="number" name="required" value="{{object.required}}" />
+            <input type="number" name="required" value="{{document.required}}" />
         </div>
     </div>
-    <div class="editor-container">
-        {{editor enrichedText target="content" editable=true button=true owner=owner engine=editor.engine collaborate=editor.collaborate }}
+    <div class="flexcol editor-parent">
+        <div class="editor editor-control wrapper">
+            <prose-mirror name="content" value="{{ document.content }}"></prose-mirror>
+        </div>
     </div>
-    <button type="submit" name="submit" value="1"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.Update"}}</button>
-</form>
+</div>

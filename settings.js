@@ -1,7 +1,5 @@
 import { MonksEnhancedJournal, i18n } from "./monks-enhanced-journal.js"
 import { EditCurrency } from "./apps/editcurrency.js"
-import { AdjustPrice } from "./apps/adjust-price.js"
-import { EditPersonAttributes, EditPlaceAttributes } from "./apps/editattributes.js"
 import { CustomisePages } from "./apps/customise-pages.js"
 import { APSJ } from "./apsjournal.js";
 
@@ -24,11 +22,6 @@ export const registerSettings = function () {
 		'apsj': "Arius Planeswalker's Stylish Journal",
 		'false': "Core Foundry"
 	};
-
-	let engineOptions = {
-		'tinymce': "TinyMCE",
-        'prosemirror': "ProseMirror",
-    };
 
 	let backgroundImages = {
 		'none': "None",
@@ -98,16 +91,6 @@ export const registerSettings = function () {
 		icon: 'fas fa-file-lines',
 		restricted: true,
 		type: CustomisePages
-	});
-
-	game.settings.register(modulename, 'editor-engine', {
-		name: i18n("MonksEnhancedJournal.editor-engine.name"),
-		hint: i18n("MonksEnhancedJournal.editor-engine.hint"),
-		scope: 'world',
-		config: true,
-		default: "tinymce",
-		choices: engineOptions,
-		type: String,
 	});
 
 	game.settings.register(modulename, 'background-colour', {
@@ -201,6 +184,22 @@ export const registerSettings = function () {
 		scope: "client",
 		config: true,
 		default: false,
+		type: Boolean,
+	});
+
+	game.settings.register(modulename, "allow-poll-against", {
+		name: i18n("MonksEnhancedJournal.allow-poll-against.name"),
+		hint: i18n("MonksEnhancedJournal.allow-poll-against.hint"),
+		scope: "world",
+		default: true,
+		type: Boolean,
+	});
+
+	game.settings.register(modulename, "poll-folders-single-vote", {
+		name: i18n("MonksEnhancedJournal.poll-folders-single-vote.name"),
+		hint: i18n("MonksEnhancedJournal.poll-folders-single-vote.hint"),
+		scope: "world",
+		default: true,
 		type: Boolean,
 	});
 
@@ -374,6 +373,7 @@ export const registerSettings = function () {
 		type: Boolean,
 	});
 
+	/*
 	game.settings.register(modulename, "hide-rolltables", {
 		name: i18n("MonksEnhancedJournal.hide-rolltables.name"),
 		hint: i18n("MonksEnhancedJournal.hide-rolltables.hint"),
@@ -382,6 +382,7 @@ export const registerSettings = function () {
 		default: false,
 		type: Boolean,
 	});
+	*/
 
 	game.settings.register(modulename, "use-system-tag", {
 		name: i18n("MonksEnhancedJournal.use-system-tag.name"),
@@ -574,11 +575,6 @@ export const registerSettings = function () {
 					'notes': { name: 'MonksEnhancedJournal.Notes', shown: true },
 				},
 			},
-			picture: {
-				settings: {
-					'open': { name: 'MonksEnhancedJournal.OpenAsPicture', value: false },
-				}
-			},
 			quest: {
 				tabs: {
 					'description': { name: 'MonksEnhancedJournal.Description', shown: true },
@@ -723,6 +719,20 @@ export const registerSettings = function () {
 	});
 
 	game.settings.register(modulename, "fix-sheet-settings", {
+		scope: "world",
+		default: true,
+		type: Boolean,
+		config: false
+	});
+
+	game.settings.register(modulename, "fix-list-sheet", {
+		scope: "world",
+		default: true,
+		type: Boolean,
+		config: false
+	});
+
+	game.settings.register(modulename, "fix-v13", {
 		scope: "world",
 		default: true,
 		type: Boolean,

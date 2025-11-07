@@ -1,12 +1,15 @@
-<form class="journal-show-dialog">
+<div>
     <div class="form-group-stacked">
-        <div class="checkbox-label">
+        <div class="checkbox-label flexrow">
             <span>{{localize "JOURNAL.ShowTo"}}</span>
-            <div style="text-align:right">
-                <a href="javascript:void(0)" class="select-all" name="selectAll">Select All</a>
-                /
-                <a href="javascript:void(0)" class="deselect-all" name="deselectAll">Deselect All</a>
-            </div>
+            <button type="button" class="select-all" data-action="selectAll">
+                <i class="fa-regular fa-square-plus" inert></i>
+                <span>Select All</span>
+            </button>
+            <button type="button" class="deselect-all" data-action="deselectAll">
+                <i class="fa-regular fa-square-minus" inert></i>
+                <span>Deselect All</span>
+            </button>
         </div>
         <div class="show-to-players">
             {{#each users}}
@@ -62,4 +65,4 @@
             <input type="checkbox" name="forceDowngrade" />
         </div>
     </div>
-</form>
+</div>

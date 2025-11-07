@@ -1,58 +1,98 @@
 import { MonksEnhancedJournal, log, setting, i18n, makeid, quantityname } from '../monks-enhanced-journal.js';
 import { getValue, setValue } from "../helpers.js";
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class TransferCurrency extends FormApplication {
-    constructor(object, actor, loot, options = {}) {
-        super(object, options);
+export class TransferCurrency extends HandlebarsApplicationMixin(ApplicationV2) {
 
-        this.loot = loot;
+    constructor(options = {}) {
+        super(options);
+
+        this.loot = this.options.loot;
         this.currency = {};
-        this.actor = actor || game.user.character;
+        this.actor = this.options.actor || game.user.character;
     }
 
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "transfer-currency",
-            classes: ["form", "transfer-currency", "monks-journal-sheet", "dialog"],
-            title: i18n("MonksEnhancedJournal.TransferCurrency"),
-            template: "modules/monks-enhanced-journal/templates/transfer-currency.html",
-            dragDrop: [
-                { dropSelector: ".transfer-container" }
-            ],
-            width: 600,
-            height: 'auto'
-        });
+    static DEFAULT_OPTIONS = {
+        id: "transfer-currency",
+        tag: "form",
+        classes: ["transfer-currency", "sheet"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            icon: "fas fa-money-bill-transfer",
+            title: "MonksEnhancedJournal.TransferCurrency"
+        },
+        actions: {
+            cancel: TransferCurrency.onClose,
+            clearCurrency: TransferCurrency.clearCurrency,
+            clearAllCurrency: TransferCurrency.clearAllCurrency,
+        },
+        position: { width: 600 },
+        form: {
+            handler: TransferCurrency.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
+
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
+            template: "modules/monks-enhanced-journal/templates/transfer-currency.html"
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
+        }
+
+        return context;
     }
 
-    getData(options) {
-        let data = super.getData(options);
+    _prepareBodyContext(context, options) {
+        context.currency = MonksEnhancedJournal.currencies.filter(c => c.convert != null).map(c => { return { id: c.id, name: c.name }; });
 
-        data.currency = MonksEnhancedJournal.currencies.filter(c => c.convert != null).map(c => { return { id: c.id, name: c.name }; });
+        context.coins = this.currency;
 
-        data.coins = this.currency;
-
-        data.actor = {
+        context.actor = {
             id: this.actor?.id,
             name: this.actor?.name || "No Actor",
             img: this.actor?.img || "icons/svg/mystery-man.svg"
         };
 
-        return data;
+        return context;
     }
 
-    _canDragStart(selector) {
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-hand-holding-usd",
+                label: "Transfer",
+            },
+            {
+                type: "button",
+                icon: "fas fa-times",
+                label: "Cancel",
+                action: "cancel"
+            },
+        ];
+    }
+
+    _canDragDrop(selector) {
         return game.user.isGM;
     }
 
     async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == "Actor") {
             let actor = await fromUuid(data.uuid);
@@ -65,31 +105,32 @@ export class TransferCurrency extends FormApplication {
         }
     }
 
-    /** @override */
-    async _onSubmit(event, options = {}) {
+    async _onSubmitForm(formConfig, event) {
         event.preventDefault();
 
-        let remainder = this.object.getFlag('monks-enhanced-journal', 'currency');
+        let remainder = this.options.document.getFlag('monks-enhanced-journal', 'currency');
 
         for (let [k, v] of Object.entries(this.currency)) {
             if (v < 0) {
                 // make sure the character has the currency
                 let curr = this.loot.getCurrency(this.actor, k);
                 if (curr < Math.abs(v)) {
-                    return ui.notifications.warn("Actor does not have enough currency: " + k);
+                    ui.notifications.warn("Actor does not have enough currency: " + k);
+                    return;
                 }
             } else if (v > 0) {
                 if (remainder[k] < v) {
-                    return ui.notifications.warn("Loot does not have enough currency: " + k);
+                    ui.notifications.warn("Loot does not have enough currency: " + k);
+                    return;
                 }
             }
         }
 
-        return super._onSubmit(event, options);
+        return super._onSubmitForm(formConfig, event);
     }
 
-    async _updateObject(event, formData) {
-        let remainder = this.object.getFlag('monks-enhanced-journal', 'currency') || {};
+    static async onSubmitForm(event, form, formData) {
+        let remainder = this.options.document.getFlag('monks-enhanced-journal', 'currency') || {};
 
         for (let [k, v] of Object.entries(this.currency)) {
             if (v != 0) {
@@ -97,40 +138,47 @@ export class TransferCurrency extends FormApplication {
                 remainder[k] = (remainder[k] ?? 0) - v;
             }
         }
-        if (game.user.isGM || this.object.isOwner) {
-            await this.object.setFlag('monks-enhanced-journal', 'currency', remainder);
+        if (game.user.isGM || this.document.isOwner) {
+            await this.options.document.setFlag('monks-enhanced-journal', 'currency', remainder);
         } else {
             // Send this to the GM to update the loot sheet currency
-            MonksEnhancedJournal.emit("transferCurrency", { currency: remainder, uuid: this.object.uuid });
+            MonksEnhancedJournal.emit("transferCurrency", { currency: remainder, uuid: this.options.document.uuid });
         }
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
+    async _onRender(context, options) {
+        await super._onRender(context, options);
 
-        $('.actor-icon', html).on("dblclick", this.openActor.bind(this));
+        $('.actor-icon', this.element).on("dblclick", this.openActor.bind(this));
+        $('.currency-field', this.element).on("blur", this.onCurrencyChange.bind(this));
 
-        $('.clear-items', html).on("click", this.clearAllCurrency.bind(this));
-        $('.item-delete', html).on("click", this.clearCurrency.bind(this));
-        $('.cancel-offer', html).on("click", this.close.bind(this));
-        $('.currency-field', html).on("blur", (event) => {
-            let currName = $(event.currentTarget).attr("name");
-            let lootCurrency = this.loot.object.getFlag("monks-enhanced-journal", "currency") || {};
-            let maxCurr = lootCurrency[currName] || 0;
-            this.currency[currName] = Math.min(parseInt($(event.currentTarget).val() || 0), maxCurr);
-            $(event.currentTarget).val(this.currency[currName]);
-        });
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".transfer-container",
+            permissions: {
+                drop: this._canDragDrop.bind(this)
+            },
+            callbacks: {
+                drop: this._onDrop.bind(this),
+            }
+        }).bind(this.element);
     }
 
-    clearCurrency(event) {
-        let that = this;
-        const id = event.currentTarget.closest(".item").dataset.id;
+    onCurrencyChange(event) {
+        let currName = $(event.currentTarget).attr("name");
+        let lootCurrency = this.loot.document.getFlag("monks-enhanced-journal", "currency") || {};
+        let maxCurr = lootCurrency[currName] || 0;
+        this.currency[currName] = Math.min(parseInt($(event.currentTarget).val() || 0), maxCurr);
+        $(event.currentTarget).val(this.currency[currName]);
+    }
+
+    static clearCurrency(event, target) {
+        const id = target.closest(".item").dataset.id;
 
         this.currency[id] = 0;
         $(`.currency-field[name="${id}"]`, this.element).val('');
     }
 
-    clearAllCurrency(event) {
+    static clearAllCurrency(event, target) {
         this.currency = {};
         $(`.currency-field`, this.element).val('');
     }
@@ -141,5 +189,9 @@ export class TransferCurrency extends FormApplication {
                 this.actor.sheet.render(true);
             }
         } catch { }
+    }
+
+    static onClose(event, form) {
+        this.close();
     }
 }

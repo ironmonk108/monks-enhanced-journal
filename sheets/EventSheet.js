@@ -2,125 +2,83 @@ import { setting, i18n, log, makeid, MonksEnhancedJournal } from "../monks-enhan
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
 
 export class EventSheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
-    }
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.event",
+            icon: "fa-solid fa-calendar-days",
+        },
+        actions: {
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.Event"),
+        },
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
             template: "modules/monks-enhanced-journal/templates/sheets/event.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dropSelector: ".event-container" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-detailed-header.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-relationships.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-notes.hbs",
+                "templates/generic/tab-navigation.hbs",
             ],
-            scrollY: [".tab.description .tab-inner"]
-        });
-    }
-
-    async getData() {
-        let data = await super.getData();
-
-        data.relationships = {};
-        for (let item of (data.data.flags['monks-enhanced-journal']?.relationships || [])) {
-            let entity = await this.getDocument(item, "JournalEntry", false);
-            if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage))
-                continue;
-            if (entity && entity.testUserPermission(game.user, "LIMITED") && (game.user.isGM || !item.hidden)) {
-                let page = (entity instanceof JournalEntryPage ? entity : entity.pages.contents[0]);
-                let type = foundry.utils.getProperty(page, "flags.monks-enhanced-journal.type");
-                if (!data.relationships[type])
-                    data.relationships[type] = { type: type, name: i18n(`MonksEnhancedJournal.${type.toLowerCase()}`), documents: [] };
-
-                item.name = page.name;
-                item.img = page.src;
-                item.type = type;
-
-                data.relationships[type].documents.push(item);
-            }
+            scrollable: [
+                ".editor-display",
+                ".editor-content",
+                ".items-list .item-list"
+            ]
         }
+    };
 
-        for (let [k, v] of Object.entries(data.relationships)) {
-            v.documents = v.documents.sort((a, b) => a.name.localeCompare(b.name));
+    static TABS = {
+        primary: {
+            tabs: [
+                { id: "description", icon: "fa-solid fa-file-signature" },
+                { id: "relationships", icon: "fa-solid fa-users" },
+                { id: "notes", icon: "fa-solid fa-paperclip" },
+            ],
+            initial: "description",
+            labelPrefix: "MonksEnhancedJournal.tabs"
         }
-
-        data.has = {
-            relationships: Object.keys(data.relationships || {})?.length
-        }
-
-        return data;
-    }
+    };
 
     static get type() {
         return 'event';
     }
 
-    /*
-    get allowedRelationships() {
-        return ['person', 'place'];
-    }*/
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
 
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-        $('.item-hide', html).on('click', this.alterItem.bind(this));
-        $('.item-delete', html).on('click', $.proxy(this._deleteItem, this));
-        $('.relationships .items-list h4', html).click(this.openRelationship.bind(this));
-        //$('.item-relationship .item-field', html).on('change', this.alterRelationship.bind(this));
+        context.relationships = await this.getRelationships();
+
+        context.has = {
+            relationships: Object.keys(context.relationships || {})?.length > 0
+        }
+
+        context.fields = [
+            { id: 'location', label: "MonksEnhancedJournal.Location", value: foundry.utils.getProperty(context.data, "flags.monks-enhanced-journal.location") },
+            { id: 'date', label: "MonksEnhancedJournal.Date", value: foundry.utils.getProperty(context.data, "flags.monks-enhanced-journal.date") }
+        ]
+        context.placeholder = "MonksEnhancedJournal.Event";
+
+        return context;
     }
 
     _documentControls() {
         let ctrls = [
-            { text: '<i class="fas fa-search"></i>', type: 'text' },
-            { id: 'search', type: 'input', text: i18n("MonksEnhancedJournal.SearchDescription"), callback: this.enhancedjournal.searchText },
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers },
-            { id: 'edit', text: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fa-pencil-alt', conditional: this.isEditable, callback: () => { this.onEditDescription(); } },
-            { id: 'sound', text: i18n("MonksEnhancedJournal.AddSound"), icon: 'fa-music', conditional: this.isEditable, callback: () => { this.onAddSound(); } },
-            { id: 'convert', text: i18n("MonksEnhancedJournal.Convert"), icon: 'fa-clipboard-list', conditional: (game.user.isGM && this.isEditable), callback: () => { } }
+            { label: '<i class="fas fa-search"></i>', type: 'text' },
+            { id: 'search', type: 'input', label: i18n("MonksEnhancedJournal.SearchDescription"), visible: !!this.enhancedjournal, callback: this.searchText },
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'edit', label: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fas fa-pencil-alt', visible: this.isEditable, action: "editDescription" },
+            { id: 'sound', label: i18n("MonksEnhancedJournal.AddSound"), icon: 'fas fa-music', visible: this.isEditable, action: "addSound" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" }
         ];
         //this.addPolyglotButton(ctrls);
         return ctrls.concat(super._documentControls());
     }
 
-    _getSubmitData(updateData = {}) {
-        let data = foundry.utils.expandObject(super._getSubmitData(updateData));
-
-        if (data.relationships) {
-            data.flags['monks-enhanced-journal'].relationships = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "relationships") || []);
-            for (let relationship of data.flags['monks-enhanced-journal'].relationships) {
-                let dataRel = data.relationships[relationship.id];
-                if (dataRel)
-                    relationship = foundry.utils.mergeObject(relationship, dataRel);
-            }
-            delete data.relationships;
-        }
-
-        return foundry.utils.flattenObject(data);
-    }
-
     _canDragDrop(selector) {
-        return game.user.isGM || this.object.isOwner;
-    }
-
-    async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
-
-        if (data.type == 'JournalEntry') {
-            this.addRelationship(data);
-        } else if (data.type == 'JournalEntryPage') {
-            let doc = await fromUuid(data.uuid);
-            data.id = doc?.parent.id;
-            data.uuid = doc?.parent.uuid;
-            data.type = "JournalEntry";
-            this.addRelationship(data);
-        }
-
-        log('drop data', event, data);
+        return game.user.isGM || this.document.isOwner;
     }
 }

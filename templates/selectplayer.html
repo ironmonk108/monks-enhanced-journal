@@ -1,4 +1,4 @@
-<form class="select-player flexcol" autocomplete="off" onsubmit="event.preventDefault();">
+<div class="select-player flexcol" autocomplete="off">
     <div class="flexrow" style="padding-bottom: 10px;border-bottom: 2px groove #eeede0"><span style="flex: 0 0 75px;">Sending: </span><span style="font-weight:bold;">{{object.name}}</span></div>
     <div class="flexcol options">
         <div class="flexrow" {{#unless picchoice}} style="display:none;" {{/unless}}><span style="line-height: 25px;">{{localize "MonksEnhancedJournal.ShowJustThePicture"}}</span><input type="checkbox" class="pic-select" {{checked showpic}} style="flex:0 0 25px" /></div>
@@ -12,8 +12,4 @@
         </li>
         {{/each}}
     </ul>
-    <div class="flexrow">
-        <button type="submit" name="showall" value="1"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.ShowAll"}}</button>
-        <button type="submit" name="show" value="1"><i class="far fa-save"></i> {{localize "MonksEnhancedJournal.Show"}}</button>
-    </div>
-</form>
+</div>

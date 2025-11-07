@@ -1,36 +1,16 @@
-<form class="flexcol journal-subsheet {{entrytype}}" editable="{{editable}}">
-    <div class="sheet-container journal-container flexcol">
-        <header class="journal-sheet-header header-name flexrow">
-            <i class="fas fa-book-open sheet-icon"></i>
-            <input name="name" type="text" value="{{data.name}}" placeholder="{{localize 'MonksEnhancedJournal.JournalEntryName'}}">
-            {{#if sound.audiofile}}
-            <button type="button" class="play-journal-sound{{#if sound.playing}} active{{/if}}">
-                <i class="fas {{#if sound.playing}}fa-volume-up{{else}}fa-volume-off{{/if}}"></i>
-            </button>
-            {{/if}}
-            <input type="text" style="display:none;" /><!--I can't figure out what's going on, but to avoid Enter causing a page submit a second text needs to be on the page-->
-        </header>
-        <nav class="sheet-navigation tabs" data-group="primary" {{#if hideTabs}} style="display:none;" {{/if}}>
-            <a class="item active" data-tab="description">{{localize 'MonksEnhancedJournal.Description'}}</a>
-            <a class="item" data-tab="picture">{{localize 'MonksEnhancedJournal.Picture'}}</a>
-        </nav>
-        <section class="sheet-body">
-            <div class="tab description active" data-group="primary" data-tab="description">
-                <div class="tab-inner editor-parent flexcol">
-                    {{editor enrichedText target="text.content" editable=true button=true owner=owner engine=editor.engine collaborate=editor.collaborate }}
+<div>
+    <div class="flexcol journal-subsheet" editable="{{editable}}">
+        <div class="sheet-container journal-container flexcol">
+            {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-header.hbs"}}
+            {{> "templates/generic/tab-navigation.hbs" tabs=subtabs}}
+            <section class="sheet-body">
+                <div class="tab{{#if subtabs.description.active}} active{{/if}}" data-group="primary" data-tab="description">
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs"}}
                 </div>
-            </div>
-            <div class="tab picture active" data-group="primary" data-tab="picture" style="position:relative;">
-                <div class="tab-inner picture-container flexrow">
-                    <div class="picture-outer">
-                        <div class="picture-img lightbox-image" name="src" src="{{data.src}}" style="background-image: url('{{data.src}}')" data-edit="src" onerror="$(this).css({opacity:0});"></div>
-                    </div>
-                    {{#if owner}}
-                    <div class="instruction" style="{{#if data.src}}display:none;{{/if}}">Click to add an Image</div>
-                    {{/if}}
-                    <div class="reset-scale" title="Clear scaling"><i class="fas fa-eraser"></i></div>
+                <div class="tab{{#if subtabs.picture.active}} active{{/if}}" data-group="primary" data-tab="picture">
+                    {{> "modules/monks-enhanced-journal/templates/sheets/partials/sheet-image.hbs"}}
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
-</form>
+</div>

@@ -1,11 +1,11 @@
 import { MonksEnhancedJournal, log, setting, i18n, makeid, quantityname } from '../monks-enhanced-journal.js';
 import { getValue, setValue } from "../helpers.js";
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class MakeOffering extends FormApplication {
-    constructor(object, journalsheet, options = {}) {
-        super(object, options);
+export class MakeOffering extends HandlebarsApplicationMixin(ApplicationV2) {
+    constructor(options = {}) {
+        super(options);
 
-        this.journalsheet = journalsheet;
         this.offering = foundry.utils.mergeObject({
             currency: {},
             items: []
@@ -20,30 +20,57 @@ export class MakeOffering extends FormApplication {
         }
     }
 
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "make-offering",
-            classes: ["form", "make-offering", "monks-journal-sheet", "dialog"],
-            title: i18n("MonksEnhancedJournal.MakeOffering"),
-            template: "modules/monks-enhanced-journal/templates/make-offering.html",
-            dragDrop: [
-                { dropSelector: ".make-offer-container" }
-            ],
-            width: 600,
-            height: 'auto'
-        });
+    static DEFAULT_OPTIONS = {
+        id: "make-offering",
+        tag: "form",
+        classes: ["make-offering"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form", "monks-journal-sheet"],
+            //icon: "fa-solid fa-align-justify",
+            title: "MonksEnhancedJournal.MakeOffering"
+        },
+        actions: {
+            removeOffering: MakeOffering.removeOffering,
+            cancel: MakeOffering.onClose
+        },
+        position: { width: 600 },
+        form: {
+            handler: MakeOffering.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
+
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
+            template: "modules/monks-enhanced-journal/templates/make-offering.html"
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
+        }
+
+        return context;
     }
 
-    getData(options) {
-        let data = super.getData(options);
+    _prepareBodyContext(context, options) {
+        context.private = this.offering.hidden;
 
-        data.private = this.offering.hidden;
+        context.currency = MonksEnhancedJournal.currencies.filter(c => c.convert != null).map(c => { return { id: c.id, name: c.name }; });
 
-        data.currency = MonksEnhancedJournal.currencies.filter(c => c.convert != null).map(c => { return { id: c.id, name: c.name }; });
-
-        data.coins = this.offering.currency;
-        data.items = (this.offering.items || []).map(i => {
+        context.coins = this.offering.currency;
+        context.items = (this.offering.items || []).map(i => {
             let actor = game.actors.get(i.actorId)
             if (!actor)
                 return null;
@@ -52,7 +79,7 @@ export class MakeOffering extends FormApplication {
             if (!item)
                 return null;
 
-            let details = MonksEnhancedJournal.getDetails(item);
+            let details = MonksEnhancedJournal.getItemDetails(item);
 
             return {
                 id: i.id,
@@ -63,29 +90,37 @@ export class MakeOffering extends FormApplication {
         }).filter(i => !!i);
 
         let actor = game.actors.get(this.offering?.actor?.id);
-        data.actor = {
+        context.actor = {
             id: actor?.id,
             name: actor?.name || "No Actor",
             img: actor?.img || "icons/svg/mystery-man.svg"
         };
 
-        return data;
+        return context;
     }
 
-    /* -------------------------------------------- */
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-hand-holding-usd",
+                label: "Offer",
+            },
+            {
+                type: "button",
+                icon: "fas fa-times",
+                label: "Cancel",
+                action: "cancel"
+            },
+        ];
+    }
 
     _canDragDrop() {
         return true;
     }
 
     async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
+        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == 'Item') {
             let item = await fromUuid(data.uuid);
@@ -103,7 +138,7 @@ export class MakeOffering extends FormApplication {
                 img: actor.img
             }
 
-            let result = await this.journalsheet.constructor.confirmQuantity(item, max, "offer", false);
+            let result = await this.options.journalsheet.constructor.confirmQuantity(item, max, "offer", false);
             if ((result?.quantity ?? 0) > 0) {
 
                 this.offering.items.push({
@@ -132,45 +167,56 @@ export class MakeOffering extends FormApplication {
         log('drop data', event, data);
     }
 
-    /** @override */
-    async _updateObject(event, formData) {
+    static onSubmitForm(event, form, formData) {
         this.offering.userid = game.user.id;
         this.offering.state = "offering";
 
-        if (game.user.isGM || this.object.isOwner) {
-            let offerings = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "offerings") || []);
+        if (game.user.isGM || this.options.document.isOwner) {
+            let offerings = foundry.utils.duplicate(this.options.document.getFlag("monks-enhanced-journal", "offerings") || []);
             this.offering.id = makeid();
             offerings.unshift(this.offering);
-            await this.object.setFlag("monks-enhanced-journal", "offerings", offerings);
+            this.options.document.setFlag("monks-enhanced-journal", "offerings", offerings);
         } else {
-            MonksEnhancedJournal.emit("makeOffering", { offering: this.offering, uuid: this.object.uuid });
+            MonksEnhancedJournal.emit("makeOffering", { offering: this.offering, uuid: this.options.document.uuid });
         }
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
+    async _onRender(context, options) {
+        super._onRender(context, options);
 
-        $('.actor-icon', html).on("dblclick", this.openActor.bind(this));
-        $('.item-delete', html).on("click", this.removeOffering.bind(this));
+        $('.actor-icon', this.element).on("dblclick", this.openActor.bind(this));
 
-        $('.cancel-offer', html).on("click", this.close.bind(this));
-        $('.private', html).on("change", (event) => {
+        $('.private', this.element).on("change", (event) => {
             this.offering.hidden = $(event.currentTarget).prop("checked");
         });
-        $('.currency-field', html).on("blur", (event) => {
+        $('.currency-field', this.element).on("blur", (event) => {
             this.offering.currency[$(event.currentTarget).attr("name")] = parseInt($(event.currentTarget).val() || 0);
         });
+
+        new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".make-offer-container",
+            permissions: {
+                drop: this._canDragDrop
+            },
+            callbacks: {
+                drop: this._onDrop.bind(this)
+            }
+        }).bind(this.element);
     }
 
-    removeOffering(event) {
+    static removeOffering(event, target) {
         let that = this;
-        const id = event.currentTarget.closest(".item").dataset.id;
-        Dialog.confirm({
-            title: `Remove offering Item`,
+        const id = target.closest(".item").dataset.id;
+        foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: `Remove offering Item`,
+            },
             content: "Are you sure you want to remove this item from the offering?",
-            yes: () => {
-                that.offering.items.findSplice(i => i.id == id);
-                that.render();
+            yes: {
+                callback: () => {
+                    that.offering.items.findSplice(i => i.id == id);
+                    that.render();
+                }
             }
         });
     }
@@ -182,5 +228,9 @@ export class MakeOffering extends FormApplication {
                 actor.sheet.render(true);
             }
         } catch {}
+    }
+
+    static onClose(event, form) {
+        this.close();
     }
 }

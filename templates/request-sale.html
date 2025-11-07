@@ -1,26 +1,26 @@
-<div class="monks-enhanced-journal request-item request-sale item-card monks-journal-sheet sheet">
+<div class="monks-enhanced-journal request-sale item-card">
     <div class="flexrow" style="align-items: center; flex-grow: 0;">
-        <img src="{{actor.img}}" class="reqest-chat-icon chat-actor-icon" />
-        <h4 style="margin-bottom:0px;">{{actor.name}}</h4>
+        <img src="{{actor.img}}" class="reqest-chat-icon chat-actor-icon" style="width: 30px; height: 30px; flex: 0 0 30px; object-fit: contain;" />
+        <div style="margin-bottom:0px;">{{actor.name}}</div>
     </div>
     <div class="flexrow" style="align-items: center; flex-grow: 0;">
-        <img src="{{shop.img}}" class="reqest-chat-icon chat-shop-icon" />
-        <h4 style="margin-bottom:0px;">{{shop.name}}</h4>
+        <img src="{{shop.img}}" class="reqest-chat-icon chat-shop-icon" style="width: 30px; height: 30px; flex: 0 0 30px; object-fit: contain;" />
+        <div style="margin-bottom:0px;">{{shop.name}}</div>
     </div>
 
-    <div class="items-list sell-items">
-        <div class="item-header flexrow">
-            <h3 class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Items'}}</h3>
-        </div>
-        <ol class="item-list">
+    <div class="items-list sell-items" style="overflow: hidden; height: 100%; display: flex; flex-direction: column;margin-top: 8px;">
+        <header style="font-family: var(--mej-font-family); align-items: center; display: grid; gap: 0.25rem; margin: 0; padding: 2px; position: relative; text-align: left; background: rgba(0, 0, 0, 0.2); border: 2px groove #eeede0;">
+            <div class="item-name noborder flexrow">{{localize 'MonksEnhancedJournal.Items'}}</div>
+        </header>
+        <ol class="item-list" style="align-items: center; display: grid; gap: 0.25rem; margin: 0; padding: 2px; position: relative; text-align: left; overflow-y: auto; height: 100%; max-height: 200px; margin: 0px; ">
             {{#each items}}
-            <li class="item flexrow" data-id="{{this._id}}">
-                <img src="{{this.img}}" class="reqest-chat-icon item-icon" />
-                <h4>{{this.name}}</h4>
+            <li class="item flexrow" data-id="{{this._id}}" style="display: flex;">
+                <img src="{{this.img}}" class="reqest-chat-icon item-icon" style="width: 30px; height: 30px; flex: 0 0 30px;" />
+                <div>{{this.name}}</div>
             </li>
-            <li class="item flexrow" data-id="{{this._id}}">
+            <li class="item flexrow" data-id="{{this._id}}" style="display: flex;">
                 <div class="item-name flexrow">
-                    <h4>{{localize 'MonksEnhancedJournal.Quantity'}}{{#if this.flags.monks-enhanced-journal.maxquantity}} <i><small>(Max {{this.flags.monks-enhanced-journal.maxquantity}})</small></i>{{/if}}</h4>
+                    <div>{{localize 'MonksEnhancedJournal.Quantity'}}{{#if this.flags.monks-enhanced-journal.maxquantity}} <i><small>(Max {{this.flags.monks-enhanced-journal.maxquantity}})</small></i>{{/if}}</div>
                 </div>
 
                 <div class="item-quantity flexrow" style="flex: 0 0 70px;">
@@ -28,9 +28,9 @@
                     <span class="player-only" style="text-align: right; padding-right: 4px;">{{this.flags.monks-enhanced-journal.quantity}}</span>
                 </div>
             </li>
-            <li class="item flexrow" data-id="{{this._id}}">
+            <li class="item flexrow" data-id="{{this._id}}" style="display: flex;">
                 <div class="item-name flexrow">
-                    <h4>{{localize 'MonksEnhancedJournal.Price'}}</h4>
+                    <div>{{localize 'MonksEnhancedJournal.Price'}}</div>
                 </div>
 
                 <div class="item-price flexrow" style="flex: 0 0 70px;">
@@ -38,9 +38,9 @@
                     <span class="player-only" style="text-align: right; padding-right: 4px;">{{this.flags.monks-enhanced-journal.sell}} {{this.flags.monks-enhanced-journal.currency}}</span>
                 </div>
             </li>
-            <li class="item flexrow" data-id="{{this._id}}" style="border-top: 1px solid #FFFFFF;">
+            <li class="item flexrow" data-id="{{this._id}}" style="border-top: 1px solid #FFFFFF;display: flex;">
                 <div class="item-name flexrow">
-                    <h4 style="font-weight:bold;">{{localize 'MonksEnhancedJournal.Total'}}</h4>
+                    <div style="font-weight:bold;">{{localize 'MonksEnhancedJournal.Total'}}</div>
                 </div>
 
                 <div class="item-total flexrow">
@@ -50,15 +50,15 @@
             {{/each}}
         </ol>
     </div>
-    <div class="gm-only flexrow request-buttons">
+    <div class="gm-only flexrow request-buttons" style="flex: 0 0 30px; margin-top: 8px;">
         <button type="button" class="request-accept"><i class="fas fa-check"></i> {{localize 'MonksEnhancedJournal.Offer'}}</button>
         <button type="button" class="request-reject"><i class="fas fa-times"></i> {{localize 'MonksEnhancedJournal.Reject'}}</button>
     </div>
-    <div class="player-only flexrow request-buttons">
+    <div class="player-only flexrow request-buttons" style="flex: 0 0 30px; margin-top: 8px;">
         <button type="button" class="request-accept"><i class="fas fa-check"></i> {{localize 'MonksEnhancedJournal.Accept'}}</button>
         <button type="button" class="request-reject"><i class="fas fa-times"></i> {{localize 'MonksEnhancedJournal.Cancel'}}</button>
     </div>
-    <footer class="card-footer">
+    <footer class="card-footer" style="padding: 3px 0 0; border-top: 2px groove rgb(255, 255, 255); flex-grow: 0;">
         <span class="request-msg">{{localize 'MonksEnhancedJournal.msg.ShopIsConsideringAnOffer'}}</span>
     </footer>
 </div>

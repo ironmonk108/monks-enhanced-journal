@@ -191,15 +191,15 @@
 /**
 * Core Style Overrides
 **/
-:root[mejtheme] .monks-journal-sheet .editor-content table tbody tr td {
+:root[mejtheme] .monks-journal-sheet .editor-display table tbody tr td {
     padding: 0 15px;
 }
 
-:root[mejtheme] .monks-journal-sheet .editor-content table tbody tr td:first-child {
+:root[mejtheme] .monks-journal-sheet .editor-display table tbody tr td:first-child {
     white-space: nowrap;
 }
 
-:root[mejtheme] .monks-journal-sheet .editor-content blockquote {
+:root[mejtheme] .monks-journal-sheet .editor-display blockquote {
     margin-bottom: 1.5em;
 }
 
@@ -260,35 +260,36 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 /**
 * V10 Journal Overrides
 **/
-
-.monks-enhanced-journal[sidebar-image='leather'] .sheet.journal-entry .pages-list .directory-item.active {
+/*
+.monks-enhanced-journal[sidebar-image='leather'] .sheet.journal-entry .toc li.page.active {
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
 
-.monks-enhanced-journal[sidebar-image='leather'] .sheet.journal-entry .directory li.journalentry {
+.monks-enhanced-journal[sidebar-image='leather'] .sheet.journal-entry .journal-sidebar li.journalentry {
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item.active {
+:root[mejtheme] .sheet.journal-entry .toc li.page.active {
     background: linear-gradient(var(--apsj-primary-light), var(--apsj-primary-dark));
     opacity: 75%;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
 
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item.active:first-of-type,
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item:not(.active),
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item.active + :not(.active),
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item:not(.active) + .active {
+:root[mejtheme] .sheet.journal-entry .toc li.page.active:first-of-type,
+:root[mejtheme] .sheet.journal-entry .toc li.page:not(.active),
+:root[mejtheme] .sheet.journal-entry .toc li.page.active + :not(.active),
+:root[mejtheme] .sheet.journal-entry .toc li.page:not(.active) + .active {
     border-top: 1px solid var(--apsj-primary-light);
 }
 
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item.active:last-of-type {
+:root[mejtheme] .sheet.journal-entry .toc li.page.active:last-of-type {
     border-bottom: 1px solid var(--apsj-primary-dark);
 }
 
-:root[mejtheme] .sheet.journal-entry .pages-list .directory-item:not(.active) {
+:root[mejtheme] .sheet.journal-entry .toc li.page:not(.active) {
     background: var(--apsj-primary-dark);
 }
+    */
 
 :root[mejtheme] .journal-sheet .journal-header .title {
     font-family: var(--mej-font-family);
@@ -301,9 +302,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     background: var(--apsj-primary);
 }
 
+/*
 :root[mejtheme] .journal-sheet .journal-entry-pages {
     color: var(--mej-sheet-color);
 }
+*/
 /**
 * Background Overrides
 **/
@@ -527,16 +530,20 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     text-shadow: 2px 3px 5px rgba(var(--mej-dark-0), 0.75);
 }
 
+/*
 :root[mejtheme] .monks-enhanced-journal .editor-edit {
     text-shadow: 1px 1px 1px rgb(var(--mej-light-4));
     background: linear-gradient(rgb(var(--mej-light-5)), rgb(var(--mej-light-2)), rgb(var(--mej-light-5)));
 }
+*/
 
+/*
 :root[mejtheme] .monks-enhanced-journal .directory .directory-item.journalentry .permissions {
     line-height: 20px;
 }
+    */
 
-:root[mejtheme] .monks-enhanced-journal .directory .action-buttons button,
+/*:root[mejtheme] .monks-enhanced-journal .directory .action-buttons button,*/
 :root[mejtheme] .monks-enhanced-journal footer.navigation .nav-button.navigate {
     text-shadow: 1px 1px 1px rgb(var(--mej-light-4));
     box-shadow: 0 0 5px rgba(var(--mej-dark-0), 0.75);
@@ -558,7 +565,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 /**
 * Stylish MEJ Sheets
 **/
-:root[mejtheme] .monks-journal-sheet.sheet .sheet-navigation {
+:root[mejtheme] .monks-journal-sheet.sheet .sheet-tabs {
     text-shadow: 1px 1px 2px rgb(var(--mej-dark-4));
     opacity: 85%;
 }
@@ -572,12 +579,12 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     font-family: var(--mej-font-family);
 }
 
-:root[mejtheme] .monks-journal-sheet.sheet .items-list .item-header .item-control:hover {
+:root[mejtheme] .monks-journal-sheet.sheet .items-list header .item-control:hover {
     box-shadow: 0 0 5px red !important;
 	text-shadow: none;
 }
 
-:root[mejtheme] .monks-journal-sheet.sheet .items-list .item-header .item-controls a {
+:root[mejtheme] .monks-journal-sheet.sheet .items-list header .item-controls a {
     text-shadow: 1px 1px 2px rgb(var(--mej-light-4));
 }
 

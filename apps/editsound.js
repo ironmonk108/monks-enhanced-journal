@@ -1,57 +1,94 @@
 import { MonksEnhancedJournal, log, error, i18n, setting, makeid, getVolume } from "../monks-enhanced-journal.js";
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
-export class EditSound extends FormApplication {
-    constructor(object, sound, options) {
-        super(object, options);
-
-        this.soundfile = sound;
+export class EditSound extends HandlebarsApplicationMixin(ApplicationV2) {
+    constructor(options) {
+        super(options);
+        this.document = options.document;
     }
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            id: "journal-editsound",
-            title: i18n("MonksEnhancedJournal.EditSound"),
-            classes: ["edit-sound"],
-            template: "./modules/monks-enhanced-journal/templates/edit-sound.html",
-            width: 500,
-            height: "auto",
-            closeOnSubmit: true,
-            popOut: true,
+    static DEFAULT_OPTIONS = {
+        id: "journal-editsound",
+        tag: "form",
+        classes: ["edit-sound"],
+        sheetConfig: false,
+        window: {
+            contentClasses: ["standard-form"],
+            //icon: "fa-solid fa-align-justify",
+            title: "MonksEnhancedJournal.EditSound"
+        },
+        actions: {
+            
+        },
+        position: { width: 500 },
+        form: {
+            handler: EditSound.onSubmitForm,
+            closeOnSubmit: true
+        }
+    };
+
+    static PARTS = {
+        form: {
+            classes: ["standard-form"],
+            template: "./modules/monks-enhanced-journal/templates/edit-sound.html"
+        },
+        footer: {
+            template: "templates/generic/form-footer.hbs"
+        }
+    };
+
+    async _preparePartContext(partId, context, options) {
+        context = await super._preparePartContext(partId, context, options);
+        switch (partId) {
+            case "form":
+                this._prepareBodyContext(context, options);
+                break;
+            case "footer":
+                context.buttons = this.prepareButtons();
+        }
+
+        return context;
+    }
+
+    _prepareBodyContext(context, options) {
+        let sound = foundry.utils.mergeObject({ volume: 1, loop: true, autoplay: true }, (this.document.getFlag("monks-enhanced-journal", "sound") || {}));
+        return foundry.utils.mergeObject(context, {
+            sound: sound
         });
     }
 
-    getData(options) {
-        let sound = foundry.utils.mergeObject({volume: 1, loop: true, autoplay: true}, (this.object.getFlag("monks-enhanced-journal", "sound") || {}));
-        return {
-            sound: sound
-        };
+    prepareButtons() {
+        return [
+            {
+                type: "submit",
+                icon: "far fa-save",
+                label: "MonksEnhancedJournal.Update",
+            }
+        ];
     }
 
-    _updateObject(event, formData) {
-        let data = foundry.utils.expandObject(formData);
-
-        if (this.soundfile) {
-            let oldData = this.object.getFlag('monks-enhanced-journal', 'sound');
-            if (oldData.volume != data.sound.volume) {
-                this.soundfile.effectiveVolume = data.sound.volume;
-                this.soundfile.volume = data.sound.volume * getVolume();
+    static async onSubmitForm(event, form, formData) {
+        let submitData = foundry.utils.expandObject(formData.object);
+        if (this.options.sound) {
+            let oldData = this.document.getFlag('monks-enhanced-journal', 'sound');
+            if (oldData.volume != submitData.sound.volume) {
+                this.options.sound.effectiveVolume = submitData.sound.volume;
+                this.options.sound.volume = submitData.sound.volume * getVolume();
             }
-            if (oldData.loop != data.sound.loop)
-                this.soundfile.loop = data.sound.loop;
-            if (oldData.audiofile != data.sound.audiofile) {
-                let isPlaying = this.soundfile.playing;
-                if (this.soundfile?.playing)
-                    this.soundfile.stop();
-                if (data.sound.audiofile) {
-                    this.soundfile = new foundry.audio.Sound(data.sound.audiofile);
-                    //this.soundfile.src = data.sound.audiofile;
-                    this.soundfile.load({ autoplay: isPlaying, autoplayOptions: { loop: data.sound.loop, volume: data.sound.volume } });
+            if (oldData.loop != submitData.sound.loop)
+                this.options.sound.loop = submitData.sound.loop;
+            if (oldData.audiofile != submitData.sound.audiofile) {
+                let isPlaying = this.options.sound.playing;
+                if (this.options.sound?.playing)
+                    this.options.sound.stop();
+                if (submitData.sound.audiofile) {
+                    this.options.journalsheet.loadSound(submitData.sound.audiofile, isPlaying, { loop: submitData.sound.loop, volume: submitData.sound.volume });
                 } else
-                    this.soundfile = null;
+                    this.options.journalsheet.clearSound();
             }
         }
 
-        this.object.setFlag('monks-enhanced-journal', 'sound', data.sound);
+        this.document.setFlag('monks-enhanced-journal', 'sound', submitData.sound);
         this.submitting = true;
     }
 }

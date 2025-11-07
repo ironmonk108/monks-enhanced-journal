@@ -2,23 +2,53 @@ import { setting, i18n, log, makeid, MonksEnhancedJournal } from "../monks-enhan
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
 
 export class PlaceSheet extends EnhancedJournalSheet {
-    constructor(data, options) {
-        super(data, options);
-    }
+    static DEFAULT_OPTIONS = {
+        window: {
+            title: "MonksEnhancedJournal.sheettype.place",
+            icon: "fa-solid fa-place-of-worship",
+        },
+        actions: {
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.place"),
+        },
+    };
+
+    static PARTS = {
+        main: {
+            root: true,
             template: "modules/monks-enhanced-journal/templates/sheets/place.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dragSelector: ".document.actor", dropSelector: ".place-container" },
-                { dragSelector: ".document.item", dropSelector: ".place-container" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
+            templates: [
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-detailed-header.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-textentry.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-details.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-relationships.hbs",
+                "modules/monks-enhanced-journal/templates/sheets/partials/sheet-notes.hbs",
+                "templates/generic/tab-navigation.hbs",
             ],
-            scrollY: [".tab.entry-details .tab-inner", ".tab.townsfolk .tab-inner", ".tab.shops .tab-inner", ".tab.description .tab-inner"]
-        });
-    }
+            scrollable: [
+                ".editor-display",
+                ".editor-content",
+                ".details-section.scrollable",
+                ".tab[data-tab='townsfolk'] .items-list .item-list",
+                ".tab[data-tab='shops'] .items-list .item-list",
+                ".tab[data-tab='relationships'] .items-list .item-list"
+            ]
+        }
+    };
+
+    static TABS = {
+        primary: {
+            tabs: [
+                { id: "description", icon: "fa-solid fa-file-signature" },
+                { id: "entry-details", icon: "fa-solid fa-table" },
+                { id: "townsfolk", icon: "fa-solid fa-people-roof" },
+                { id: "shops", icon: "fa-solid fa-shop" },
+                { id: "relationships", icon: "fa-solid fa-users" },
+                { id: "notes", icon: "fa-solid fa-paperclip" },
+            ],
+            initial: "description",
+            labelPrefix: "MonksEnhancedJournal.tabs"
+        }
+    };
 
     static get type() {
         return 'place';
@@ -28,25 +58,42 @@ export class PlaceSheet extends EnhancedJournalSheet {
         return { shops: [], townsfolk: [], attributes: {} };
     }
 
-    /*
-    get allowedRelationships() {
-        return ['organization', 'person', 'shop', 'poi', 'place'];
-    }*/
+    _prepareTabs(group) {
+        let tabs = super._prepareTabs(group);
 
-    async getData() {
-        let data = await super.getData();
-
-        if (data?.data?.flags['monks-enhanced-journal']?.townsfolk) {
-            data.data.flags['monks-enhanced-journal'].relationships = data?.data?.flags['monks-enhanced-journal']?.townsfolk;
-            this.object.setFlag('monks-enhanced-journal', 'relationships', data.data.flags['monks-enhanced-journal'].relationships);
-            this.object.unsetFlag('monks-enhanced-journal', 'townsfolk');
+        if (!game.user.isGM) {
+            // Check for relationships of type person and remove townsfolk tab if none exist
+            let relationships = Object.values(this.document.getFlag("monks-enhanced-journal", "relationships") || {});
+            if (relationships.filter(r => r.type == "person").length == 0) {
+                delete tabs.townsfolk;
+            }
+            // Check for relationships of type shop and remove shops tab if none exist
+            if (relationships.filter(r => r.type == "shop").length == 0) {
+                delete tabs.shops;
+            }
+            // Check for relationships of other types and remove relationships tab if none exist
+            if (relationships.filter(r => r.type != "person" && r.type != "shop").length == 0) {
+                delete tabs.relationships;
+            }
         }
 
-        if (foundry.utils.hasProperty(data, "data.flags.monks-enhanced-journal.attributes")) {
+        return tabs;
+    }
+
+    async _prepareBodyContext(context, options) {
+        context = await super._prepareBodyContext(context, options);
+
+        if (context?.data?.flags['monks-enhanced-journal']?.townsfolk) {
+            context.data.flags['monks-enhanced-journal'].relationships = context?.data?.flags['monks-enhanced-journal']?.townsfolk;
+            await this.document.setFlag('monks-enhanced-journal', 'relationships', context.data.flags['monks-enhanced-journal'].relationships);
+            await this.document.unsetFlag('monks-enhanced-journal', 'townsfolk');
+        }
+
+        if (foundry.utils.hasProperty(context, "data.flags.monks-enhanced-journal.attributes")) {
             // check to make sure the attributes are formatted correctly
             let changedObjectValues = false;
             let sheetSettings = {};
-            let attributes = data?.data?.flags['monks-enhanced-journal']?.attributes || {};
+            let attributes = context?.data?.flags['monks-enhanced-journal']?.attributes || {};
             for (let [k, v] of Object.entries(attributes)) {
                 if (typeof v == "object") {
                     sheetSettings[k] = { shown: !v.hidden };
@@ -55,91 +102,80 @@ export class PlaceSheet extends EnhancedJournalSheet {
                 }
             }
             if (changedObjectValues) {
-                await this.object.update({ 'monks-enhanced-journal.flags.sheet-settings.attributes': sheetSettings });
-                await this.object.setFlag('monks-enhanced-journal', 'attributes', attributes);
+                await this.document.update({ 'monks-enhanced-journal.flags.sheet-settings.attributes': sheetSettings });
+                await this.document.setFlag('monks-enhanced-journal', 'attributes', attributes);
             }
-        } else if (foundry.utils.hasProperty(data, "data.flags.monks-enhanced-journal.fields")) {
+        } else if (foundry.utils.hasProperty(context, "data.flags.monks-enhanced-journal.fields")) {
             // convert fields to attributes
-            let fields = foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal.fields");
+            let fields = foundry.utils.getProperty(context, "data.flags.monks-enhanced-journal.fields");
             let attributes = {};
             let sheetSettings = {};
-            let flags = foundry.utils.getProperty(data, "data.flags.monks-enhanced-journal") || {};
-            let defaultSettings = this.object.constructor.sheetSettings() || {};
+            let flags = foundry.utils.getProperty(context, "data.flags.monks-enhanced-journal") || {};
+            let defaultSettings = this.document.constructor.sheetSettings() || {};
 
             for (let attr of Object.keys(defaultSettings.attributes)) {
                 attributes[attr] = flags[attr] || "";
                 if (fields[attr] != undefined)
                     sheetSettings[attr].shown = !!fields[attr]?.value;
             }
-            foundry.utils.setProperty(data, "data.flags.monks-enhanced-journal.attributes", attributes);
-            foundry.utils.setProperty(data, "data.flags.monks-enhanced-journal.sheet-settings.attributes", sheetSettings);
-            await this.object.setFlag('monks-enhanced-journal', 'attributes', attributes);
-            await this.object.update({ 'monks-enhanced-journal.flags.sheet-settings.attributes': sheetSettings });
+            foundry.utils.setProperty(context, "data.flags.monks-enhanced-journal.attributes", attributes);
+            foundry.utils.setProperty(context, "data.flags.monks-enhanced-journal.sheet-settings.attributes", sheetSettings);
+            await this.document.setFlag('monks-enhanced-journal', 'attributes', attributes);
+            await this.document.update({ 'monks-enhanced-journal.flags.sheet-settings.attributes': sheetSettings });
         }
 
-        if (data?.data?.flags['monks-enhanced-journal']?.shops) {
-            let relationships = data.data.flags['monks-enhanced-journal'].relationships || [];
-            relationships = relationships.concat(data?.data?.flags['monks-enhanced-journal']?.shops);
-            this.object.setFlag('monks-enhanced-journal', 'relationships', relationships);
-            this.object.unsetFlag('monks-enhanced-journal', 'shops');
-        }
-
-
-        data.relationships = await this.getRelationships();
-        data.shops = (data.relationships?.shop?.documents || []);
-        data.townsfolk = (data.relationships?.person?.documents || []);
-        delete data.relationships.shop;
-        delete data.relationships.person;
-
-        /*
-        for (let item of (data.data.flags['monks-enhanced-journal'].relationships || [])) {
-            let entity = await this.getDocument(item, "JournalEntry", false);
-            if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage))
-                continue;
-            if (entity && entity.testUserPermission(game.user, "LIMITED") && (game.user.isGM || !item.hidden)) {
-                let page = (entity instanceof JournalEntryPage ? entity : entity.pages.contents[0]);
-                let type = foundry.utils.getProperty(page, "flags.monks-enhanced-journal.type");
-                item.name = page.name;
-                item.img = page.src;
-                item.type = type;
-
-                if (type == "shop") {
-                    item.shoptype = page.getFlag("monks-enhanced-journal", "shoptype");
-                    data.shops.push(item);
-                } else if (type == "person") {
-                    item.role = page.getFlag("monks-enhanced-journal", "role");
-                    data.townsfolk.push(item);
-                } else if(page instanceof JournalEntryPage) {
-                    if (!data.relationships[type])
-                        data.relationships[type] = { type: type, name: i18n(`MonksEnhancedJournal.${type.toLowerCase()}`), documents: [] };
-
-                    data.relationships[type].documents.push(item);
+        context.relationships = await this.getRelationships();
+        if (context.relationships?.shop?.documents?.length) {
+            context.shops = {
+                shop: {
+                    documents: (context.relationships?.shop?.documents || []),
+                    name: i18n("MonksEnhancedJournal.Shops"),
+                    type: 'shop',
                 }
-            }
+            };
+            context.shopAdditional = { id: "shoptype", label: "MonksEnhancedJournal.ShopType" };
+            context.shops.shop.documents = context.shops.shop.documents.sort((a, b) => a.name.localeCompare(b.name));
         }
-        */
+        if (context.relationships?.person?.documents?.length) {
+            context.townsfolk = {
+                person: {
+                    documents: (context.relationships?.person?.documents || []),
+                    name: i18n("MonksEnhancedJournal.Townsfolk"),
+                    type: 'person',
+                }
+            };
+            context.townsfolkAdditional = { id: "role", label: "MonksEnhancedJournal.Role" };
+            context.townsfolk.person.documents = context.townsfolk.person.documents.sort((a, b) => a.name.localeCompare(b.name));
+        }
 
-        data.shops = data.shops.sort((a, b) => a.name.localeCompare(b.name));
-        data.townsfolk = data.townsfolk.sort((a, b) => a.name.localeCompare(b.name));
-        for (let [k, v] of Object.entries(data.relationships)) {
+        delete context.relationships.shop;
+        delete context.relationships.person;
+
+        for (let [k, v] of Object.entries(context.relationships)) {
             v.documents = v.documents.sort((a, b) => a.name.localeCompare(b.name));
         }
 
-        data.fields = this.fieldlist();
+        context.detailFields = this.fieldlist();
 
-        data.has = {
-            relationships: Object.keys(data.relationships || {})?.length,
-            townsfolk: data.townsfolk?.length,
-            shops: data.shops?.length
+        context.has = {
+            relationships: Object.keys(context.relationships || {})?.length > 0,
+            townsfolk: context.townsfolk?.person.documents.length > 0,
+            shops: context.shops?.shop.documents.length > 0
         }
 
-        return data;
+        context.fields = [
+            { id: 'placetype', label: "MonksEnhancedJournal.Type", value: foundry.utils.getProperty(context.data, "flags.monks-enhanced-journal.placetype") },
+            { id: 'location', label: "MonksEnhancedJournal.Location", value: foundry.utils.getProperty(context.data, "flags.monks-enhanced-journal.location") }
+        ]
+        context.placeholder = "MonksEnhancedJournal.Place";
+
+        return context;
     }
 
     fieldlist() {
         let settings = this.sheetSettings() || {};
-        let fields = MonksEnhancedJournal.convertObjectToArray(settings)?.attributes;
-        let attributes = this.object.flags['monks-enhanced-journal'].attributes || {};
+        let fields = MonksEnhancedJournal.convertObjectToArray(settings?.attributes);
+        let attributes = this.document.flags['monks-enhanced-journal'].attributes || {};
         return fields
             .filter(f => f.shown)
             .map(f => {
@@ -155,36 +191,22 @@ export class PlaceSheet extends EnhancedJournalSheet {
 
     _documentControls() {
         let ctrls = [
-            { text: '<i class="fas fa-search"></i>', type: 'text' },
-            { id: 'search', type: 'input', text: i18n("MonksEnhancedJournal.SearchDescription"), callback: this.enhancedjournal.searchText },
-            { id: 'show', text: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fa-eye', conditional: game.user.isGM, callback: this.enhancedjournal.doShowPlayers },
-            { id: 'edit', text: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fa-pencil-alt', conditional: this.isEditable, callback: () => { this.onEditDescription(); } },
-            { id: 'sound', text: i18n("MonksEnhancedJournal.AddSound"), icon: 'fa-music', conditional: this.isEditable, callback: () => { this.onAddSound(); } },
-            { id: 'convert', text: i18n("MonksEnhancedJournal.Convert"), icon: 'fa-clipboard-list', conditional: (game.user.isGM && this.isEditable), callback: () => { } }
+            { label: '<i class="fas fa-search"></i>', type: 'text' },
+            { id: 'search', type: 'input', label: i18n("MonksEnhancedJournal.SearchDescription"), visible: !!this.enhancedjournal, callback: this.searchText },
+            { id: 'show', label: i18n("MonksEnhancedJournal.ShowToPlayers"), icon: 'fas fa-eye', visible: game.user.isGM, action: "showPlayers" },
+            { id: 'edit', label: i18n("MonksEnhancedJournal.EditDescription"), icon: 'fas fa-pencil-alt', visible: this.isEditable, action: "editDescription" },
+            { id: 'sound', label: i18n("MonksEnhancedJournal.AddSound"), icon: 'fas fa-music', visible: this.isEditable, action: "addSound" },
+            { id: 'convert', label: i18n("MonksEnhancedJournal.Convert"), icon: 'fas fa-clipboard-list', visible: (game.user.isGM && this.isEditable), action: "convertSheet" }
         ];
         //this.addPolyglotButton(ctrls);
         return ctrls.concat(super._documentControls());
-    }
-
-    activateListeners(html, enhancedjournal) {
-        super.activateListeners(html, enhancedjournal);
-
-        $('.townsfolk .items-list h4', html).click(this.openRelationship.bind(this));
-        $('.shops .items-list h4', html).click(this.openRelationship.bind(this));
-        $('.relationships .items-list h4', html).click(this.openRelationship.bind(this));
-
-        $('.item-action', html).on('click', this.alterItem.bind(this));
-        $('.item-delete', html).on('click', $.proxy(this._deleteItem, this));
-        $('.item-hide', html).on('click', this.alterItem.bind(this));
-
-        //$('.item-relationship .item-field', html).on('change', this.alterRelationship.bind(this));
     }
 
     _getSubmitData(updateData = {}) {
         let data = foundry.utils.expandObject(super._getSubmitData(updateData));
 
         if (data.relationships) {
-            data.flags['monks-enhanced-journal'].relationships = foundry.utils.duplicate(this.object.getFlag("monks-enhanced-journal", "relationships") || []);
+            data.flags['monks-enhanced-journal'].relationships = foundry.utils.duplicate(this.document.getFlag("monks-enhanced-journal", "relationships") || []);
             for (let relationship of data.flags['monks-enhanced-journal'].relationships) {
                 let dataRel = data.relationships[relationship.id];
                 if (dataRel)
@@ -194,35 +216,9 @@ export class PlaceSheet extends EnhancedJournalSheet {
         }
 
         if (data.flags['monks-enhanced-journal']?.attributes) {
-            data.flags['monks-enhanced-journal'].attributes = foundry.utils.mergeObject((this.object?.flags['monks-enhanced-journal']?.attributes || {}), (data.flags['monks-enhanced-journal']?.attributes || {}));
+            data.flags['monks-enhanced-journal'].attributes = foundry.utils.mergeObject((this.document?.flags['monks-enhanced-journal']?.attributes || {}), (data.flags['monks-enhanced-journal']?.attributes || {}));
         }
 
         return foundry.utils.flattenObject(data);
-    }
-
-    _canDragDrop(selector) {
-        return game.user.isGM || this.object.isOwner;
-    }
-
-    async _onDrop(event) {
-        let data;
-        try {
-            data = JSON.parse(event.dataTransfer.getData('text/plain'));
-        }
-        catch (err) {
-            return false;
-        }
-
-        if (data.type == 'JournalEntry') {
-            this.addRelationship(data);
-        } else if (data.type == 'JournalEntryPage') {
-            let doc = await fromUuid(data.uuid);
-            data.id = doc?.parent.id;
-            data.uuid = doc?.parent.uuid;
-            data.type = "JournalEntry";
-            this.addRelationship(data);
-        }
-
-        log('drop data', event, data);
     }
 }

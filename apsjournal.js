@@ -49,91 +49,8 @@ export class APSJ {
 
     static async init() {
         APSJ.setTheme(setting('background-colour'));
-
-        CONFIG.TinyMCE.content_css.push(
-            'modules/monks-enhanced-journal/css/monks-enhanced-journal.css',
-            'modules/monks-enhanced-journal/css/apsjournal.css'
-        );
-
-        CONFIG.TinyMCE.style_formats.push({
-            title: game.i18n.format('APSJournal.stylish-text-menu.name'),
-            items: [
-                {
-                    title: game.i18n.format('APSJournal.text-heading-title.name'),
-                    selector: 'h1,h2,h3,h4,h5,h6,th,td,p',
-                    classes: 'apsj-title',
-                },
-                {
-                    title: game.i18n.format('APSJournal.text-heading.name'),
-                    selector: 'h1,h2,h3,h4,h5,h6,th,td,p',
-                    classes: 'apsj-heading',
-                },
-                {
-                    title: game.i18n.format('APSJournal.text-data-heading.name'),
-                    selector: 'h1,h2,h3,h4,h5,h6,th,td,p',
-                    classes: 'apsj-data-heading',
-                },
-                {
-                    title: game.i18n.format('APSJournal.text-data.name'),
-                    selector: 'h1,h2,h3,h4,h5,h6,th,td,p',
-                    classes: 'apsj-data',
-                },
-                {
-                    title: game.i18n.format('APSJournal.text-paragraph.name'),
-                    selector: 'td,p',
-                    classes: 'apsj-text',
-                },
-            ],
-        });
-
-        CONFIG.TinyMCE.templates = (CONFIG.TinyMCE.templates || [])
-            .concat(
-                await Promise.all(
-                    APSJ.blockList.map(async (c) => {
-                        return {
-                            title: i18n(`APSJournal.block-${c}.name`),
-                            description: i18n(
-                                `APSJournal.block-${c}.description`
-                            ),
-                            content: await APSJ.getBlock(c),
-                        };
-                    })
-                )
-            )
-            .concat(
-                ...(await Promise.all(
-                    APSJ.dialogList.flatMap(async (c) => {
-                        return await Promise.all(
-                            ['left', 'right'].map(async (s) => {
-                                return {
-                                    title: i18n(
-                                        `APSJournal.block-dialogue-${c}-${s}.name`
-                                    ),
-                                    description: i18n(
-                                        'APSJournal.block-dialogue.description'
-                                    ),
-                                    content: await APSJ.getDialog(c, s),
-                                };
-                            })
-                        );
-                    })
-                ))
-            )
-            .concat(
-                await Promise.all(
-                    APSJ.panelList.map(async (c) => {
-                        return {
-                            title: i18n(`APSJournal.panel-${c}.name`),
-                            description: i18n(
-                                `APSJournal.panel-${c}.description`
-                            ),
-                            content: await APSJ.getPanel(c),
-                        };
-                    })
-                )
-            );
     }
-
+        
     /**
      * Change to the selected theme in local storage
      **/
@@ -149,7 +66,7 @@ export class APSJ {
 
     static async getBlock(colour) {
         if (['card', 'scroll', 'encounter', 'read-aloud'].includes(colour)) {
-            let content = await renderTemplate(
+            let content = await foundry.applications.handlebars.renderTemplate(
                 `modules/monks-enhanced-journal/templates/apsjournal/${colour}.html`
             );
             return content;
@@ -161,7 +78,7 @@ export class APSJ {
                 body: i18n(`APSJournal.block-${colour}.body`),
             };
 
-            let content = await renderTemplate(
+            let content = await foundry.applications.handlebars.renderTemplate(
                 'modules/monks-enhanced-journal/templates/apsjournal/block.html',
                 data
             );
@@ -170,7 +87,7 @@ export class APSJ {
     }
 
     static async getDialog(colour, side) {
-        let content = await renderTemplate(
+        let content = await foundry.applications.handlebars.renderTemplate(
             'modules/monks-enhanced-journal/templates/apsjournal/dialog.html',
             { colour, side }
         );
@@ -218,16 +135,14 @@ export class APSJ {
                 break;
         }
 
-        let content = await renderTemplate(
+        let content = await foundry.applications.handlebars.renderTemplate(
             'modules/monks-enhanced-journal/templates/apsjournal/panel.html',
             data
         );
         return content;
     }
-}
 
-export class APSJMenu extends ProseMirror.ProseMirrorMenu {
-    addElement(htmlString) {
+    static addElement(htmlString) {
         const parser = ProseMirror.DOMParser.fromSchema(
             ProseMirror.defaultSchema
         );
@@ -241,57 +156,10 @@ export class APSJMenu extends ProseMirror.ProseMirrorMenu {
         tr.setSelection(ProseMirror.TextSelection.create(tr.doc, pos));
         this.view.dispatch(tr);
     }
-
-    _getDropDownMenus() {
-        const menus = super._getDropDownMenus();
-        // menus.format.entries.push({
-        //     action: 'stylishText',
-        //     title: 'Stylish Text',
-        //     children: [
-        //         {
-        //             action: 'stylishTitle',
-        //             title: game.i18n.format(
-        //                 'APSJournal.text-heading-title.name'
-        //             ),
-        //             priority: 1,
-        //             style: "font-family: 'Modesto Condensed'",
-        //             node: ProseMirror.defaultSchema.nodes.paragraph,
-        //             cmd: () => {},
-        //         },
-        //         {
-        //             action: 'stylishHeading',
-        //             title: game.i18n.format('APSJournal.text-heading.name'),
-        //             priority: 1,
-        //             style: "font-family: 'ScalySansCaps'",
-        //             node: ProseMirror.defaultSchema.nodes.paragraph,
-        //         },
-        //         {
-        //             action: 'stylishDataHeading',
-        //             title: game.i18n.format(
-        //                 'APSJournal.text-data-heading.name'
-        //             ),
-        //             priority: 1,
-        //             style: "font-family: 'ScaySansCaps'",
-        //             node: ProseMirror.defaultSchema.nodes.paragraph,
-        //         },
-        //         {
-        //             action: 'stylishData',
-        //             title: game.i18n.format('APSJournal.text-data.name'),
-        //             priority: 1,
-        //             style: "font-family: 'ScalySans'",
-        //             node: ProseMirror.defaultSchema.nodes.paragraph,
-        //         },
-        //         {
-        //             action: 'stylishParagraph',
-        //             title: game.i18n.format('APSJournal.text-paragraph.name'),
-        //             priority: 1,
-        //             style: "font-family: 'Bookinsanity'",
-        //             node: ProseMirror.defaultSchema.nodes.paragraph,
-        //         },
-        //     ],
-        // });
-
-        menus.stylish = {
+    /*
+    static getProseMirrorMenuDropDowns(items) {
+        items.stylish = {
+            cssClass: 'mej-menu-stylish',
             title: i18n('APSJournal.stylish-menu.name'),
             entries: [
                 {
@@ -302,7 +170,7 @@ export class APSJMenu extends ProseMirror.ProseMirrorMenu {
                             action: `${c}Block`,
                             title: i18n(`APSJournal.block-${c}.name`),
                             cmd: async () => {
-                                this.addElement(await APSJ.getBlock(c));
+                                APSJ.addElement.call(this, await APSJ.getBlock(c));
                             },
                         };
                     }),
@@ -314,11 +182,9 @@ export class APSJMenu extends ProseMirror.ProseMirrorMenu {
                         return ['left', 'right'].map((s) => {
                             return {
                                 action: `${c}Dialogue${s}`,
-                                title: i18n(
-                                    `APSJournal.block-dialogue-${c}-${s}.name`
-                                ),
+                                title: i18n(`APSJournal.block-dialogue-${c}-${s}.name`),
                                 cmd: async () => {
-                                    this.addElement(await APSJ.getDialog(c, s));
+                                    APSJ.addElement.call(this, await APSJ.getDialog(c, s));
                                 },
                             };
                         });
@@ -332,13 +198,13 @@ export class APSJMenu extends ProseMirror.ProseMirrorMenu {
                             action: `${c}Panel`,
                             title: i18n(`APSJournal.panel-${c}.name`),
                             cmd: async () => {
-                                this.addElement(await APSJ.getPanel(c));
+                                APSJ.addElement.call(this, await APSJ.getPanel(c));
                             },
                         };
                     }),
                 },
             ],
         };
-        return menus;
     }
+    */
 }
