@@ -1,3 +1,13 @@
+# Version 13.04
+
+Fixing issue with Quest Rewards being shown to players even if visible is turned off
+
+Fixing issue with Objectives being displayed even if available is turned off
+
+Changed the text on the Objectives to be consistent
+
+Removed buttons for players that players shouldn't been seen
+
 # Version 13.03
 
 Fixing Forge issue
