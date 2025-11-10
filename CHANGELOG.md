@@ -1,3 +1,7 @@
+# Version 13.06
+
+Fixing an issue if Conversation-HUD isn't installed.
+
 # Version 13.05
 
 Fixed issue with converting item prices in shop not getting the default values.

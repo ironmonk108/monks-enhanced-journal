@@ -3224,7 +3224,7 @@ export class MonksEnhancedJournal {
 				if (type == "base" || type == "oldentry") type = "journalentry";
 				if (types[type])
 					docIcon = MonksEnhancedJournal.getIcon(type);
-				else {
+				else if (game.modules.get("conversation-hud")?.active) {
 					type = document.pages.contents[0].getFlag('conversation-hud', 'type');
 					if (type == "conversation-sheet-data") {
                         docIcon = "fa-comments";
