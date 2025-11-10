@@ -74,8 +74,7 @@ export class AdjustPrice extends HandlebarsApplicationMixin(ApplicationV2) {
             let defValue = defaultAdjustment[t] || { sell: null, buy: null };
             adjustments[t] = { ...adj, default: defValue };
         }
-        adjustments.default.default = defaultAdjustment.default || { sell: 1, buy: 0.5 };
-        
+        foundry.utils.setProperty(adjustments, "default.default", defaultAdjustment.default || { sell: 1, buy: 0.5 });
         foundry.utils.mergeObject(adjustments, types);
 
         adjustments = Object.keys(adjustments).map(k => {
