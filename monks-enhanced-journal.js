@@ -22,7 +22,7 @@ import { APSJ } from "./apsjournal.js";
 import { EnhancedJournalSheet } from "./sheets/EnhancedJournalSheet.js";
 import { ProseMirrorPlugin } from "./classes/prosemirror.js";
 
-export let debugEnabled = 0;
+export let debugEnabled = 1;
 
 export let debug = (...args) => {
 	if (debugEnabled > 1) console.log("DEBUG: monks-enhanced-journal | ", ...args);
@@ -77,7 +77,7 @@ export let patchFunc = (prop, func, type = "WRAPPER") => {
 	let nonLibWrapper = () => {
 		const oldFunc = eval(prop);
 		eval(`${prop} = function (event) {
-			return func.call(this, ${type != "OVERRIDE" ? "oldFunc.bind(this)," : ""} ...arguments);
+			return func.call(this, ${type != "OVERRIDE" ? "oldFunc.bind(this)," : ""}, ...arguments);
 		}`);
 	}
 	if (game.modules.get("lib-wrapper")?.active) {

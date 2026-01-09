@@ -39,7 +39,8 @@ export class MEJHelpers {
 
     static defaultCurrency() {
         let currency = MonksEnhancedJournal.currencies.find(c => c.convert == 0);
-        return currency?.id || "";
+        return (game.system.id == 'dsa5') ? currency?.name || "" // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+            : currency?.id || "";
     }
 
     static getSystemPrice(item, name, ignorePrice = false) {

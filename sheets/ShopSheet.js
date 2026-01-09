@@ -593,7 +593,8 @@ export class ShopSheet extends EnhancedJournalSheet {
                         setPrice(itemData, pricename(), result.price);
                     if (!data.consumable) {
                         let sheet = actor.sheet;
-                        if (sheet._onDropItem)
+                        if (sheet._onDropItem
+                            && itemData.toObject === 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
                             sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
                         else
                             actor.createEmbeddedDocuments("Item", [itemData]);
@@ -690,7 +691,8 @@ export class ShopSheet extends EnhancedJournalSheet {
             } else {
                 let totalDefault = 0;
                 for (let curr of MonksEnhancedJournal.currencies) {
-                    totalDefault += (this.getCurrency(actor, curr.id) * (curr.convert || 1));
+                    let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                    totalDefault += (this.getCurrency(actor, currIdentifier) * (curr.convert || 1));
                 }
                 let check = MonksEnhancedJournal.currencies.find(c => c.id == price.currency);
                 totalDefault = totalDefault / (check?.convert || 1);
