@@ -1073,7 +1073,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                         remainder -= used;
                         
                         let unused = available - used;
-                        changes[currencies[idx].id] = Math.floor(unused / rate);
+                        let currIdentifier = (game.system.id == 'dsa5') ? currencies[idx].name : currencies[idx].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                        changes[currIdentifier] -= used / rate; // Substraction is required to ensure that overstanding amounts of lower denominations won't be cut off.
                         unused -= Math.floor(unused / rate) * rate;
 
                         if (idx < denomIdx && unused > 0) {
@@ -1082,8 +1083,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                             while (unused > 0 && jdx < currencies.length) {
                                 let r = (currencies[jdx].convert || 1) / (currencies[denomIdx].convert || 1);
                                 let disperse = unused / r;
-                                changes[currencies[jdx].id] += Math.floor(disperse);
+                                let currIdentifier = (game.system.id == 'dsa5') ? currencies[jdx].name : currencies[jdx].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                                changes[currIdentifier] += Math.floor(disperse);
                                 unused -= Math.floor(disperse) * r;
+
+                                // We also need to remove the dispersed amount from the higher denomination
+                                currIdentifier = (game.system.id == 'dsa5') ? currencies[jdx-1].name : currencies[jdx-1].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                                changes[currIdentifier] = Math.floor(changes[currIdentifier]);
 
                                 jdx++;
                             }
@@ -1143,10 +1149,12 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 let coinage = actor.items.find(i => { return i.type == "money" && i.name == k });
                 if (coinage) {
                     updates[`system.quantity`] = { value: v };
-                    promises.push(coinage.update(updates));
+                    await(new Promise(resolve =>
+                        resolve(coinage.update(updates))));
+                    // for some weird reason, dsa5 has issues with Promise.all(promises): only the last update gets processed. Therefore, we need to process them one by one.
                 }
             }
-            return Promise.all(promises);
+            return null; // Promise.all(promises) won't work correctly here - see above.
         } else if (game.system.id == 'wfrp4e') {
             let promises = [];
             for (let [k, v] of Object.entries(changes)) {
