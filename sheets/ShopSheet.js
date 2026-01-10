@@ -635,7 +635,6 @@ export class ShopSheet extends EnhancedJournalSheet {
             let newQuantity = parseInt(getValue(existing, quantityname(), 1));
             newQuantity += selectedQuantity;
 
-            // Temporary solution, proven only for
             switch (game.system.id) {
                 case 'dnd5e':
                     await existing.update({"system.quantity": newQuantity});
