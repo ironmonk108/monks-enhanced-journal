@@ -3670,11 +3670,22 @@ export class MonksEnhancedJournal {
 						setPrice(itemData, pricename(), { value: data.sell, currency: data.currency });
 					delete itemData._id;
 					if (!data.consumable) {
-						let sheet = actor.sheet;
-						if (sheet._onDropItem)
-							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
-						else
-							actor.createEmbeddedDocuments("Item", [itemData]);
+						// make sure to stack the item to any identical ones in the target inventory
+						let existing = actor.items.getName(itemData.name);
+						if (existing === undefined || !await ShopSheet.addToExisting(existing, parseInt(itemQty))) {
+							let sheet = actor.sheet;
+							if (sheet._onDropItem
+								&& itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
+							sheet._onDropItem({
+									preventDefault: () => {
+									}, target: {
+										closest: () => {
+										}
+									}
+								}, itemData);
+							else
+								actor.createEmbeddedDocuments("Item", [itemData]);
+						}
 					}
 					//deduct the gold
 					if (data.sell > 0)

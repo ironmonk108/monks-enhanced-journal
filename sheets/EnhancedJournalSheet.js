@@ -3575,11 +3575,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 delete itemData._id;
                 let itemQty = getValue(itemData, quantityname(), 1);
                 setValue(itemData, quantityname(), item.qty * itemQty);
-                let sheet = destActor.sheet;
-                if (sheet._onDropItem)
-                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
-                else
-                    destActor.createEmbeddedDocuments("Item", [itemData]);
+
+                // make sure to stack the item to any identical ones in the target inventory
+                let existing = destActor.items.getName(itemData.name);
+                if (existing === undefined || !await ShopSheet.addToExisting(existing, parseInt(itemQty))) {
+                    let sheet = destActor.sheet;
+                    if (sheet._onDropItem
+                        && itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
+                        sheet._onDropItem({
+                            preventDefault: () => {
+                            }, target: {
+                                closest: () => {
+                                }
+                            }
+                        }, itemData);
+                    else
+                        destActor.createEmbeddedDocuments("Item", [itemData]);
+                }
             }
             // Save the image if we're about to delete it
             let realitem = offer.items.find(i => i.id == item.id);

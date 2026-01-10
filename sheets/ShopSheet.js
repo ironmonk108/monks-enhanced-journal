@@ -593,26 +593,7 @@ export class ShopSheet extends EnhancedJournalSheet {
 
                     // make sure to stack the item to any identical ones in the target inventory
                     let existing = actor.items.getName(itemData.name);
-                    // This is a temporary hack proven so far only for dnd5e and dsa5. Any other system still to be clarified
-                    if ((game.system.id === 'dnd5e' || game.system.id === 'dsa5')
-                        && existing !== undefined) {
-                        let newQuantity = parseInt(getValue(existing, quantityname(), 1));
-                        newQuantity += result.quantity;
-
-                        // Temporary solution, proven only for
-                        switch (game.system.id) {
-                            case 'dnd5e':
-                                await existing.update({"system.quantity": newQuantity});
-                                break;
-                            case 'dsa5':
-                                await existing.update({"system.quantity.value": newQuantity});
-                                break;
-                            default:
-                                // not verified for other systems yet, therefore skipped.
-                                //setValue(existing, quantityname(), newQuantity);
-                                break;
-                        }
-                    } else {
+                    if (existing === undefined || !await ShopSheet.addToExisting(existing, result.quantity)) {
                         setValue(itemData, quantityname(), result.quantity * itemQty);
 
                         if (!data.consumable) {
@@ -645,6 +626,32 @@ export class ShopSheet extends EnhancedJournalSheet {
                 }
             }
         }
+    }
+
+    static async addToExisting(existing, selectedQuantity) {
+        let addedToExisting = false;
+        // This is a temporary hack proven so far only for dnd5e and dsa5. Any other system still to be clarified
+        if (game.system.id === 'dnd5e' || game.system.id === 'dsa5') {
+            let newQuantity = parseInt(getValue(existing, quantityname(), 1));
+            newQuantity += selectedQuantity;
+
+            // Temporary solution, proven only for
+            switch (game.system.id) {
+                case 'dnd5e':
+                    await existing.update({"system.quantity": newQuantity});
+                    addedToExisting = true;
+                    break;
+                case 'dsa5':
+                    await existing.update({"system.quantity.value": newQuantity});
+                    addedToExisting = true;
+                    break;
+                default:
+                    // not verified for other systems yet, therefore skipped.
+                    //setValue(existing, quantityname(), newQuantity);
+                    break;
+            }
+        }
+        return addedToExisting;
     }
 
     async createSellMessage(item, actor) {
