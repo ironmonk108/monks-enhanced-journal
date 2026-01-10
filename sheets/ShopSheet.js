@@ -587,17 +587,50 @@ export class ShopSheet extends EnhancedJournalSheet {
                 else {
                     let itemData = foundry.utils.duplicate(item);
                     delete itemData._id;
-                    let itemQty = getValue(itemData, quantityname(), 1);
-                    setValue(itemData, quantityname(), result.quantity * itemQty);
                     if (!setting("use-generic-price"))
                         setPrice(itemData, pricename(), result.price);
-                    if (!data.consumable) {
-                        let sheet = actor.sheet;
-                        if (sheet._onDropItem
-                            && itemData.toObject === 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
-                            sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
-                        else
-                            actor.createEmbeddedDocuments("Item", [itemData]);
+                    let itemQty = getValue(itemData, quantityname(), 1);
+
+                    // make sure to stack the item to any identical ones in the target inventory
+                    let existing = actor.items.getName(itemData.name);
+                    // This is a temporary hack proven so far only for dnd5e and dsa5. Any other system still to be clarified
+                    if ((game.system.id === 'dnd5e' || game.system.id === 'dsa5')
+                        && existing !== undefined) {
+                        let newQuantity = parseInt(getValue(existing, quantityname(), 1));
+                        newQuantity += result.quantity;
+
+                        // Temporary solution, proven only for
+                        switch (game.system.id) {
+                            case 'dnd5e':
+                                await existing.update({"system.quantity": newQuantity});
+                                break;
+                            case 'dsa5':
+                                await existing.update({"system.quantity.value": newQuantity});
+                                break;
+                            default:
+                                // not verified for other systems yet, therefore skipped.
+                                //setValue(existing, quantityname(), newQuantity);
+                                break;
+                        }
+                    } else {
+                        setValue(itemData, quantityname(), result.quantity * itemQty);
+
+                        if (!data.consumable) {
+                            let sheet = actor.sheet;
+
+                            if (sheet._onDropItem
+                                && itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
+                                sheet._onDropItem({
+                                    preventDefault: () => {
+                                    }, target: {
+                                        closest: () => {
+                                        }
+                                    }
+                                }, itemData);
+                            else {
+                                actor.createEmbeddedDocuments("Item", [itemData]);
+                            }
+                        }
                     }
 
                     MonksEnhancedJournal.emit("purchaseItem",

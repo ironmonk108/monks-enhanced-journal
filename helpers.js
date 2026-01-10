@@ -32,9 +32,13 @@ export class MEJHelpers {
     }
 
     static setValue(item, name, value = 1, options = {}) {
-        let prop = (item.system != undefined ? item.system : item);
+        let prop = (item.system !== undefined ? item.system : item);
         let data = foundry.utils.getProperty(prop, name);
-        foundry.utils.setProperty(prop, name, (data && data.hasOwnProperty("value") && !value.hasOwnProperty("value") && !options.overwrite ? Object.assign(data, { value: value }) : value));
+        let newValue =
+            (data && data.hasOwnProperty("value") && !value.hasOwnProperty("value") && !options.overwrite)
+                ? Object.assign(data, { value: value })
+                : value;
+        foundry.utils.setProperty(prop, name, newValue);
     }
 
     static defaultCurrency() {
