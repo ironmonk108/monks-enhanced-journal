@@ -1029,11 +1029,19 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         if (value < 0 && setting("purchase-conversion")) {
             let currencies = foundry.utils.duplicate(MonksEnhancedJournal.currencies || []).filter(c => c.convert != undefined);
             for (let curr of currencies) {
-                curr.value = parseInt(this.getCurrency(actor, curr.id) || 0);
+                let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                curr.value = parseInt(this.getCurrency(actor, currIdentifier) || 0);
             }
 
-            changes = currencies.reduce((a, v) => ({ ...a, [v.id]: v.value }), {});
-            let denomIdx = currencies.findIndex(c => c.id == denomination);
+            let denomIdx;
+            if (game.system.id == 'dsa5') { // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                changes = currencies.reduce((a, v) => ({ ...a, [v.name]: v.value }), {});
+                denomIdx = currencies.findIndex(c => c.name == denomination);
+            }
+            else {
+                changes = currencies.reduce((a, v) => ({ ...a, [v.id]: v.value }), {});
+                denomIdx = currencies.findIndex(c => c.id == denomination);
+            }
             if (denomIdx == -1)
                 return;
 
@@ -1089,8 +1097,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             //changes[denomination] += value;
 
             for (let curr of Object.keys(changes)) {
-                let orig = currencies.find(c => c.id == curr);
-                if (changes[curr] == orig.value)
+                let orig;
+                if (game.system.id == 'dsa5') { // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                    orig = currencies.find(c => c.name == curr);
+                } else {
+                    orig = currencies.find(c => c.id == curr);
+                }
+                if (orig !== undefined && changes[curr] == orig.value)
                     delete changes[curr];
             }
         } else
@@ -1927,7 +1940,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
         let quantity = 1;
         let data = {
-            msg: format("MonksEnhancedJournal.HowManyWouldYouLike", { verb: verb }),
+            msg: format("MonksEnhancedJournal.HowManyWouldYouLike", { verb: format(verb) }),
             img: details.img,
             name: details.name,
             quantity: quantity,

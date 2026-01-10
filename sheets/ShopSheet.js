@@ -565,7 +565,7 @@ export class ShopSheet extends EnhancedJournalSheet {
             return false;
         }
 
-        let result = await ShopSheet.confirmQuantity(item, max, "purchase");
+        let result = await ShopSheet.confirmQuantity(item, max, "MonksEnhancedJournal.Purchase");
         if ((result?.quantity ?? 0) > 0) {
             let price = MEJHelpers.getPrice(data.cost);
 
@@ -742,7 +742,7 @@ export class ShopSheet extends EnhancedJournalSheet {
 
             let price = MEJHelpers.getPrice(cost);
 
-            let result = await ShopSheet.confirmQuantity(item, max, "purchase");
+            let result = await ShopSheet.confirmQuantity(item, max, "MonksEnhancedJournal.Purchase");
             if ((result?.quantity ?? 0) > 0) {
                 price = result.price;
                 if (game.user.isGM) {
