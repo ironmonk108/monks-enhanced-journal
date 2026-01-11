@@ -98,7 +98,7 @@
   "MonksEnhancedJournal.Monsters": "Monster",
   "MonksEnhancedJournal.DeleteMonster": "Lösche Monster",
   "MonksEnhancedJournal.Items": "Gegenstände",
-  "MonksEnhancedJournal.Qty": "Qty",
+  "MonksEnhancedJournal.Qty": "Menge",
   "MonksEnhancedJournal.Quantity": "Anzahl",
   "MonksEnhancedJournal.Remaining": "Verbleibend",
   "MonksEnhancedJournal.Price": "Preis",
@@ -530,5 +530,9 @@
   "MonksEnhancedJournal.currency.tavs": "Tavs",
   "MonksEnhancedJournal.currency.hammer": "Hammer",
   "MonksEnhancedJournal.purchasing.hidden": "Versteckt",
-  "MonksEnhancedJournal.purchasing.visible": "Sichtbar"
+  "MonksEnhancedJournal.purchasing.visible": "Sichtbar",
+
+  "MonksEnhancedJournal.HoursOfOperation": "Öffnungszeiten",
+  "MonksEnhancedJournal.Description": "Description",
+  "MonksEnhancedJournal.Notes": "Notizen"
 }
