@@ -1663,7 +1663,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             items = newItems;
             await this.document.setFlag("monks-enhanced-journal", "items", items);
         }
-        
+
         let groups = {};
         for (let [key, item] of Object.entries(items)) {
             if (!key || !item)
@@ -1728,6 +1728,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
             let itemData = {
                 _id: key,
+                uuid: item.uuid,
                 name: name,
                 identifiedname: game.user.isGM && identifiedName != name ? identifiedName : null,
                 type: item.type,
@@ -3578,7 +3579,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                 // make sure to stack the item to any identical ones in the target inventory
                 let existing = destActor.items.getName(itemData.name);
-                if (existing === undefined || !await ShopSheet.addToExisting(existing, parseInt(itemQty))) {
+                if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, parseInt(itemQty))) {
                     let sheet = destActor.sheet;
                     if (sheet._onDropItem
                         && itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794

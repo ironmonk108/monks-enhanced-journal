@@ -3672,7 +3672,7 @@ export class MonksEnhancedJournal {
 					if (!data.consumable) {
 						// make sure to stack the item to any identical ones in the target inventory
 						let existing = actor.items.getName(itemData.name);
-						if (existing === undefined || !await ShopSheet.addToExisting(existing, parseInt(itemQty))) {
+						if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, parseInt(itemQty))) {
 							let sheet = actor.sheet;
 							if (sheet._onDropItem
 								&& itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794

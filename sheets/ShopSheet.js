@@ -593,7 +593,7 @@ export class ShopSheet extends EnhancedJournalSheet {
 
                     // make sure to stack the item to any identical ones in the target inventory
                     let existing = actor.items.getName(itemData.name);
-                    if (existing === undefined || !await ShopSheet.addToExisting(existing, result.quantity)) {
+                    if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, result.quantity)) {
                         setValue(itemData, quantityname(), result.quantity * itemQty);
 
                         if (!data.consumable) {
@@ -628,7 +628,7 @@ export class ShopSheet extends EnhancedJournalSheet {
         }
     }
 
-    static async addToExisting(existing, selectedQuantity) {
+    static async addPurchasedItemToExistingStack(existing, selectedQuantity) {
         let addedToExisting = false;
         // This is a temporary hack proven so far only for dnd5e and dsa5. Any other system still to be clarified
         if (game.system.id === 'dnd5e' || game.system.id === 'dsa5') {
