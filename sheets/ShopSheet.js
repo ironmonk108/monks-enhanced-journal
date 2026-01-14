@@ -17,6 +17,7 @@ export class ShopSheet extends EnhancedJournalSheet {
             adjustPrice: ShopSheet.onAdjustPrice,
             requestItem: ShopSheet.onRequestItem,
             clickItem: ShopSheet.onClickItem,
+            renderItemSheet: ShopSheet.renderItemSheet,
             toggleConsumable: ShopSheet.onToggleConsumable,
         },
     };
@@ -712,6 +713,21 @@ export class ShopSheet extends EnhancedJournalSheet {
 
         if (item)
             return item.sheet.render(true);
+    }
+
+    static renderItemSheet(event, target) {
+        const items = this.document.getFlag("monks-enhanced-journal", "items");
+        if (!items)
+            return {};
+        const _id = target.attributes?.getNamedItem("data-id")?.nodeValue;
+        if (!_id)
+            return;
+        const item = items[_id];
+        const worldItem = new CONFIG.Item.documentClass(item);
+        if (!worldItem?.sheet ||!worldItem.ownership)
+            return;
+        worldItem.ownership.default = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
+        worldItem.sheet.render(true);
     }
 
     static canAfford(item, actor) {

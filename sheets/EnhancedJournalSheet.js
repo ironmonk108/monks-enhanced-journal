@@ -1728,7 +1728,6 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
             let itemData = {
                 _id: key,
-                uuid: item.uuid,
                 name: name,
                 identifiedname: game.user.isGM && identifiedName != name ? identifiedName : null,
                 type: item.type,
@@ -3039,7 +3038,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             return;
 
         let item = new CONFIG.Item.documentClass(itemData);
-        let chatData = foundry.utils.getProperty(item, "system.description");
+        let chatData = EnhancedJournalSheet.createItemChatData(item);
         if (item.getChatData && item.type != "spell") {
             try {
                 let cdata = await item.getChatData({ secrets: false }, item);
@@ -3112,7 +3111,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                         });
                         if (chatData.price != undefined) {
                             let price = chatData.price;
-                            if (price.denomination)
+                            if (price?.denomination)
                                 price = `${price.value} ${price.denomination}`;
                             props.append(`<span class="tag">${i18n("MonksEnhancedJournal.Price")}: ${price}</span>`);
                         }
@@ -3715,6 +3714,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
         if (name) {
             await this.document.update({ name: name });
+        }
+    }
+
+    static createItemChatData(item) {
+        if (game.system.id === "dsa5") {
+            // simulate what would be returned by dnd5e, pf and other already supported systems, according to the original code
+            let chatData = new Object();
+            chatData.properties = [];
+            let prop = new Object();
+            prop.name = item.name;
+            chatData.properties.push(prop);
+            chatData.price = item.system.price.value;
+            chatData.description = item.system.description.value;
+            return chatData;
+        }
+        else {
+            foundry.utils.getProperty(item, "system.description");
         }
     }
 }
