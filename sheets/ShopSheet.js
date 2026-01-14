@@ -370,7 +370,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
                         price.value = Math.floor(price.value * buy);
-                        let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
+                        let result = await this.constructor.confirmQuantity(item, max, "MonksEnhancedJournal.Sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             let itemData = item.toObject();
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
@@ -413,7 +413,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
                         price.value = Math.floor(price.value * buy);
-                        let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
+                        let result = await this.constructor.confirmQuantity(item, max, "MonksEnhancedJournal.Sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             if (selling == "free") {
                                 //give the player the money
@@ -450,7 +450,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                         }
                     }
                 } else {
-                    let result = await ShopSheet.confirmQuantity(item, null, "transfer", false);
+                    let result = await ShopSheet.confirmQuantity(item, null, "MonksEnhancedJournal.Transfer", false);
                     if ((result?.quantity ?? 0) > 0) {
                         let itemData = item.toObject();
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename());
