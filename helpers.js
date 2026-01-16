@@ -113,7 +113,8 @@ export class MEJHelpers {
                     let val = (price * adjust) / ((tcurr.convert || 1) * adjust);
                     if (val == Math.floor(val)) {
                         curr = tcurr;
-                        currency = tcurr.id;
+                        currency = (game.system.id === 'dsa5') ? tcurr.name || "" // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                            : tcurr.id ;
                         price = Math.floor(val);
                         break;
                     }
