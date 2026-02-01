@@ -1797,6 +1797,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
         for (let group of Object.values(groups)) {
             group.collapsed = this.document._itemList[group.id];
+            group.countVisible = group.items.filter(i => i.hidden === false).length;
         }
 
         return groups;

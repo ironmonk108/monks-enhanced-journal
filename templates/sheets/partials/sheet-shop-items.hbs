@@ -26,7 +26,7 @@
     {{#if has.items}}
     <ol class="item-list" data-container="items">
         {{#each groups}}
-        {{#if this.id}}
+        {{#if (or (and this.id (gt this.countVisible 0)) @root.owner)}}
         <li data-id="{{this.id}}">
             <header class="collapsible {{#if this.collapsed}} collapsed{{/if}}">
                 <div class="item-name noborder flexrow">{{localize this.name}} <span class="collapse-text item-count">({{this.items.length}} items)</span></div>
@@ -36,6 +36,7 @@
         <li {{#if this.collapsed}} style="display: none;" {{/if}}>
             <ol>
                 {{#each this.items}}
+                {{#if (or @root.owner (not this.hidden))}}
                 <li class="item flexrow{{#if (eq this.quantity 0)}} empty{{/if}}" data-id="{{this._id}}" data-document="Item" draggable="false">
                     <div class="item-name flexrow">
                         <div class="item-image item-icon" style="background-image: url('{{this.img}}')" data-action="itemSummary"></div>
@@ -87,6 +88,7 @@
                         {{/if}}
                     </div>
                 </li>
+                {{/if}}
                 {{/each}}
             </ol>
         </li>
