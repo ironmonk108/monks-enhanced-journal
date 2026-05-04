@@ -3671,7 +3671,7 @@ export class MonksEnhancedJournal {
 					delete itemData._id;
 					if (!data.consumable) {
 						let sheet = actor.sheet;
-						if (sheet._onDropItem)
+						if (sheet._onDropItem && game.system.id != "dcc")
 							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
 						else
 							actor.createEmbeddedDocuments("Item", [itemData]);
@@ -4269,6 +4269,14 @@ export class MonksEnhancedJournal {
 					{ id: "cp", name: "cp", convert: 0.1 },
 					{ id: "bits", name: "bits", convert: 0.01 }
 				];
+			case "dcc":
+				return [
+					{ id: "pp", name: i18n("MonksEnhancedJournal.currency.platinum"), convert: 100 },
+					{ id: "ep", name: i18n("MonksEnhancedJournal.currency.electrum"), convert: 10 },
+					{ id: "gp", name: i18n("MonksEnhancedJournal.currency.gold"), convert: 0 },
+					{ id: "sp", name: i18n("MonksEnhancedJournal.currency.silver"), convert: 0.1 },
+					{ id: "cp", name: i18n("MonksEnhancedJournal.currency.copper"), convert: 0.01 }
+				];
 			default:
 				return [];
 		}
@@ -4516,7 +4524,7 @@ Hooks.on('dropActorSheetData', (actor, sheet, data) => {
 						if (!setting("use-generic-price"))
 							setPrice(data.data, pricename(), result.price);
 						data.uuid = `${data.uuid}${data.rewardId ? `.Rewards.${data.rewardId}` : ""}.Items.${data.itemId}`;
-						if (sheet._onDropItem && game.system.id != "cyphersystem")
+						if (sheet._onDropItem && game.system.id != "cyphersystem" && game.system.id != "dcc")
 							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data.data);
 						else
 							actor.createEmbeddedDocuments("Item", [data.data]);
