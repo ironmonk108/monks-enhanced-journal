@@ -3135,7 +3135,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 if (original.isOwner && orgPage.isOwner) {
                     MonksEnhancedJournal.fixType(orgPage);
                     let sheet = orgPage.sheet;
-                    sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: true }, false);
+                    sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: this.document.parent.hidden }, false);
                 } else {
                     MonksEnhancedJournal.emit("addRelationship", { uuid: relationship.uuid, relationship: { id: this.document.parent.id, uuid: this.document.parent.uuid }, page: this.document.id, hidden: true });
                 }
