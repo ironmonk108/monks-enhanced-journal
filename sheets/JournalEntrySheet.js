@@ -297,7 +297,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
             name: "JOURNAL.ActionShow",
             icon: '<i class="fa-solid fa-eye"></i>',
             condition: li => getPage(li)?.isOwner,
-            callback: li => Journal.showDialog(getPage(li))
+            callback: li => foundry.documents.collections.Journal.showDialog(getPage(li))
         }, {
             name: "SIDEBAR.JumpPin",
             icon: '<i class="fa-solid fa-crosshairs"></i>',
@@ -700,7 +700,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
             caption: page?.image.caption,
             window: { title }
         });
-        if (page) ip.shareImage = () => Journal.showDialog(page);
+        if (page) ip.shareImage = () => foundry.documents.collections.Journal.showDialog(page);
         ip.render({ force: true });
     }
 
@@ -1002,7 +1002,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
 
     async _onDrop(event) {
         // Retrieve the dropped Journal Entry Page.
-        const data = TextEditor.implementation.getDragEventData(event);
+        const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
         const page = await JournalEntryPage.implementation.fromDropData(data);
         if (!page) return;
 

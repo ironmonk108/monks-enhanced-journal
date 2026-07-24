@@ -402,7 +402,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async renderSubSheet(options = {}) {
         try {
-            const modes = foundry.appv1.sheets.JournalSheet.VIEW_MODES;
+            const modes = JournalEntrySheet.VIEW_MODES;
 
             let currentTab = this.tabs.active();
             if (!currentTab) {

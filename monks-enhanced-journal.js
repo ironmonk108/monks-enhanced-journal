@@ -451,9 +451,9 @@ export class MonksEnhancedJournal {
 
 		foundry.documents.collections.Journal.prototype.constructor._showEntry = async function(entryId, mode = null, force = true, showid) {
 			let entry = await fromUuid(entryId);
-			const options = { tempOwnership: force, mode: foundry.appv1.sheets.JournalSheet.VIEW_MODES.MULTIPLE, pageIndex: 0 };
+			const options = { tempOwnership: force, mode: foundry.applications.sheets.journal.JournalEntrySheet.VIEW_MODES.MULTIPLE, pageIndex: 0 };
 			if (entry instanceof JournalEntryPage) {
-				options.mode = foundry.appv1.sheets.JournalSheet.VIEW_MODES.SINGLE;
+				options.mode = foundry.applications.sheets.journal.JournalEntrySheet.VIEW_MODES.SINGLE;
 				options.pageId = entry.id;
 				// Set temporary observer permissions for this page.
 				entry.ownership[game.userId] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
@@ -1134,7 +1134,7 @@ export class MonksEnhancedJournal {
 			return oldImportFromCompendium.call(this, collection, id, updateData, options);
 		}
 
-		patchFunc("DocumentSheet.prototype._onConfigureSheet", async function (wrapped, ...args) {
+		patchFunc("foundry.appv1.api.DocumentSheet.prototype._onConfigureSheet", async function (wrapped, ...args) {
 			if (this.enhancedjournal)
 				this.document.enhancedjournal = this.enhancedjournal;
 			return wrapped(...args);
@@ -1143,7 +1143,7 @@ export class MonksEnhancedJournal {
 		let clickNote2 = async function (wrapped, ...args) {
 			const options = { newtab: setting("open-new-tab")};
 			if (this.page) {
-				options.mode = foundry.appv1.sheets.JournalSheet.VIEW_MODES.SINGLE;
+				options.mode = foundry.applications.sheets.journal.JournalEntrySheet.VIEW_MODES.SINGLE;
 				options.pageId = this.page.id;
 				options.anchor = (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.anchor") || "").slugify().replace(/["']/g, "").substring(0, 64);
 			}
@@ -2813,7 +2813,7 @@ export class MonksEnhancedJournal {
 				await img._render(true);
 				$(img.element).attr('data-show-id', data.showid);
 			} else {
-				Journal._showEntry(data.uuid, null, true);
+				foundry.documents.collections.Journal._showEntry(data.uuid, null, true);
 			}
 		}
 	}
