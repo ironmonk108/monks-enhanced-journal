@@ -78,7 +78,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             toggleViewMode: EnhancedJournal.toggleViewMode,
             navigatePrevious: EnhancedJournal.navigatePrevious,
             navigateNext: EnhancedJournal.navigateNext,
-            activateEntry: EnhancedJournal.activateEntry
+            activateEntry: EnhancedJournal.activateEntry,
+            toggleMaximize: EnhancedJournal.toggleMaximize
         },
         position: { width: 1025, height: 700 },
         form: {
@@ -273,7 +274,14 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _getHeaderControls() {
-        return this.subsheet?._getHeaderControls?.() || [];
+        let controls = this.subsheet?._getHeaderControls?.() || [];
+        let maximized = this.element?.classList.contains("maximized");
+        return controls.concat([{
+            icon: maximized ? "fas fa-compress-arrows-alt" : "fas fa-expand-arrows-alt",
+            label: maximized ? "MonksEnhancedJournal.Restore" : "MonksEnhancedJournal.Maximize",
+            action: "toggleMaximize",
+            visible: true
+        }]);
     }
 
     get entryType() {
@@ -1468,17 +1476,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         //don't do anything, but leave this here to prevent the regular journal page from doing anything
     }
 
-    _getHeaderButtons() {
-        let buttons = super._getHeaderButtons();
-
-        buttons.unshift({
-            label: i18n("MonksEnhancedJournal.Maximize"),
-            class: "toggle-fullscreen",
-            icon: "fas fa-expand-arrows-alt",
-            onclick: this.fullscreen.bind(this)
-        });
-
-        return buttons;
+    static toggleMaximize(event) {
+        this.fullscreen();
     }
 
     static doShowPlayers(event) {
@@ -1492,15 +1491,13 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     fullscreen() {
-        if (this.element.hasClass("maximized")) {
-            this.element.removeClass("maximized");
-            $('.toggle-fullscreen', this.element).html(`<i class="fas fa-expand-arrows-alt"></i>${i18n("MonksEnhancedJournal.Maximize")}`);
+        if (this.element.classList.contains("maximized")) {
+            this.element.classList.remove("maximized");
             this.setPosition({ width: this._previousPosition.width, height: this._previousPosition.height });
             this.setPosition({ left: this._previousPosition.left, top: this._previousPosition.top });
         } else {
-            this.element.addClass("maximized");
-            $('.toggle-fullscreen', this.element).html(`<i class="fas fa-compress-arrows-alt"></i>${i18n("MonksEnhancedJournal.Restore")}`);
-            
+            this.element.classList.add("maximized");
+
             this._previousPosition = foundry.utils.duplicate(this.position);
             this.setPosition({ left: 0, top: 0 });
             this.setPosition({ height: $('body').height(), width: $('body').width() - $('#sidebar').width() });
