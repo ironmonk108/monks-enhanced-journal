@@ -1,0 +1,189 @@
+- generic [active] [ref=f9e1]:
+  - list
+  - generic [ref=f9e2]:
+    - generic:
+      - generic:
+        - complementary:
+          - list:
+            - listitem:
+              - tab "Token Controls" [ref=f9e3]
+            - listitem:
+              - tab "Tile Controls" [ref=f9e4] [cursor=pointer]
+            - listitem:
+              - tab "Drawing Tools" [ref=f9e5] [cursor=pointer]
+            - listitem:
+              - tab "Wall Controls" [ref=f9e6] [cursor=pointer]
+            - listitem:
+              - tab "Lighting Controls" [ref=f9e7] [cursor=pointer]
+            - listitem:
+              - tab "Ambient Sound Controls" [ref=f9e8] [cursor=pointer]
+            - listitem:
+              - tab "Region Controls" [ref=f9e9] [cursor=pointer]
+            - listitem:
+              - tab "Journal Notes" [ref=f9e10] [cursor=pointer]
+          - list:
+            - listitem:
+              - button "Select Tokens" [pressed] [ref=f9e11]
+            - listitem:
+              - button "Select Targets" [ref=f9e12] [cursor=pointer]
+            - listitem:
+              - button "Measure Distance" [ref=f9e13] [cursor=pointer]
+            - listitem:
+              - button "Unconstrained Movement" [ref=f9e14] [cursor=pointer]
+        - complementary:
+          - generic [ref=f9e15]:
+            - list [ref=f9e16]:
+              - listitem [ref=f9e17]:
+                - generic [ref=f9e18]: Gamemaster [GM]
+            - generic [ref=f9e19]:
+              - generic [ref=f9e20]: Latency 41ms
+              - generic [ref=f9e21]: FPS 52
+              - button [ref=f9e22] [cursor=pointer]
+      - generic:
+        - navigation:
+          - list:
+            - listitem [ref=f9e23]:
+              - generic [ref=f9e24]: Foundry Virtual Tabletop
+              - list [ref=f9e25]:
+                - listitem "Gamemaster" [ref=f9e26]: G
+              - text: 
+          - list
+    - generic:
+      - generic:
+        - complementary:
+          - generic:
+            - button "Mute Volume" [ref=f9e27] [cursor=pointer]
+            - button "Main Menu" [ref=f9e28] [cursor=pointer]
+          - list [ref=f9e29]:
+            - button "Empty Slot" [ref=f9e30] [cursor=pointer]:
+              - generic: "1"
+            - button "Empty Slot" [ref=f9e31] [cursor=pointer]:
+              - generic: "2"
+            - button "Empty Slot" [ref=f9e32] [cursor=pointer]:
+              - generic: "3"
+            - button "Empty Slot" [ref=f9e33] [cursor=pointer]:
+              - generic: "4"
+            - button "Empty Slot" [ref=f9e34] [cursor=pointer]:
+              - generic: "5"
+            - button "Empty Slot" [ref=f9e35] [cursor=pointer]:
+              - generic: "6"
+            - button "Empty Slot" [ref=f9e36] [cursor=pointer]:
+              - generic: "7"
+            - button "Empty Slot" [ref=f9e37] [cursor=pointer]:
+              - generic: "8"
+            - button "Empty Slot" [ref=f9e38] [cursor=pointer]:
+              - generic: "9"
+            - button "Empty Slot" [ref=f9e39] [cursor=pointer]:
+              - generic: "0"
+          - generic:
+            - navigation:
+              - button "Next Page" [ref=f9e40] [cursor=pointer]
+              - generic: "1"
+              - button "Previous Page" [ref=f9e41] [cursor=pointer]
+            - generic:
+              - button "Lock Hotbar" [ref=f9e42] [cursor=pointer]
+              - button "Clear Hotbar" [ref=f9e43] [cursor=pointer]
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - list
+          - generic "Chat" [ref=f9e44]:
+            - generic [ref=f9e45]:
+              - paragraph [ref=f9e47]
+              - text: Enter message
+          - generic:
+            - generic:
+              - button "Public as User" [pressed] [ref=f9e48]
+              - button "Private to Gamemasters" [ref=f9e49] [cursor=pointer]
+              - button "Blind to Gamemasters" [ref=f9e50] [cursor=pointer]
+              - button "Self Only" [ref=f9e51] [cursor=pointer]
+              - button "Public as Character" [ref=f9e52] [cursor=pointer]
+      - complementary:
+        - tablist:
+          - list [ref=f9e53]:
+            - listitem [ref=f9e54]:
+              - tab "Chat Messages" [ref=f9e55] [cursor=pointer]
+            - listitem [ref=f9e56]:
+              - tab "Combat Encounters" [ref=f9e57] [cursor=pointer]
+            - listitem [ref=f9e58]:
+              - tab "Scenes" [ref=f9e59] [cursor=pointer]
+            - listitem [ref=f9e60]:
+              - tab "Placeables" [ref=f9e61] [cursor=pointer]
+            - listitem [ref=f9e62]:
+              - tab "Actors" [ref=f9e63] [cursor=pointer]
+            - listitem [ref=f9e64]:
+              - tab "Items" [ref=f9e65] [cursor=pointer]
+            - listitem [ref=f9e66]:
+              - tab "Journal" [ref=f9e67] [cursor=pointer]
+            - listitem [ref=f9e68]:
+              - tab "Rollable Tables" [ref=f9e69] [cursor=pointer]
+            - listitem [ref=f9e70]:
+              - tab "Card Stacks" [ref=f9e71] [cursor=pointer]
+            - listitem [ref=f9e72]:
+              - tab "Macros" [ref=f9e73] [cursor=pointer]
+            - listitem [ref=f9e74]:
+              - tab "Playlists" [ref=f9e75] [cursor=pointer]
+            - listitem [ref=f9e76]:
+              - tab "Compendium Packs" [ref=f9e77] [cursor=pointer]
+            - listitem [ref=f9e78]:
+              - tab "Settings" [ref=f9e79] [cursor=pointer]
+            - listitem [ref=f9e80]:
+              - button "Expand" [ref=f9e81] [cursor=pointer]
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem [ref=f9e82]:
+                  - generic [ref=f9e83]:
+                    - 'heading "Foundry Virtual Tabletop Foundry Virtual Tabletop To: Gamemaster" [level=4] [ref=f9e84]':
+                      - img "Foundry Virtual Tabletop" [ref=f9e86] [cursor=pointer]
+                      - generic [ref=f9e87]:
+                        - generic [ref=f9e88]: Foundry Virtual Tabletop
+                        - generic [ref=f9e89]: "To: Gamemaster"
+                    - generic [ref=f9e90]:
+                      - time [ref=f9e91]: 48m 3s ago
+                      - generic "Additional Controls" [ref=f9e92] [cursor=pointer]
+                  - generic [ref=f9e94]:
+                    - heading "Getting Started" [level=3] [ref=f9e95]
+                    - paragraph [ref=f9e96]: It looks like this is a new World. To get started, you should first add any additional players you might need via the User Management configuration. From there, you can create Actors for them, as well as any other important personas you need to represent. Maps and other visuals can be set up using Scenes, and handouts, notes, and other information can be stored in Journal Entries.
+                    - paragraph [ref=f9e97]:
+                      - text: Be sure to investigate all of the tabs available in this sidebar, and for more in-depth information, you can review the
+                      - link "Gamemaster Tutorial" [ref=f9e98] [cursor=pointer]:
+                        - /url: https://foundryvtt.com/article/tutorial/
+                      - text: series in our
+                      - link "Knowledge Base" [ref=f9e99] [cursor=pointer]:
+                        - /url: https://foundryvtt.com/kb/
+                      - text: .
+                    - generic [ref=f9e100]: This chat card can be popped out by right-clicking it, or you can pop out the entire chat tab by right-clicking the speech bubble icon at the top. You can do the same thing to popout any of the other sidebar tabs as well.
+                - listitem [ref=f9e102]:
+                  - generic [ref=f9e103]:
+                    - 'heading "Foundry Virtual Tabletop Foundry Virtual Tabletop To: Gamemaster" [level=4] [ref=f9e104]':
+                      - img "Foundry Virtual Tabletop" [ref=f9e106] [cursor=pointer]
+                      - generic [ref=f9e107]:
+                        - generic [ref=f9e108]: Foundry Virtual Tabletop
+                        - generic [ref=f9e109]: "To: Gamemaster"
+                    - generic [ref=f9e110]:
+                      - time [ref=f9e111]: 48m 3s ago
+                      - generic "Additional Controls" [ref=f9e112] [cursor=pointer]
+                  - generic [ref=f9e114]:
+                    - heading "Inviting Your Players" [level=3] [ref=f9e115]
+                    - paragraph [ref=f9e116]: When everything is set up and you're ready to invite your players, you can send them a link to your World from the Invitation Links.
+                    - paragraph [ref=f9e117]:
+                      - text: If the Invitation Links dialog indicates that your connection is closed, you may need to set up port forwarding. You can find instructions on how to do this in our
+                      - link "Port Forwarding Guide" [ref=f9e118] [cursor=pointer]:
+                        - /url: https://foundryvtt.com/article/port-forwarding/
+                      - text: . If you still need help, you are welcome to join our Discord and make a post in
+                      - link "#install-and-connection" [ref=f9e119] [cursor=pointer]:
+                        - /url: https://discord.com/channels/170995199584108546/689889940590690323
+                      - text: for invite issues,
+                      - link "#troubleshooting" [ref=f9e120] [cursor=pointer]:
+                        - /url: https://discord.com/channels/170995199584108546/486930822465716249
+                      - text: for general issues with the software, or
+                      - link "#core-how-to" [ref=f9e121] [cursor=pointer]:
+                        - /url: https://discord.com/channels/170995199584108546/713259405667205193
+                      - text: to find out how to do something in Foundry VTT.
+                    - generic [ref=f9e122]: This chat card can be popped out by right-clicking it, or you can pop out the entire chat tab by right-clicking the speech bubble icon at the top. You can do the same thing to popout any of the other sidebar tabs as well.
+          - text:  + +  + +  + +  + +  + + • • •
+  - figure:
+    - generic: Game Paused

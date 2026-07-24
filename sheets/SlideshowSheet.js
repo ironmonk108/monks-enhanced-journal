@@ -811,10 +811,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
     _getSlideshowContextOptions() {
         return [
             {
-                name: "MonksEnhancedJournal.EditSlide",
+                label: "MonksEnhancedJournal.EditSlide",
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM,
-                callback: elem => {
+                visible: game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));
@@ -823,10 +823,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Duplicate",
+                label: "SIDEBAR.Duplicate",
                 icon: '<i class="far fa-copy"></i>',
-                condition: () => game.user.isGM,
-                callback: elem => {
+                visible: () => game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));
@@ -834,10 +834,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Delete",
+                label: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: elem => {
+                visible: () => game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));

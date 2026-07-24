@@ -1,0 +1,274 @@
+[     666ms] [LOG] _______________________________________________________________
+ _____ ___  _   _ _   _ ____  ______   __ __     _______ _____
+|  ___/ _ \| | | | \ | |  _ \|  _ \ \ / / \ \   / |_   _|_   _|
+| |_ | | | | | | |  \| | | | | |_) \ V /   \ \ / /  | |   | |
+|  _|| |_| | |_| | |\  | |_| |  _ < | |     \ V /   | |   | |
+|_|   \___/ \___/|_| \_|____/|_| \_\|_|      \_/    |_|   |_|
+=============================================================== @ http://localhost:30000/scripts/foundry.mjs:219222
+[     668ms] [LOG] Foundry VTT | Foundry Virtual Tabletop ESModule loaded @ http://localhost:30000/scripts/foundry.mjs:219223
+[     750ms] [LOG] Foundry VTT | Connected to server socket using session 8c9ff8a14bd4db3301b7fd0b @ http://localhost:30000/scripts/foundry.mjs:205572
+[    1383ms] [INFO] libWrapper: Version 1.13.5.1 (c0521af) ready. @ http://localhost:30000/modules/lib-wrapper/lib-wrapper.js:0
+[    1383ms] [LOG] Foundry VTT | Initializing Foundry Virtual Tabletop Game @ http://localhost:30000/scripts/foundry.mjs:205727
+[    1384ms] [LOG] %cD&D 5e | %cInitializing the D&D Fifth Game System - Version 5.3.3
+_______________________________
+______      ______ _____ _____
+|  _  \___  |  _  \  ___|  ___|
+| | | ( _ ) | | | |___ \| |__
+| | | / _ \/\ | | |   \ \  __|
+| |/ / (_>  < |/ //\__/ / |___
+|___/ \___/\/___/ \____/\____/
+_______________________________ color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1393ms] [LOG] %cD&D 5e | %cRegistered Dungeons & Dragons Fifth Edition data: source books color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1393ms] [LOG] %cD&D 5e | %cRegistered redirects to SRD for dnd-players-handbook color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1393ms] [LOG] %cD&D 5e | %cRegistered redirects to SRD for dnd-dungeon-masters-guide color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1393ms] [LOG] %cD&D 5e | %cRegistered redirects to SRD for dnd-monster-manual color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1398ms] [LOG] monks-enhanced-journal |  Initializing Monks Enhanced Journal @ http://localhost:30000/modules/monks-enhanced-journal/monks-enhanced-journal.js:29
+[    1440ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/active-effects.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1454ms] [LOG] Foundry VTT | Loaded localization file lang/en.json @ http://localhost:30000/scripts/foundry.mjs:204562
+[    1461ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/active-effects.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1463ms] [LOG] Foundry VTT | Loaded localization file modules/monks-enhanced-journal/lang/en.json @ http://localhost:30000/scripts/foundry.mjs:204562
+[    1471ms] [LOG] Foundry VTT | Loaded localization file modules/lib-wrapper/lang/en.json @ http://localhost:30000/scripts/foundry.mjs:204562
+[    1476ms] [LOG] Foundry VTT | Loaded localization file systems/dnd5e/lang/en.json @ http://localhost:30000/scripts/foundry.mjs:204562
+[    1592ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/apps/parts/trait-list.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/apps/parts/trait-list.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/apps/parts/traits-list.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/apps/parts/traits-list.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-classes.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-classes.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-trait-pills.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1594ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-trait-pills.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1595ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1595ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1595ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-features.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1595ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-features.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1595ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-spellbook.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1596ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-spellbook.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1596ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-warnings.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1596ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-warnings.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1596ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-warnings-dialog.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1596ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/actor-warnings-dialog.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1599ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/biography-textbox.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1601ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/parts/biography-textbox.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1614ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/character-bastion.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1619ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/character-bastion.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1626ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/character-biography.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1629ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/character-biography.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1632ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/character-details.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1634ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/character-details.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1637ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/creature-special-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1637ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/creature-special-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1638ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/npc-biography.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1639ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/actors/tabs/npc-biography.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1644ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/chat/parts/card-activities.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1645ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/chat/parts/card-activities.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1646ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/chat/parts/card-deltas.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1647ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/chat/parts/card-deltas.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1655ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-background.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1656ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-background.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1656ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-class.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1656ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-class.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1656ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-consumable.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1657ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-consumable.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1664ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-container.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1666ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-container.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1668ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-equipment.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1669ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-equipment.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1671ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-facility.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1673ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-facility.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1673ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-feat.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1674ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-feat.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1676ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-loot.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1678ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-loot.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1681ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-mountable.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1682ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-mountable.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1682ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-species.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1685ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-species.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1686ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-spell.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1687ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-spell.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1688ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-spellcasting.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1688ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-spellcasting.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1688ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-starting-equipment.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1689ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-starting-equipment.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1689ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-subclass.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1690ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-subclass.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1691ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-tool.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1692ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-tool.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1694ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-weapon.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1697ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/details/details-weapon.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1697ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/parts/item-summary.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1697ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/parts/item-summary.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1698ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/parts/item-tooltip.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1698ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/parts/item-tooltip.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1701ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/parts/spell-block.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1701ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/items/parts/spell-block.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1702ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-activation.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1703ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-activation.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1705ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-damage.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1707ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-damage.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1709ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-duration.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1710ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-duration.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1712ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-range.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1713ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-range.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1715ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-targets.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1715ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-targets.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1716ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-uses.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1717ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/field-uses.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1718ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/fieldlist.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1719ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/fieldlist.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1720ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/formlist.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1721ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/shared/fields/formlist.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1722ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/journal/parts/journal-legacy-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1723ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/journal/parts/journal-legacy-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1724ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/journal/parts/journal-modern-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1725ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/journal/parts/journal-modern-traits.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1727ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/journal/parts/journal-table.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1728ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/journal/parts/journal-table.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1730ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/activity/parts/activity-usage-notes.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1730ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/activity/parts/activity-usage-notes.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1732ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/advancement/parts/advancement-controls.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1733ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/advancement/parts/advancement-controls.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1734ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/advancement/parts/advancement-spell-config.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1735ms] [LOG] Foundry VTT | Retrieved and compiled template systems/dnd5e/templates/advancement/parts/advancement-spell-config.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1799ms] [LOG] %cD&D 5e | %cFinished setting up Rules (SRD): table of contents color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1799ms] [LOG] %cD&D 5e | %cFinished setting up Rules: table of contents color: #6e0000; font-variant: small-caps color: revert @ http://localhost:30000/systems/dnd5e/dnd5e.mjs:514
+[    1914ms] [LOG] Foundry VTT | Retrieved and compiled template templates/ui/scene-navigation.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1938ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1938ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tab.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1980ms] [LOG] Foundry VTT | Retrieved and compiled template templates/ui/players.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1987ms] [LOG] Foundry VTT | Retrieved and compiled template templates/ui/hotbar.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1992ms] [LOG] Foundry VTT | Retrieved and compiled template templates/ui/scene-controls-layers.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    1992ms] [LOG] Foundry VTT | Retrieved and compiled template templates/ui/scene-controls-tools.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2012ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/chat/log.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2013ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/chat/notifications.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2013ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/chat/input.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2039ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/combat/header.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2040ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/combat/tracker.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2040ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/combat/footer.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2054ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/directory/header.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2054ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/directory/directory.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2054ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/partials/scene-partial.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2055ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/partials/folder-partial.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2055ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/directory/footer.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2062ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/partials/document-partial.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2074ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/playlist/controls.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2074ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/playlist/playlist-partial.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2074ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/playlist/playing.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2074ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/playlist/sound-partial.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2082ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/compendiums.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2083ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/partials/pack-partial.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2083ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/partials/document-match.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2094ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/settings.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2105ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/chat-message.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2193ms] [LOG] Foundry VTT | Fonts loaded and ready. @ http://localhost:30000/scripts/foundry.mjs:99340
+[    2274ms] [LOG] Foundry VTT | Viewing Scene Foundry Virtual Tabletop @ http://localhost:30000/scripts/foundry.mjs:56643
+[    2311ms] [LOG] Foundry VTT | Drawing game canvas for scene Foundry Virtual Tabletop @ http://localhost:30000/scripts/foundry.mjs:116766
+[    2378ms] [LOG] Loaded icons/svg/combat.svg (1.56%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2382ms] [LOG] Loaded icons/svg/aura.svg (3.13%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2387ms] [LOG] Loaded icons/svg/cowled.svg (4.69%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2391ms] [LOG] Loaded icons/svg/padlock.svg (6.25%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2396ms] [LOG] Loaded icons/svg/up.svg (7.81%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2400ms] [LOG] Loaded icons/svg/down.svg (9.38%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2404ms] [LOG] Loaded icons/svg/light.svg (10.94%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2408ms] [LOG] Loaded icons/svg/light-off.svg (12.50%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2409ms] [LOG] Loaded icons/svg/skull.svg (14.06%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2412ms] [LOG] Loaded icons/svg/sound.svg (15.63%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2415ms] [LOG] Loaded icons/svg/explosion.svg (17.19%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2420ms] [LOG] Loaded icons/svg/sound-off.svg (18.75%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2424ms] [LOG] Loaded icons/svg/door-closed-outline.svg (20.31%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2427ms] [LOG] Loaded icons/svg/door-open-outline.svg (21.88%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2432ms] [LOG] Loaded icons/svg/door-secret-outline.svg (23.44%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2437ms] [LOG] Loaded icons/svg/wall-direction.svg (25.00%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2440ms] [LOG] Loaded icons/svg/door-locked-outline.svg (26.56%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2444ms] [LOG] Loaded icons/svg/levels.svg (28.13%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2471ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/burrowing.svg (29.69%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2473ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/concentrating.svg (31.25%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2477ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/cover-half.svg (32.81%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2478ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/dead.svg (34.38%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2480ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/cover-total.svg (35.94%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2482ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/cover-three-quarters.svg (37.50%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2485ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/dodging.svg (39.06%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2492ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/ethereal.svg (40.63%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2504ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/hiding.svg (42.19%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2505ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/hovering.svg (43.75%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2508ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/marked.svg (45.31%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2508ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/sleeping.svg (46.88%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2510ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/flying.svg (48.44%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2516ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/bleeding.svg (50.00%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2518ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/stable.svg (51.56%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2522ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/blinded.svg (53.13%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2524ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/burning.svg (54.69%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2524ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/charmed.svg (56.25%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2526ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/dehydration.svg (57.81%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2532ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/cursed.svg (59.38%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2534ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/deafened.svg (60.94%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2535ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/diseased.svg (62.50%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2538ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/frightened.svg (64.06%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2541ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/grappled.svg (65.63%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2543ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/falling.svg (67.19%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2547ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/exhaustion.svg (68.75%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2547ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/incapacitated.svg (70.31%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2549ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/invisible.svg (71.88%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2550ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/malnutrition.svg (73.44%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2551ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/paralyzed.svg (75.00%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2557ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/petrified.svg (76.56%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2561ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/poisoned.svg (78.13%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2568ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/prone.svg (79.69%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2569ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/restrained.svg (81.25%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2570ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/silenced.svg (82.81%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2582ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/stunned.svg (84.38%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2583ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/suffocation.svg (85.94%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2587ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/unconscious.svg (87.50%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2587ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/encumbered.svg (89.06%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2589ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/heavily-encumbered.svg (90.63%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2592ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/exceeding-carrying-capacity.svg (92.19%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2594ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/transformed.svg (93.75%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2606ms] [LOG] Loaded systems/dnd5e/icons/svg/statuses/surprised.svg (95.31%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2615ms] [LOG] Loaded nue/defaultscene/fvtt-logo.webp (96.88%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2715ms] [LOG] Loaded nue/defaultscene/fvtt-background.webp (98.44%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2867ms] [LOG] Loaded canvas/tokens/rings-steel.json (100.00%) @ http://localhost:30000/scripts/foundry.mjs:105204
+[    2869ms] [LOG] Foundry VTT | Drawing the HiddenCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2870ms] [LOG] Foundry VTT | Drawing the RenderedCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2870ms] [LOG] Foundry VTT | Drawing the EnvironmentCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2872ms] [LOG] Foundry VTT | Drawing the PrimaryCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2875ms] [LOG] Foundry VTT | Drawing the WeatherEffects canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2875ms] [LOG] Foundry VTT | Drawing the EffectsCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2876ms] [LOG] Foundry VTT | Drawing the CanvasBackgroundAlterationEffects canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2876ms] [LOG] Foundry VTT | Drawing the CanvasIlluminationEffects canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2876ms] [LOG] Foundry VTT | Drawing the CanvasColorationEffects canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2877ms] [LOG] Foundry VTT | Drawing the CanvasDarknessEffects canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2877ms] [LOG] Foundry VTT | Drawing the CanvasVisibility canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2880ms] [LOG] Foundry VTT | Drawing the InterfaceCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2881ms] [LOG] Foundry VTT | Drawing the GridLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2882ms] [LOG] Foundry VTT | Drawing the RegionLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2883ms] [LOG] Foundry VTT | Drawing the DrawingsLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2883ms] [LOG] Foundry VTT | Drawing the TemplateLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2883ms] [LOG] Foundry VTT | Drawing the TilesLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2888ms] [LOG] Foundry VTT | Drawing the WallsLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2889ms] [LOG] Foundry VTT | Drawing the TokenLayer5e canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2889ms] [LOG] Foundry VTT | Drawing the SoundsLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2889ms] [LOG] Foundry VTT | Drawing the LightingLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2914ms] [LOG] Foundry VTT | Drawing the NotesLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2914ms] [LOG] Foundry VTT | Drawing the ControlsLayer canvas layer @ http://localhost:30000/scripts/foundry.mjs:111141
+[    2953ms] [LOG] Foundry VTT | Retrieved and compiled template templates/hud/waypoint-label.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    2953ms] [LOG] Foundry VTT | Drawing the OverlayCanvasGroup canvas group @ http://localhost:30000/scripts/foundry.mjs:110537
+[    2968ms] [LOG] Applying buffered socket event: userActivity @ http://localhost:30000/scripts/foundry.mjs:205636
+[    3215ms] [LOG] Foundry VTT | Constructed index of dnd5e.subclasses Compendium containing 12 entries @ http://localhost:30000/scripts/foundry.mjs:27942
+[    3216ms] [LOG] Foundry VTT | Constructed index of dnd5e.classes Compendium containing 12 entries @ http://localhost:30000/scripts/foundry.mjs:27942
+[    3349ms] [LOG] Foundry VTT | Constructed index of dnd5e.classes24 Compendium containing 282 entries @ http://localhost:30000/scripts/foundry.mjs:27942
+[    3355ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/placeable/tabs.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    3419ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/placeable/tab.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    3546ms] [LOG] Worker TextureCompressor of FogExtractor | Initialized Worker @ http://localhost:30000/scripts/worker.js:71
+[    3839ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/placeable/search.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    3920ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/placeable/directory.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    3920ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/placeable/tokens.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    3979ms] [LOG] Foundry VTT | Retrieved and compiled template templates/sidebar/tabs/placeable/token.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[    4104ms] [LOG] Foundry VTT | Constructed index of dnd5e.classes24 Compendium containing 282 entries @ http://localhost:30000/scripts/foundry.mjs:27942
+[    4171ms] [LOG] Foundry VTT | Constructed index of dnd5e.spells24 Compendium containing 341 entries @ http://localhost:30000/scripts/foundry.mjs:27942
+[   24676ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/main.html @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24676ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/directory.html @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24708ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/journal_sidebar.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24708ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/journal_toc.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24708ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/journal_pages.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24708ms] [LOG] Foundry VTT | Retrieved and compiled template templates/journal/page.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24716ms] [LOG] Foundry VTT | Retrieved and compiled template templates/journal/pages/text/view.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[   24720ms] [LOG] Foundry VTT | Retrieved and compiled template templates/journal/toc.hbs @ http://localhost:30000/scripts/foundry.mjs:88936

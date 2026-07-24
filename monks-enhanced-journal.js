@@ -1472,9 +1472,9 @@ export class MonksEnhancedJournal {
 			let context = wrapped(...args);
 
 			context.push({
-				name: i18n("MonksEnhancedJournal.ConvertToEnhancedJournal"),
-				icon: '<i class="fas fa-file-arrow-down"></i>',
-				condition: li => {
+				label: i18n("MonksEnhancedJournal.ConvertToEnhancedJournal"),
+				icon: "fas fa-file-arrow-down",
+				visible: li => {
 					let journal = game.journal.get(li.dataset.entryId);
 					if (!journal)
 						return false;
@@ -1484,7 +1484,7 @@ export class MonksEnhancedJournal {
 
 					return !MonksEnhancedJournal.getMEJType(journal);
 				},
-				callback: async (li) => {
+				onClick: async (event, li) => {
 					let journal = game.journal.get(li.dataset.entryId);
 					if (journal) {
 						let isGood = true;
@@ -1532,12 +1532,12 @@ export class MonksEnhancedJournal {
 
 			if (setting("open-outside")) {
 				context.push({
-					name: i18n("MonksEnhancedJournal.OpenInEnhancedBrowser"),
-					icon: '<i class="fas fa-link"></i>',
-					condition: li => {
+					label: i18n("MonksEnhancedJournal.OpenInEnhancedBrowser"),
+					icon: "fas fa-link",
+					visible: li => {
 						return game.user.isGM || setting("allow-player");
 					},
-					callback: async (li) => {
+					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
 						if (journal) {
 							MonksEnhancedJournal.fixType(journal);
@@ -1548,12 +1548,12 @@ export class MonksEnhancedJournal {
 				});
 			} else {
 				context.push({
-					name: i18n("MonksEnhancedJournal.OpenOutsideEnhancedBrowser"),
-					icon: '<i class="fas fa-link"></i>',
-					condition: li => {
+					label: i18n("MonksEnhancedJournal.OpenOutsideEnhancedBrowser"),
+					icon: "fas fa-link",
+					visible: li => {
 						return game.user.isGM || setting("allow-player");
 					},
-					callback: async (li) => {
+					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
 						if (journal) {
 							if (!!MonksEnhancedJournal.getMEJType(journal)) {
@@ -1569,12 +1569,12 @@ export class MonksEnhancedJournal {
 
 			if (!setting("open-new-tab")) {
 				context.push({
-					name: i18n("MonksEnhancedJournal.OpenInNewTab"),
-					icon: '<i class="fas fa-external-link-alt"></i>',
-					condition: li => {
+					label: i18n("MonksEnhancedJournal.OpenInNewTab"),
+					icon: "fas fa-external-link-alt",
+					visible: li => {
 						return game.user.isGM || setting("allow-player");
 					},
-					callback: async (li) => {
+					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
 						if (journal) {
 							MonksEnhancedJournal.fixType(journal);

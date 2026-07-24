@@ -726,20 +726,20 @@ export class LootSheet extends EnhancedJournalSheet {
     _getActorContextOptions() {
         return [
             {
-                name: "Transfer Funds",
+                label: "Transfer Funds",
                 icon: '<i class="fas fa-user"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
+                visible: () => game.user.isGM,
+                onClick: (event, li) => {
                     const id = li.id;
                     const actor = game.actors.get(id);
                     this.transferCurrency(actor);
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.RemoveActor"),
+                label: i18n("MonksEnhancedJournal.RemoveActor"),
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
+                visible: () => game.user.isGM,
+                onClick: (event, li) => {
                     const id = li.id;
                     foundry.applications.api.DialogV2.confirm({
                         window: {

@@ -1163,9 +1163,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 let type = (entity.getFlag && entity.getFlag('monks-enhanced-journal', 'type'));
                 let icon = MonksEnhancedJournal.getIcon(type);
                 let item = {
-                    name: entity.name || i18n("MonksEnhancedJournal.Unknown"),
-                    icon: `<i class="fas ${icon}"></i>`,
-                    callback: (li) => {
+                    label: entity.name || i18n("MonksEnhancedJournal.Unknown"),
+                    icon: `fas ${icon}`,
+                    onClick: (event, li) => {
                         let idx = i;
                         this.changeHistory(idx)
                     }
@@ -1534,9 +1534,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     async _createContextMenus(html) {
         this._context = new foundry.applications.ux.ContextMenu(html, ".bookmark-button", [
             {
-                name: "Open outside Enhanced Journal",
-                icon: '<i class="fas fa-file-export"></i>',
-                callback: async (li) => {
+                label: "Open outside Enhanced Journal",
+                icon: "fas fa-file-export",
+                onClick: async (event, li) => {
                     let bookmark = this.bookmarks.find(b => b.id == li.dataset.bookmarkId);
                     let document = await fromUuid(bookmark.entityId);
                     if (!document) {
@@ -1551,9 +1551,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Open in new tab",
-                icon: '<i class="fas fa-file-export"></i>',
-                callback: async (li) => {
+                label: "Open in new tab",
+                icon: "fas fa-file-export",
+                onClick: async (event, li) => {
                     let bookmark = this.bookmarks.find(b => b.id == li.dataset.bookmarkId);
                     let document = await fromUuid(bookmark.entityId);
                     if (!document) {
@@ -1566,9 +1566,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "MonksEnhancedJournal.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "MonksEnhancedJournal.Delete",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     const bookmark = this.bookmarks.find(b => b.id === li.dataset.bookmarkId);
                     this.removeBookmark(bookmark);
                 }
@@ -1577,14 +1577,14 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this._tabcontext = new foundry.applications.ux.ContextMenu(html, ".enhanced-journal-header .tab-bar", [
             {
-                name: "Open outside Enhanced Journal",
-                icon: '<i class="fas fa-file-export"></i>',
-                condition: (li) => {
+                label: "Open outside Enhanced Journal",
+                icon: "fas fa-file-export",
+                visible: (li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return false;
                     return !["blank", "folder"].includes(tab.entity?.type);
                 },
-                callback: async (li) => {
+                onClick: async (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return;
                     let document = tab.entity;
@@ -1598,27 +1598,27 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Close Tab",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "Close Tab",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab)
                         this.removeTab(tab);
                 }
             },
             {
-                name: "Close All Tabs",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close All Tabs",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     this.tabs.splice(0, this.tabs.length);
                     this.saveTabs();
                     this.addTab();
                 }
             },
             {
-                name: "Close Other Tabs",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close Other Tabs",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab) {
                         let idx = this.tabs.findIndex(t => t.id == this.contextTab);
@@ -1630,9 +1630,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Close To the right",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close To the right",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab) {
                         let idx = this.tabs.findIndex(t => t.id == this.contextTab);
@@ -1665,9 +1665,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         this._historycontext = new foundry.applications.ux.ContextMenu(this.element, ".mainbar .navigation .nav-button.history", history, { fixed: true, jQuery: false });
         this._imgcontext = new foundry.applications.ux.ContextMenu(this.element, ".journal-body.oldentry .tab.picture", [
             {
-                name: "MonksEnhancedJournal.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "MonksEnhancedJournal.Delete",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     log('Remove image on old entry');
                 }
             }
