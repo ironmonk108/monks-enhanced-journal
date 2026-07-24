@@ -585,10 +585,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             subsheet._replaceHTML.call(subsheet, result, subsheetElement, subsheetOptions);
 
             if (!this.isEditable) {
-                let originalFramed = subsheet.options.window.frame;
-                subsheet.options.window.frame = false;
                 subsheet._toggleDisabled.call(subsheet, true);
-                subsheet.options.window.frame = originalFramed;
             }
 
             if (subsheet.refresh)

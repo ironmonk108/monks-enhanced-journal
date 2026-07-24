@@ -926,12 +926,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         ];
     }
 
+    _toggleDisabled(disabled) {
+        let element = this.trueElement;
+        if (!element) return;
+        element.querySelectorAll("secret-block").forEach(b => b.revealable = !disabled);
+        const form = this.form;
+        if (!form) return;
+        for (const el of form.elements) el.disabled = disabled;
+        for (const input of form.querySelectorAll("input[type=image]")) input.disabled = disabled;
+        for (const img of form.querySelectorAll("img[data-edit]")) img.classList.toggle("disabled", disabled);
+        if (disabled) this._disableFields(form);
+    }
+
     _disableFields(form) {
-        super._disableFields(form);
         let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
         if (hasGM) {
             $('.tab.notes .editor-edit', form).removeAttr('disabled');
-            $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly').on('blur', this._onChangeInput.bind(this));
+            $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly');
         }
         //$('.editor-edit', form).css({ width: '0px !important', height: '0px !important' });
     }
