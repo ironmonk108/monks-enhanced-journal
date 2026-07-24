@@ -789,8 +789,8 @@ export class MonksEnhancedJournal {
 		}*/
 
 		let clickCompendiumEntry = async function (wrapped, ...args) {
-			let event = args[0];
-			let li = event.currentTarget.parentElement;
+			let [event, target] = args;
+			let li = target.closest("[data-entry-id]");
 			const document = await this.collection.getDocument(li.dataset.entryId);
 			if (document instanceof JournalEntry) {
 				if (! await MonksEnhancedJournal.openJournalEntry(document, { editable: game.user.isGM && !this.collection.locked })) {
@@ -969,9 +969,10 @@ export class MonksEnhancedJournal {
 		}, "MIXED");
 		*/
 
-		patchFunc("foundry.appv1.sheets.JournalTextPageSheet.prototype.onAutosave", function (...args) {
+		patchFunc("foundry.appv1.sheets.JournalTextPageSheet.prototype._onAutosave", function (wrapped, ...args) {
+			wrapped(...args);
 			this.document.parent?._sheet?.render(false);
-		}, "OVERRIDE");
+		});
 
 		let getPageData = function (wrapped, ...args) {
 			let pages = wrapped(...args);

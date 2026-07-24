@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - heading "Foundry Virtual Tabletop" [level=1] [ref=e4]
+  - contentinfo [ref=e6]:
+    - paragraph [ref=e7]: Version 14 Build 365

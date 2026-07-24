@@ -211,8 +211,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         context = foundry.utils.mergeObject(context, {
             tree: ui.journal.collection.tree,
-            entryPartial: ui.journal.constructor.entryPartial,
-            folderPartial: ui.journal.constructor.folderPartial,
             canCreateEntry: cls.canUserCreate(game.user),
             canCreateFolder: ui.journal._canCreateFolder(),
             maxFolderDepth: ui.journal.collection.maxFolderDepth,
@@ -280,10 +278,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
     get entryType() {
         return ui.journal.collection.documentName;
-    }
-
-    get _onCreateDocument() {
-        return ui.journal._onCreateDocument;
     }
 
     get collection() {
@@ -605,20 +599,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                     for (let [partId, part] of Object.entries(parts)) {
                         let partState = state[partId] || {};
 
-                        if (partState.scrollPositions?.length) {
-                            // Replace the elements with the new ones so the scroll positions are applied to the correct elements
-                            let scrollableSelectors = (part.scrollable || []);
-                            let idx = 0;
-                            for (let i = 0; i < scrollableSelectors.length; i++) {
-                                const selector = scrollableSelectors[i];
-                                const el1 = selector === "" ? subsheetElement : subsheetElement.querySelector(selector);
-                                if (!el1) continue;
-                                if (partState.scrollPositions[idx]?.length > 0)
-                                    partState.scrollPositions[idx][0] = el1;
-                                idx++;
-                            }
-                        }
-
                         subsheet._syncPartState.call(subsheet, partId, subsheetElement, subsheetElement, partState);
                         if (partState.focus && !!partState.focusCaret) {
                             // Restore the focus caret position within the focused element
@@ -674,13 +654,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
             this.activateControls($('#left-journal-buttons', this.element).empty(), $('#right-journal-buttons', this.element).empty());
 
-            let controls = [];
-            for (const c of subsheet._getHeaderControls()) {
-                const visible = typeof c.visible === "function" ? c.visible.call(this) : c.visible ?? true;
-                if (visible) controls.push(this._renderHeaderControl(c));
-            }
-            this.window.controlsDropdown.replaceChildren(...controls);
-            this.window.controls.classList.toggle("hidden", !controls.length);
+            this.window.controls.classList.toggle("hidden", !Array.from(this._headerControlButtons()).length);
 
             this.document._sheet = null; //set this to null so that other things can open the sheet
             subsheet._state = subsheet.constructor.RENDER_STATES.RENDERED;

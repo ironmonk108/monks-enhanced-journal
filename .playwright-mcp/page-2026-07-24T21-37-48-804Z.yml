@@ -1,0 +1,61 @@
+- generic [active] [ref=f4e1]:
+  - list
+  - banner [ref=f4e3]:
+    - heading "Foundry Virtual Tabletop" [level=1] [ref=f4e4]
+  - navigation [ref=f4e5]:
+    - generic [ref=f4e6]:
+      - button "Warnings" [ref=f4e7] [cursor=pointer]
+      - button "Configure" [ref=f4e8] [cursor=pointer]:
+        - generic: "!"
+      - button "Update" [ref=f4e9] [cursor=pointer]
+      - button "Manage Backups" [ref=f4e10] [cursor=pointer]
+  - generic [ref=f4e11]:
+    - generic [ref=f4e12]:
+      - navigation [ref=f4e13]:
+        - heading "Game Worlds" [level=2] [ref=f4e14] [cursor=pointer]
+        - heading "Game Systems" [level=2] [ref=f4e15] [cursor=pointer]
+        - heading "Add-on Modules" [level=2] [ref=f4e16] [cursor=pointer]
+      - generic [ref=f4e17]:
+        - generic [ref=f4e18]:
+          - generic [ref=f4e19]:
+            - searchbox "" [ref=f4e20]
+            - text: 
+          - button "Create World" [ref=f4e21] [cursor=pointer]
+          - generic [ref=f4e22]:
+            - button "Gallery View" [ref=f4e23] [cursor=pointer]
+            - button "Tiles View" [ref=f4e24] [cursor=pointer]
+            - button "Details View" [ref=f4e25] [cursor=pointer]
+        - list [ref=f4e26]:
+          - listitem [ref=f4e27]:
+            - heading "World A" [level=3] [ref=f4e29]
+            - generic [ref=f4e30]: Friday, Jul 24
+            - generic [ref=f4e32]: dnd5e
+      - text:  
+    - complementary [ref=f4e37]:
+      - generic [ref=f4e38]:
+        - heading "News" [level=2] [ref=f4e39]
+        - generic [ref=f4e41]:
+          - link [ref=f4e42] [cursor=pointer]:
+            - /url: https://foundryvtt.com/article/year-in-review-2026/
+            - img "2026 Year in Review" [ref=f4e43]
+            - heading "2026 Year in Review" [level=3] [ref=f4e44]
+          - link [ref=f4e45] [cursor=pointer]:
+            - /url: https://foundryvtt.com/article/anniversary-2026/
+            - img "2026 Anniversary Celebration Events" [ref=f4e46]
+            - heading "2026 Anniversary Celebration Events" [level=3] [ref=f4e47]
+          - link [ref=f4e48] [cursor=pointer]:
+            - /url: https://foundryvtt.com/releases/14.359
+            - img "Version 14 Stable Release" [ref=f4e49]
+            - heading "Version 14 Stable Release" [level=3] [ref=f4e50]
+          - link [ref=f4e51] [cursor=pointer]:
+            - /url: https://foundryvtt.com/packages/restored-keep-levels
+            - img "Try Out Scene Levels with The Restored Keep" [ref=f4e52]
+            - heading "Try Out Scene Levels with The Restored Keep" [level=3] [ref=f4e53]
+      - generic [ref=f4e54]:
+        - heading "Featured Content" [level=2] [ref=f4e55]
+        - link [ref=f4e56] [cursor=pointer]:
+          - /url: https://foundryvtt.com/ember
+          - img "Ember Early Access" [ref=f4e57]
+          - heading "Ember Early Access" [level=3] [ref=f4e58]
+  - contentinfo [ref=f4e59]:
+    - paragraph [ref=f4e60]: Version 14 Build 365
