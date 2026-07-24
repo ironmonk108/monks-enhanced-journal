@@ -2381,7 +2381,7 @@ export class MonksEnhancedJournal {
 					shareable: false,
 					editable: false
 				});
-				img._render(true);
+				img.render(true);
 			} else
 				ui.notifications.warn(format("MonksEnhancedJournal.msg.YouDontHaveDocumentPermissions", { documentName: doc.documentName} ));
 			return true;
@@ -2544,7 +2544,7 @@ export class MonksEnhancedJournal {
 			uuid: document.uuid,
 			shareable: false,
 			editable: false
-		})._render(true);
+		}).render(true);
 
 		//if (game.user.isGM)
 		//    this._onShowPlayers({ data: { object: document } });
@@ -2809,7 +2809,7 @@ export class MonksEnhancedJournal {
 					shareable: false,
 					editable: false
 				});
-				await img._render(true);
+				await img.render(true);
 				$(img.element).attr('data-show-id', data.showid);
 			} else {
 				foundry.documents.collections.Journal._showEntry(data.uuid, null, true);

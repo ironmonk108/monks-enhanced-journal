@@ -42,20 +42,6 @@ export class LootSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.loot"),
-            template: "modules/monks-enhanced-journal/templates/sheets/loot.html",
-            dragDrop: [
-                { dragSelector: ".document.item", dropSelector: ".loot-container" },
-                { dragSelector: ".loot-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".loot-items .item-list .item .item-name", dropSelector: ".loot-character" },
-                { dragSelector: ".loot-character", dropSelector: "null" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".loot-items"]
-        });
-    }
     */
 
     static get type() {

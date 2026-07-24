@@ -80,21 +80,6 @@ export class QuestSheet extends EnhancedJournalSheet {
     }
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.quest"),
-            template: "modules/monks-enhanced-journal/templates/sheets/quest.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dragSelector: ".document.actor", dropSelector: ".quest-container" },
-                { dragSelector: ".document.item", dropSelector: ".quest-container" },
-                { dragSelector: ".reward-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".objective-items .item-list .item", dropSelector: ".quest-container" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".objective-items", ".reward-container .reward-items > .item-list", ".tab.description .tab-inner"]
-        });
-    }
     */
 
     getCurrentRewardId() {

@@ -58,7 +58,7 @@ export class ListSheet extends EnhancedJournalSheet {
     }
 
     get subtype() {
-        return this.document.getFlag("monks-enhanced-journal", "subtype", "basic");
+        return this.document.getFlag("monks-enhanced-journal", "subtype") ?? "basic";
     }
 
     static get defaultObject() {
@@ -179,12 +179,6 @@ export class ListSheet extends EnhancedJournalSheet {
         this.entries = (this.document?.flags['monks-enhanced-journal']?.entries || []).map(i => { return { id: i.id, document: i, sort: idx++ }; });
         // Build Tree
         this.tree = this.constructor.setupFolders(this.folders, this.entries);
-    }
-
-    async _render(force = false, options = {}) {
-        if (options.reload)
-            this.initialize();
-        super._render(force, options);
     }
 
     _documentControls() {

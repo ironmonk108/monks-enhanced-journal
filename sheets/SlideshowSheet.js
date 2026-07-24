@@ -51,19 +51,6 @@ export class SlideshowSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.slideshow"),
-            template: "modules/monks-enhanced-journal/templates/sheets/slideshow.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "entry-details" }],
-            dragDrop: [
-                { dragSelector: ".slide", dropSelector: ".slide" },
-                { dragSelector: ".slide", dropSelector: ".slideshow-body" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".tab.entry-details .tab-inner", ".tab.slides .tab-inner"]
-        });
-    }
     */
 
     static get type() {
@@ -215,14 +202,6 @@ export class SlideshowSheet extends EnhancedJournalSheet {
 
     get canPlaySound() {
         return false;
-    }
-
-    async _render(force, options = {}) {
-        await super._render(force, options);
-
-        if (!this.document.testUserPermission(game.user, "OWNER") || options.play) {
-            this.playSlideshow();
-        }
     }
 
     static async createSlideThumbnail(src) {
