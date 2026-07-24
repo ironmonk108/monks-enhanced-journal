@@ -1833,8 +1833,7 @@ export class MonksEnhancedJournal {
 										reward.itemIds.push(id);
 									}
 								}
-								delete reward.items;
-								reward["-=items"] = null;
+								reward.items = new foundry.data.operators.ForcedDeletion();
 							}
 							await page.setFlag('monks-enhanced-journal', "rewards", rewards);
 							await page.setFlag('monks-enhanced-journal', "items", items);

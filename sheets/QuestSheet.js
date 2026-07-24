@@ -163,8 +163,7 @@ export class QuestSheet extends EnhancedJournalSheet {
                         reward.itemIds.push(item._id);
                     }
                 }
-                delete reward.items;
-                reward["-=items"] = null;
+                reward.items = new foundry.data.operators.ForcedDeletion();
                 changed = true;
             }
         }
@@ -494,8 +493,7 @@ export class QuestSheet extends EnhancedJournalSheet {
 
         let items = this.document.getFlag('monks-enhanced-journal', 'items') || {};
         for (let itemId of reward.itemIds || []) {
-            delete items[itemId];
-            items[`-=${itemId}`] = null;
+            items[itemId] = new foundry.data.operators.ForcedDeletion();
         }
         await this.document.setFlag('monks-enhanced-journal', 'items', items);
 
@@ -798,8 +796,7 @@ export class QuestSheet extends EnhancedJournalSheet {
         reward.itemIds = assignedIds;
         for (let key of Object.keys(rewardItems)) {
             if (!assignedIds.includes(key)) {
-                delete items[key];
-                items[`-=${key}`] = null;
+                items[key] = new foundry.data.operators.ForcedDeletion();
             }
         }
         this.setFlag('monks-enhanced-journal', 'items', items);
