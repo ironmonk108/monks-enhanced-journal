@@ -282,3 +282,50 @@ _______________________________ color: #6e0000; font-variant: small-caps color: 
 [   35832ms] [LOG] Foundry VTT | Retrieved and compiled template templates/journal/page.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
 [   35855ms] [LOG] Foundry VTT | Retrieved and compiled template templates/journal/pages/text/view.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
 [   35861ms] [LOG] Foundry VTT | Retrieved and compiled template templates/journal/toc.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[   72981ms] [ERROR] DataModelValidationError: [JournalEntryPage5e] validation errors: SchemaField#_validateRecursive
+  type: "code" is not a valid type for the JournalEntryPage Document class
+[Detected 1 package: system:dnd5e(5.3.3)]
+    at DataModelValidationFailure.asError (http://localhost:30000/scripts/foundry.mjs:8365:12)
+    at JournalEntryPage5e.validate (http://localhost:30000/scripts/foundry.mjs:14033:59)
+    at new DataModel (http://localhost:30000/scripts/foundry.mjs:13515:10)
+    at new Document (http://localhost:30000/scripts/foundry.mjs:14422:1)
+    at new ClientDocumentMixin (http://localhost:30000/scripts/foundry.mjs:36076:7)
+    at new JournalEntryPage (http://localhost:30000/scripts/foundry.mjs:44560:26)
+    at new JournalEntryPage5e (http://localhost:30000/systems/dnd5e/dnd5e.mjs:79434:1)
+    at #preCreateDocumentArray (http://localhost:30000/scripts/foundry.mjs:80795:15)
+    at ClientDatabaseBackend._createDocuments (http://localhost:30000/scripts/foundry.mjs:80758:56)
+    at ClientDatabaseBackend.create (http://localhost:30000/scripts/foundry.mjs:80379:17)
+    at async eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:17:7)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30 @ :2
+[   72983ms] [ERROR] [JournalEntryPage5e] validation errors: SchemaField#_validateRecursive
+  type: "code" is not a valid type for the JournalEntryPage Document class
+[Detected 1 package: system:dnd5e(5.3.3)]  @ :2
+[   72983ms] [ERROR] DataModelValidationError: [JournalEntryPage5e] validation errors: SchemaField#_validateRecursive
+  type: "markdown" is not a valid type for the JournalEntryPage Document class
+[Detected 1 package: system:dnd5e(5.3.3)]
+    at DataModelValidationFailure.asError (http://localhost:30000/scripts/foundry.mjs:8365:12)
+    at JournalEntryPage5e.validate (http://localhost:30000/scripts/foundry.mjs:14033:59)
+    at new DataModel (http://localhost:30000/scripts/foundry.mjs:13515:10)
+    at new Document (http://localhost:30000/scripts/foundry.mjs:14422:1)
+    at new ClientDocumentMixin (http://localhost:30000/scripts/foundry.mjs:36076:7)
+    at new JournalEntryPage (http://localhost:30000/scripts/foundry.mjs:44560:26)
+    at new JournalEntryPage5e (http://localhost:30000/systems/dnd5e/dnd5e.mjs:79434:1)
+    at #preCreateDocumentArray (http://localhost:30000/scripts/foundry.mjs:80795:15)
+    at ClientDatabaseBackend._createDocuments (http://localhost:30000/scripts/foundry.mjs:80758:56)
+    at ClientDatabaseBackend.create (http://localhost:30000/scripts/foundry.mjs:80379:17)
+    at async eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:17:7)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30 @ :2
+[   72983ms] [ERROR] [JournalEntryPage5e] validation errors: SchemaField#_validateRecursive
+  type: "markdown" is not a valid type for the JournalEntryPage Document class
+[Detected 1 package: system:dnd5e(5.3.3)]  @ :2
+[  101469ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/shop.html @ http://localhost:30000/scripts/foundry.mjs:88936
+[  101469ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/sheet-shop-details.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[  101469ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/sheet-transactions.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[  101470ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/sheet-shop-items.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[  149090ms] [LOG] Foundry VTT | Retrieved and compiled template /modules/monks-enhanced-journal/templates/confirm-purchase.html @ http://localhost:30000/scripts/foundry.mjs:88936
+[  284913ms] [LOG] monks-enhanced-journal |  drop data {preventDefault: , stopPropagation: , target: div.sheet-container.detailed.shop-container.flexcol, dataTransfer: Object} {type: Item, uuid: Item.WOE5oCZ87awu3azz} @ http://localhost:30000/modules/monks-enhanced-journal/monks-enhanced-journal.js:29
+[  337615ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/person.html @ http://localhost:30000/scripts/foundry.mjs:88936
+[  337616ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/sheet-details.hbs @ http://localhost:30000/scripts/foundry.mjs:88936
+[  337616ms] [LOG] Foundry VTT | Retrieved and compiled template modules/monks-enhanced-journal/templates/sheets/partials/sheet-offerings.hbs @ http://localhost:30000/scripts/foundry.mjs:88936

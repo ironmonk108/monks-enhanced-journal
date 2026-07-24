@@ -476,7 +476,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             let document = await fromUuid(data.uuid);
             this.enhancedjournal.open(document);
         } else if (data.type == 'Item') {
-            this.addItems(data);
+            this.addItem(data);
         } else
             return false;
     }

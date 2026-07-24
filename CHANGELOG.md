@@ -1,3 +1,23 @@
+# Version 14.01
+
+Updated for Foundry VTT v14 compatibility.  The module now requires v14.
+
+Fixed the window header controls dropdown not populating, and scroll positions not being restored when switching entries, due to ApplicationV2 changes in v14.
+
+Fixed the journal text page autosave refresh patch targeting the wrong function name.
+
+Fixed clicking Journal Entries in a Compendium not opening the Enhanced Journal.
+
+Fixed showing an image to players throwing an error.
+
+Fixed the crash when switching pages after the viewed page was deleted.
+
+Fixed List journals without a list type failing to display.
+
+Restored the Maximize button, now available in the window controls dropdown.
+
+Replaced deprecated API usage that would stop working in v15 and v16 (global namespaces, context menu entry format, and flag deletion syntax).
+
 # Version 13.06
 
 Fixing an issue if Conversation-HUD isn't installed.
