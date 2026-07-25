@@ -4560,10 +4560,7 @@ Hooks.on('dropJournalSheetData', (journal, sheet, data) => {
 						let itemQty = getValue(data.data, quantityname());
 						setValue(data.data, quantityname(), result.quantity * itemQty);
 						data.uuid = `${data.uuid}.Items.${data.itemId}`;
-						if (MEJHelpers.canDropOnActorSheet(sheet))
-							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data);
-						else
-							journal.createEmbeddedDocuments("Item", [data.data]);
+						sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data);
 					}
 				});
 			}
