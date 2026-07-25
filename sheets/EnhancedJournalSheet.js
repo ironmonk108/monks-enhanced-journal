@@ -2635,7 +2635,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                         let itemData = item.toObject();
                         if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
-                            itemData = await EncounterSheet.createScrollFromSpell(itemData);
+                            itemData = await EnhancedJournalSheet.createScrollFromSpell(itemData);
                         }
 
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename()); //MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
