@@ -135,7 +135,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         await super._preFirstRender(context, options);
 
         this.tabs = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'tabs') || [{ "id": makeid(), "text": i18n("MonksEnhancedJournal.NewTab"), "active": true, "history": [] }]);
-        this.removeDuplicateTab(this.document);
+        this.removeDuplicateTab();
         this.tabs = this.tabs.map(t => { delete t.entity; return t; })
         this.tabs.active = (findone = true) => {
             let tab = this.tabs.find(t => t.active);
@@ -1105,13 +1105,21 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-    removeDuplicateTab(entity) {
-        if (!entity?.id) return;
+    removeDuplicateTab() {
+        // The saved tab list can end up with more than one tab pointing at the same document, keep the
+        // first tab for each entity and drop the rest, making sure the active tab isn't lost with them
+        let tabs = [];
+        for (let tab of this.tabs) {
+            let existing = (tab.entityId ? tabs.find(t => t.entityId == tab.entityId) : null);
+            if (existing) {
+                if (tab.active)
+                    existing.active = true;
+            } else
+                tabs.push(tab);
+        }
 
-        const duplicateTabs = this.tabs.filter(tab => tab.entityId?.includes(entity.id));
-        duplicateTabs.forEach(tab => {
-            this.tabs.findSplice(t => t.id == tab.id);
-        });
+        if (tabs.length)
+            this.tabs = tabs;
     }
 
     saveTabs() {
