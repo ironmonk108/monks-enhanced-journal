@@ -942,7 +942,8 @@ export class MonksEnhancedJournal {
 							foundry.utils.setProperty(pageData, "flags.monks-enhanced-journal.subtype", subtype);
 						pageData.type = "text";
 					}
-					await document.setFlag("monks-enhanced-journal", "img", `modules/monks-enhanced-journal/assets/${type}.png`);
+					if (types[type])
+						await document.setFlag("monks-enhanced-journal", "img", `modules/monks-enhanced-journal/assets/${type}.png`);
 					let page = await JournalEntryPage.create(pageData, { parent: document });
 					if (types[type]) {
 						page.type = type;
