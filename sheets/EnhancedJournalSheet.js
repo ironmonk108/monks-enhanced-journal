@@ -2699,7 +2699,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                     let otherRelationships = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
                     let otherRelationship = Object.values(otherRelationships).find(value => value.uuid == this.document.uuid || value.uuid == this.document.parent.uuid);
                     if (otherRelationship) {
-                        otherRelationship.hidden = !otherRelationship.hidden;
+                        otherRelationship.hidden = items[id].hidden;
                         page.setFlag('monks-enhanced-journal', "relationships", otherRelationships);
                     }
                 }
@@ -3146,7 +3146,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 if (original.isOwner && orgPage.isOwner) {
                     MonksEnhancedJournal.fixType(orgPage);
                     let sheet = orgPage.sheet;
-                    sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: true }, false);
+                    sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: this.document.parent.hidden }, false);
                 } else {
                     MonksEnhancedJournal.emit("addRelationship", { uuid: relationship.uuid, relationship: { id: this.document.parent.id, uuid: this.document.parent.uuid }, page: this.document.id, hidden: true });
                 }
