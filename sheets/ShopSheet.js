@@ -1,6 +1,6 @@
 import { setting, i18n, format, log, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname } from "../monks-enhanced-journal.js";
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
-import { getValue, setValue, setPrice, MEJHelpers } from "../helpers.js";
+import { getValue, setValue, setPrice, MEJHelpers, distributeCurrency } from "../helpers.js";
 import { AdjustPrice } from "../apps/adjust-price.js";
 
 export class ShopSheet extends EnhancedJournalSheet {
@@ -349,16 +349,19 @@ export class ShopSheet extends EnhancedJournalSheet {
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename());
                         let price = MEJHelpers.getPrice(sysPrice);
                         let origPrice = price.value;
+                        let origCurrency = price.currency;
                         let adjustment = this.sheetSettings()?.adjustment || {};
                         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
-                        price.value = Math.floor(price.value * buy);
+                        let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+                        price.value = converted.value;
+                        price.currency = converted.currency;
                         let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             let itemData = item.toObject();
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
-                            foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + price.currency);
+                            foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + origCurrency);
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.lock", true);
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", actor.name);
                             this.addItem({ data: itemData });
@@ -392,11 +395,14 @@ export class ShopSheet extends EnhancedJournalSheet {
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename());
                         let price = MEJHelpers.getPrice(sysPrice);
                         let origPrice = price.value;
+                        let origCurrency = price.currency;
                         let adjustment = this.sheetSettings()?.adjustment || {};
                         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
-                        price.value = Math.floor(price.value * buy);
+                        let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+                        price.value = converted.value;
+                        price.currency = converted.currency;
                         let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             if (selling == "free") {
@@ -406,7 +412,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                                 //add the item to the shop
                                 let itemData = item.toObject();
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
-                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + price.currency);
+                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + origCurrency);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.lock", true);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", actor.name);
 
@@ -425,7 +431,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                             } else {
                                 let itemData = item.toObject();
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
-                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + price.currency);
+                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + origCurrency);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.lock", true);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", actor.name);
 
@@ -603,8 +609,9 @@ export class ShopSheet extends EnhancedJournalSheet {
         let price = MEJHelpers.getPrice(data.price);
         let adjustment = this.sheetSettings()?.adjustment || {};
         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
-        data.sell = Math.floor(price.value * buy);
-        data.currency = price.currency;
+        let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+        data.sell = converted.value;
+        data.currency = converted.currency;
         data.maxquantity = data.quantity;
         data.quantity = Math.max(Math.min(data.maxquantity, data.quantity), 1);
         data.total = data.quantity * data.sell;
@@ -863,7 +870,8 @@ export class ShopSheet extends EnhancedJournalSheet {
         for (let item of Object.values(items)) {
             let sell = adjustment[item.type]?.sell ?? adjustment.default.sell ?? 1;
             let price = MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
-            let cost = Math.max(Math.ceil((price.value * sell), 1)) + " " + price.currency;
+            let converted = distributeCurrency(price.value * sell, price.currency, MonksEnhancedJournal.currencies);
+            let cost = converted.value + " " + converted.currency;
             foundry.utils.setProperty(item, "flags.monks-enhanced-journal.cost", cost);
         }
 

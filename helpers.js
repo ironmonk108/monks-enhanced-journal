@@ -16,6 +16,33 @@ export let setPrice = (item, name, price) => {
     return MEJHelpers.setPrice(item, name, price);
 }
 
+// Convert a fractional amount in a given denomination down through lower
+// denominations using the system's conversion rates, so no value is truncated.
+// Walks `currencies` (the module's per-system currency list, ordered from the
+// highest denomination to the lowest, each with a `convert` rate relative to
+// the default currency) from `denomination` downward, carrying the fractional
+// remainder into the next lower unit until the amount is a whole number or
+// there are no more denominations to convert into. Returns a single
+// { value, currency } pair - the same shape MEJHelpers.getPrice() produces -
+// so callers can drop it straight into their "value currency" strings.
+export function distributeCurrency(value, denomination, currencies) {
+    let list = (currencies || []).filter(c => c.convert != undefined);
+    let idx = list.findIndex(c => c.id == denomination);
+    if (idx == -1)
+        return { value: Math.floor(value), currency: denomination };
+
+    let isWhole = (v) => Math.abs(v - Math.round(v)) < 1e-6;
+
+    let i = idx;
+    while (!isWhole(value) && i < list.length - 1) {
+        let rate = (list[i].convert || 1) / (list[i + 1].convert || 1);
+        value = value * rate;
+        i++;
+    }
+
+    return { value: (isWhole(value) ? Math.round(value) : Math.floor(value)), currency: list[i].id };
+}
+
 export class MEJHelpers {
     static getValue(item, name, defvalue = 0) {
         name = name || pricename();
