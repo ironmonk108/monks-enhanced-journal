@@ -583,11 +583,20 @@ export class ShopSheet extends EnhancedJournalSheet {
                     if (!setting("use-generic-price"))
                         setPrice(itemData, pricename(), result.price);
                     if (!data.consumable) {
-                        let sheet = actor.sheet;
-                        if (sheet._onDropItem)
-                            sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
-                        else
-                            actor.createEmbeddedDocuments("Item", [itemData]);
+                        let existing = actor.items.find(i => i.name === itemData.name && i.type === itemData.type);
+                        if (existing) {
+                            let existingQty = getValue(existing, quantityname(), 1);
+                            let addQty = getValue(itemData, quantityname(), 1);
+                            let update = { system: {} };
+                            foundry.utils.setProperty(update.system, quantityname(), existingQty + addQty);
+                            await existing.update(update);
+                        } else {
+                            let sheet = actor.sheet;
+                            if (sheet._onDropItem)
+                                sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
+                            else
+                                actor.createEmbeddedDocuments("Item", [itemData]);
+                        }
                     }
 
                     MonksEnhancedJournal.emit("purchaseItem",
