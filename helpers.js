@@ -82,11 +82,23 @@ export class MEJHelpers {
             cost = getValue(item, name, null);
         }
         if (cost) {
-            for (let curr of ["pp", "gp", "sp", "cp", "gc", "ss", "bp"]) {
-                if (cost[curr] && cost[curr] != "0" && cost[curr] != 0) {
-                    cost = `${cost[curr]} ${curr}`;
-                    break;
-                }
+            // some systems (e.g. wfrp4e's gc/ss/bp) store price as several denominations
+            // at once, so collect every non-zero one instead of stopping at the first
+            let denominations = ["pp", "gp", "sp", "cp", "gc", "ss", "bp"].filter(curr => cost[curr] && cost[curr] != "0" && cost[curr] != 0);
+            if (denominations.length > 1) {
+                // sum everything into the lowest denomination present (the last one in
+                // the list above) using the system's own currency conversion, so no
+                // part of a mixed-denomination price gets silently dropped
+                let base = denominations[denominations.length - 1];
+                let baseRate = MonksEnhancedJournal.currencies.find(c => c.id == base)?.convert || 1;
+                let total = denominations.reduce((sum, curr) => {
+                    let rate = MonksEnhancedJournal.currencies.find(c => c.id == curr)?.convert || 1;
+                    return sum + (parseInt(cost[curr]) * (baseRate / rate));
+                }, 0);
+                cost = `${Math.round(total)} ${base}`;
+            } else if (denominations.length == 1) {
+                let curr = denominations[0];
+                cost = `${cost[curr]} ${curr}`;
             }
         }
 
