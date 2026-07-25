@@ -858,7 +858,7 @@ export class ShopSheet extends EnhancedJournalSheet {
         let settingDefaults = setting("adjustment-defaults") || {};
         let adjustment = foundry.utils.mergeObject(settingDefaults, formData.adjustment || {});
 
-        let items = this.options.document.getFlag('monks-enhanced-journal', 'items') || {};
+        let items = this.document.getFlag('monks-enhanced-journal', 'items') || {};
 
         for (let item of Object.values(items)) {
             let sell = adjustment[item.type]?.sell ?? adjustment.default.sell ?? 1;
@@ -867,6 +867,6 @@ export class ShopSheet extends EnhancedJournalSheet {
             foundry.utils.setProperty(item, "flags.monks-enhanced-journal.cost", cost);
         }
 
-        await this.options.document.update({ "flags.monks-enhanced-journal.items": items }, { focus: false });
+        await this.document.update({ "flags.monks-enhanced-journal.items": items }, { focus: false });
     }
 }
