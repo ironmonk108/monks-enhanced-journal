@@ -1,4 +1,4 @@
-﻿import { setting, i18n, format, log, warn, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname, getVolume } from "../monks-enhanced-journal.js";
+﻿import { setting, i18n, format, log, warn, error, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname, getVolume } from "../monks-enhanced-journal.js";
 import { CustomisePage } from "../apps/customise-page.js";
 import { EditSound } from "../apps/editsound.js";
 import { MakeOffering } from "../apps/make-offering.js";
@@ -3178,6 +3178,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             try {
                 await this.document.setFlag("monks-enhanced-journal", "relationships", relationships);
             } catch (err) {
+                error(err);
                 ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotWriteRelationshipToLockedCompendium"));
                 return;
             }
