@@ -27,7 +27,7 @@ export let setPrice = (item, name, price) => {
 // so callers can drop it straight into their "value currency" strings.
 export function distributeCurrency(value, denomination, currencies) {
     let list = (currencies || []).filter(c => c.convert != undefined);
-    let idx = list.findIndex(c => c.id == denomination);
+    let idx = list.findIndex(c => (game.system.id == 'dsa5' ? c.name : c.id) == denomination); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
     if (idx == -1)
         return { value: Math.floor(value), currency: denomination };
 
@@ -40,7 +40,7 @@ export function distributeCurrency(value, denomination, currencies) {
         i++;
     }
 
-    return { value: (isWhole(value) ? Math.round(value) : Math.floor(value)), currency: list[i].id };
+    return { value: (isWhole(value) ? Math.round(value) : Math.floor(value)), currency: (game.system.id == 'dsa5' ? list[i].name : list[i].id) };
 }
 
 export class MEJHelpers {
@@ -161,7 +161,8 @@ export class MEJHelpers {
 
                 if (!curr) {
                     curr = MonksEnhancedJournal.currencies[MonksEnhancedJournal.currencies.length - 1];
-                    currency = curr.id;
+                    currency = (game.system.id == 'dsa5') ? curr.name || "" // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+                        : curr.id;
                     price = Math.floor(price / (curr.convert || 1));
                 }
             } else
