@@ -694,7 +694,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                     let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
                     totalDefault += (this.getCurrency(actor, currIdentifier) * (curr.convert || 1));
                 }
-                let check = MonksEnhancedJournal.currencies.find(c => c.id == price.currency);
+                let check = MonksEnhancedJournal.currencies.find(c => (game.system.id == 'dsa5' ? c.name : c.id) == price.currency); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
                 totalDefault = totalDefault / (check?.convert || 1);
 
                 return totalDefault >= price.value;

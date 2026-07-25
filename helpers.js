@@ -186,7 +186,7 @@ export class MEJHelpers {
 
     static toDefaultCurrency(price) {
         let value = (typeof price == "string" ? MEJHelpers.getPrice(price, "price") : price);
-        let currency = MonksEnhancedJournal.currencies.find(c => c.id == value.currency);
+        let currency = MonksEnhancedJournal.currencies.find(c => (game.system.id == 'dsa5' ? c.name : c.id) == value.currency); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
         let result = (currency?.convert || 1) * value.value;
 
         return result;
