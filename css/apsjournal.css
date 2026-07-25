@@ -321,6 +321,32 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 
 .monks-enhanced-journal[background-image='marbleBlack'] {
     --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-black.webp') repeat;
+    --mej-itemlist-item-name: rgb(var(--mej-light-1));
+    --mej-sheet-color: rgb(var(--mej-light-6));
+    --mej-sheet-header-input-color: rgb(var(--mej-light-0));
+    --mej-sheet-header-name-color: rgb(var(--mej-light-0));
+    --mej-sheet-header-detail-input-color: rgb(var(--mej-light-5));
+    --mej-sheet-header-label-color: rgb(var(--mej-light-3));
+    --mej-sheet-tab-color-active: rgb(var(--mej-light-6));
+    --mej-sheet-input-background: rgb(var(--mej-dark-2));
+    --mej-itemlist-control-color: rgb(var(--mej-light-6));
+    --mej-itemlist-colour: rgb(var(--mej-light-3));
+    --mej-itemlist-header-colour: rgb(var(--mej-dark-0));
+    --mej-itemlist-input-color: rgb(var(--mej-light-3));
+    --mej-header-nav-input-color: rgb(var(--mej-light-6));
+    --mej-itemlist-input-background: rgb(var(--mej-dark-2));
+    --mej-blank-color: rgb(var(--mej-light-2));
+    --mej-itemlist-control-color-hover: rgb(var(--mej-light-0));
+    --mej-sheet-header-search-border: rgb(var(--mej-light-6));
+    --mej-sheet-header-search-color: rgb(var(--mej-light-2));
+    --mej-sheet-header-search-background: rgb(var(--mej-dark-1));
+    --mej-sheet-header-search-background-hover: rgba(var(--mej-dark-2));
+    --mej-sheet-input-color: rgb(var(--mej-light-2));
+    --mej-slideshow-add-slide: rgb(var(--mej-light-2));
+}
+
+.monks-enhanced-journal[background-image='marbleBlack'] .editor-edit {
+    color: rgb(var(--mej-dark-2));
 }
 
 .monks-enhanced-journal[background-image='marbleWhite'] {
