@@ -2306,6 +2306,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                         let currency = that.document.getFlag('monks-enhanced-journal', "currency") || {};
                         let currChanged = false;
+                        let skippedTextResults = [];
 
                         for (let i = 0; i < numberof; i++) {
                             const available = table.results.filter(r => !r.drawn);
@@ -2334,7 +2335,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                                         }
                                         break;
                                     default:
-                                        if (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type") == 'loot') {
+                                        let text = tableresult.text;
+                                        let isCurrencyText = (text.startsWith("{") && text.endsWith("}") && text.length > 2) || (text.startsWith("[[/award") && text.endsWith("]]"));
+
+                                        if (isCurrencyText && foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type") == 'loot') {
                                             async function tryRoll(formula) {
                                                 try {
                                                     return (await (new Roll(formula)).roll({ async: true })).total || 1;
@@ -2343,7 +2347,6 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                                                 }
                                             }
 
-                                            let text = tableresult.text;
                                             let textCoins = [];
                                             if (text.startsWith("{") && text.endsWith("}") && text.length > 2) {
                                                 let splitStr = (text.indexOf("[") > -1 && text.indexOf("]") > -1) ? "," : " ";
@@ -2386,6 +2389,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                                                 let value = await tryRoll(tc.formula);
                                                 currency[tc.coin] = (currency[tc.coin] || 0) + value;
                                                 currChanged = true;
+                                            }
+                                        } else if (itemtype == "items" && text) {
+                                            // Plain text result, not a currency formula - create a generic item so it isn't silently dropped
+                                            if (CONFIG.Item.typeLabels.loot) {
+                                                item = new Item.implementation({ name: text, type: "loot" });
+                                            } else {
+                                                skippedTextResults.push(text);
                                             }
                                         }
                                 }
@@ -2483,6 +2493,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                         if (currChanged)
                             await that.document.setFlag('monks-enhanced-journal', "currency", currency);
+
+                        if (skippedTextResults.length)
+                            ui.notifications.warn(format("MonksEnhancedJournal.msg.CouldNotCreateItemFromRollTableText", { results: skippedTextResults.join(", ") }));
                     }
                 }
             },
