@@ -352,6 +352,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
     async activateListeners(html) {
         await super.activateListeners(html);
         $(html).on("click", "img:not(.nopopout)", this._onClickImage.bind(this));
+        $(html).on("dragstart", ".journal-entry-page", this._onDragSelection.bind(this));
     }
 
     async subRender(context, options) {
@@ -665,6 +666,33 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
     _attachFrameListeners() {
         super._attachFrameListeners();
         this.trueElement.addEventListener("click", this._onClickImage.bind(this), { passive: true });
+    }
+
+    _onDragSelection(event) {
+        // jQuery's delegated event doesn't forward dataTransfer onto its normalized event object.
+        const dataTransfer = event.originalEvent?.dataTransfer ?? event.dataTransfer;
+        if (!dataTransfer) return;
+
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+        if (!text || selection.isCollapsed) return;
+
+        const pageNode = event.target.closest?.(".journal-entry-page[data-page-id]");
+        if (!pageNode || !pageNode.contains(selection.anchorNode)) return;
+        const page = this.entry.pages.get(pageNode.dataset.pageId);
+        if (!page) return;
+
+        // Find the heading the selection lives under: an ancestor heading, or failing that, the nearest
+        // preceding heading in the page, using the anchor ids rendered by _renderHeadings.
+        const anchorNode = selection.anchorNode;
+        const anchorEl = anchorNode.nodeType === Node.TEXT_NODE ? anchorNode.parentElement : anchorNode;
+        const heading = anchorEl?.closest("h1, h2, h3, h4, h5, h6")
+            ?? Array.from(pageNode.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+                .filter(h => h.compareDocumentPosition(anchorEl) & Node.DOCUMENT_POSITION_FOLLOWING)
+                .pop();
+
+        const link = `@UUID[${page.uuid}${heading?.id ? `#${heading.id}` : ""}]{${text}}`;
+        dataTransfer.setData("text/plain", link);
     }
 
     _observeHeadings() {
