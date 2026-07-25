@@ -705,7 +705,7 @@ export class MonksEnhancedJournal {
 		}
 		*/
 		Actor.prototype._onClickDocumentLink = async function (event) {
-			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: event.ctrlKey && !setting("open-new-tab") })) {
+			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab") })) {
 				return this.sheet.render(true);
 			}
 		}
@@ -723,7 +723,7 @@ export class MonksEnhancedJournal {
 			const target = event.currentTarget;
 
 			//|| ["SFDialog", "forge-compendium-browser"].includes(app?.id)
-			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: event.ctrlKey && !setting("open-new-tab"), anchor: target.dataset.hash })) {
+			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab"), anchor: target.dataset.hash })) {
 				if (this.pages.size == 1) {
 					let page = this.pages.contents[0];
 					let type = foundry.utils.getProperty(page, "flags.monks-enhanced-journal.type");
@@ -741,7 +741,7 @@ export class MonksEnhancedJournal {
 		JournalEntryPage.prototype._onClickDocumentLink = async function (event) {
 			const target = event.currentTarget;
 
-			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this.parent, { newtab: event.ctrlKey && !setting("open-new-tab"), pageId: this.id, anchor: target.dataset.hash })) {
+			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this.parent, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab"), pageId: this.id, anchor: target.dataset.hash })) {
 				let type = foundry.utils.getProperty(this, "flags.monks-enhanced-journal.type");
 				if (type == "base" || type == "oldentry") type = "journalentry";
 
