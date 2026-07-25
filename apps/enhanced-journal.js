@@ -134,6 +134,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         await super._preFirstRender(context, options);
 
         this.tabs = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'tabs') || [{ "id": makeid(), "text": i18n("MonksEnhancedJournal.NewTab"), "active": true, "history": [] }]);
+        this.removeDuplicateTab(this.document);
         this.tabs = this.tabs.map(t => { delete t.entity; return t; })
         this.tabs.active = (findone = true) => {
             let tab = this.tabs.find(t => t.active);
@@ -1072,6 +1073,15 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (event != undefined)
             event.preventDefault();
+    }
+
+    removeDuplicateTab(entity) {
+        if (!entity?.id) return;
+
+        const duplicateTabs = this.tabs.filter(tab => tab.entityId?.includes(entity.id));
+        duplicateTabs.forEach(tab => {
+            this.tabs.findSplice(t => t.id == tab.id);
+        });
     }
 
     saveTabs() {
