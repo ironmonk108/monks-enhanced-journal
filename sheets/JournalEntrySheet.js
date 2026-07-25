@@ -669,6 +669,11 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
     }
 
     _onDragSelection(event) {
+        // Don't hijack drags that originate inside an active editor (e.g. dragging a
+        // selection to move text within a ProseMirror edit view) - only build a link
+        // when dragging a selection out of a saved (non-edit) page view.
+        if (event.target.closest?.(".ProseMirror, .editor-content")) return;
+
         // jQuery's delegated event doesn't forward dataTransfer onto its normalized event object.
         const dataTransfer = event.originalEvent?.dataTransfer ?? event.dataTransfer;
         if (!dataTransfer) return;
