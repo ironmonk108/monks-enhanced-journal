@@ -3176,7 +3176,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         } = itemData.system;
 
         // Get scroll data
-        const scrollUuid = `Compendium.${CONFIG.DND5E.sourcePacks.ITEMS}.${CONFIG.DND5E.spellScrollIds[level]}`;
+        const spellScrollId = CONFIG.DND5E.spellScrollIds[level];
+        const scrollUuid = spellScrollId?.startsWith("Compendium.") ? spellScrollId : `Compendium.${CONFIG.DND5E.sourcePacks.ITEMS}.${spellScrollId}`;
         const scrollItem = await fromUuid(scrollUuid);
         const scrollData = scrollItem.toObject();
         delete scrollData._id;
