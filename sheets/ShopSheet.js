@@ -592,7 +592,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                             await existing.update(update);
                         } else {
                             let sheet = actor.sheet;
-                            if (sheet._onDropItem)
+                            if (sheet._onDropItem && game.system.id != "dcc")
                                 sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
                             else
                                 actor.createEmbeddedDocuments("Item", [itemData]);

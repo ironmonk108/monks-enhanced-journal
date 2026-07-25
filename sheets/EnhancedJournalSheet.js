@@ -3566,7 +3566,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 let itemQty = getValue(itemData, quantityname(), 1);
                 setValue(itemData, quantityname(), item.qty * itemQty);
                 let sheet = destActor.sheet;
-                if (sheet._onDropItem)
+                if (sheet._onDropItem && game.system.id != "dcc")
                     sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
                 else
                     destActor.createEmbeddedDocuments("Item", [itemData]);
