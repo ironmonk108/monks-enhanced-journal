@@ -386,7 +386,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         if (this.element) {
             MonksEnhancedJournal.updateDirectory(this.element, false);
             this.activateDirectoryListeners(this.element);
-            this.renderSubSheet(options);
         }
 
         let that = this;
@@ -406,6 +405,12 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         });
 
         $('.back-button, .forward-button', this.element).toggle(game.user.isGM || setting('allow-player')).on('click', this.navigateHistory.bind(this));
+
+        // Awaited (_onRender is awaited by render(), under its render semaphore) so that render() doesn't
+        // resolve until the subsheet content, this.document and the active tab's entity have actually been
+        // committed.  Otherwise the next queued tab change starts while this one is still assigning content.
+        if (this.element)
+            await this.renderSubSheet(options);
 
         return result;
     }
@@ -879,7 +884,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             tab.history = tab.history.filter(h => h != entityId);
 
             if (tab.active && this.rendered)
-                this.render(true);  //if this entity was being shown on the active tab, then refresh the journal
+                this.queueTabChange(() => this.render(true));  //if this entity was being shown on the active tab, then refresh the journal
         }
 
         this.saveTabs();
@@ -913,7 +918,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         else {
             this.saveTabs();
             if (options.refresh)
-                this.render(true, { focus: true });
+                this.queueTabChange(() => this.render(true, { focus: true }));
         }
 
         this.updateRecent(tab.entity);
@@ -921,13 +926,19 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         return tab;
     }
 
-    // Rapidly activating/opening tabs (e.g. duplicate-named entries opened in quick succession) can otherwise
-    // interleave the tab-activation bodies below, corrupting which tab ends up marked active and which
-    // document's content gets rendered. Queue activations so only one runs at a time.
-    activateTab(tab, event, options) {
-        const run = () => this._activateTab(tab, event, options);
-        this._activateTabQueue = this._activateTabQueue.then(run, run);
+    // Rapidly activating/opening/updating tabs (e.g. duplicate-named entries opened in quick succession) can
+    // otherwise interleave the tab bodies below, corrupting which tab ends up marked active and which
+    // document's content gets rendered. Queue tab changes so only one runs at a time.
+    // Only external entry points may queue; anything called from inside a queued body has to run inline
+    // (see the inline option on removeTab), otherwise it would finish after the body that asked for it.
+    queueTabChange(fn) {
+        this._activateTabQueue = this._activateTabQueue.then(fn, fn);
+        this._activateTabQueue.catch(() => { }); //observe failures, the next queued change might never come
         return this._activateTabQueue;
+    }
+
+    activateTab(tab, event, options) {
+        return this.queueTabChange(() => this._activateTab(tab, event, options));
     }
 
     async _activateTab(tab, event, options) {
@@ -937,7 +948,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             return false;
 
         if (tab == undefined)
-            tab = this.addTab();
+            tab = this.addTab(null, { activate: false, refresh: false });   //we're activating it ourselves below
 
         if (event != undefined)
             event.preventDefault();
@@ -959,14 +970,15 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 document.sheet.render(true);
             }
         } else if (event?.shiftKey) {
-            // Close this tab
-            this.removeTab(tab, event);
+            // Close this tab, waiting for it to pick the tab that takes its place, otherwise that
+            // activation would land after this one
+            await this.removeTab(tab, event, { inline: true });
             tab = this.tabs.active(false);
             if (!tab) {
                 if (this.tabs.length)
                     tab = this.tabs[0];
                 else
-                    tab = this.addTab();
+                    tab = this.addTab(null, { activate: false, refresh: false });
             }
         }
 
@@ -1013,6 +1025,10 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     updateTab(tab, entity, options = {}) {
+        return this.queueTabChange(() => this._updateTab(tab, entity, options));
+    }
+
+    async _updateTab(tab, entity, options = {}) {
         if (!entity)
             return;
 
@@ -1058,10 +1074,13 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.rendered)
             return;
 
-        this.render(true, foundry.utils.mergeObject({ focus: true }, options));
+        await this.render(true, foundry.utils.mergeObject({ focus: true }, options));
     }
 
-    removeTab(tab, event) {
+    async removeTab(tab, event, options = {}) {
+        if (event != undefined)
+            event.preventDefault();
+
         if (typeof tab == 'string')
             tab = this.tabs.find(t => t.id == tab);
 
@@ -1071,18 +1090,19 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             $('.journal-tab[data-tabid="' + tab.id + '"]', this.element).remove();
         }
 
+        // when called from inside a queued tab change the replacement tab has to be activated inline,
+        // queueing it would run it after the body that removed this tab
+        const activate = (t) => options.inline ? this._activateTab(t) : this.activateTab(t);
+
         if (this.tabs.length == 0) {
-            this.addTab();
+            await activate(this.addTab(null, { activate: false, refresh: false }));
         } else {
             if (tab.active) {
                 let nextIdx = (idx >= this.tabs.length ? idx - 1 : idx);
-                if (!this.activateTab(nextIdx))
+                if (!(await activate(nextIdx)))
                     this.saveTabs();
             }
         }
-
-        if (event != undefined)
-            event.preventDefault();
     }
 
     removeDuplicateTab(entity) {
