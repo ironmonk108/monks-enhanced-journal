@@ -881,6 +881,9 @@ export class ShopSheet extends EnhancedJournalSheet {
             let sell = adjustment[item.type]?.sell ?? adjustment.default.sell ?? 1;
             let price = MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
             let converted = distributeCurrency(price.value * sell, price.currency, MonksEnhancedJournal.currencies);
+            // never let a priced item become free after conversion; charge 1 of the lowest denomination instead
+            if (price.value * sell > 0 && converted.value == 0)
+                converted.value = 1;
             let cost = converted.value + " " + converted.currency;
             foundry.utils.setProperty(item, "flags.monks-enhanced-journal.cost", cost);
         }
