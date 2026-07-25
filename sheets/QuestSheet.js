@@ -425,7 +425,7 @@ export class QuestSheet extends EnhancedJournalSheet {
         let rewards = foundry.utils.mergeObject(foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.rewards") || {}, foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.rewards") || {}, { overwrite: false });
         foundry.utils.setProperty(submitData, "flags.monks-enhanced-journal.rewards", rewards);
 
-        let reward = rewards[this.getCurrentRewardId()];
+        let reward = rewards[this.getCurrentRewardId()] || {};
         reward.currency = foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.currency") || {};
 
         // Make sure to include all the objectives data if you're updating data
