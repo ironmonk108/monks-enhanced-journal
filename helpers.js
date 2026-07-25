@@ -85,10 +85,14 @@ export class MEJHelpers {
             // some systems (e.g. wfrp4e's gc/ss/bp) store price as several denominations
             // at once, so collect every non-zero one instead of stopping at the first
             let denominations = ["pp", "gp", "sp", "cp", "gc", "ss", "bp"].filter(curr => cost[curr] && cost[curr] != "0" && cost[curr] != 0);
-            if (denominations.length > 1) {
+            if (game.system.id == "wfrp4e" && denominations.length > 1) {
                 // sum everything into the lowest denomination present (the last one in
                 // the list above) using the system's own currency conversion, so no
                 // part of a mixed-denomination price gets silently dropped
+                // NOTE: amount * (baseRate / rate) is only correct for wfrp4e's inverted
+                // convert convention (bp:240 = 240 per gc); other systems' tables are
+                // value-in-reference-terms (e.g. dnd5e pp:10 = 1pp worth 10gp), so this
+                // summing is gated to wfrp4e until a non-inverted formula is added
                 let base = denominations[denominations.length - 1];
                 let baseRate = MonksEnhancedJournal.currencies.find(c => c.id == base)?.convert || 1;
                 let total = denominations.reduce((sum, curr) => {
@@ -96,7 +100,7 @@ export class MEJHelpers {
                     return sum + (parseInt(cost[curr]) * (baseRate / rate));
                 }, 0);
                 cost = `${Math.round(total)} ${base}`;
-            } else if (denominations.length == 1) {
+            } else if (denominations.length >= 1) {
                 let curr = denominations[0];
                 cost = `${cost[curr]} ${curr}`;
             }
