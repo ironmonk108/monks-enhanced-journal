@@ -1813,5 +1813,5 @@ body.theme-light #list-item-edit .items-list header {
 
 .relationship-defunct {
     text-decoration: line-through;
-    color: red;
+    color: var(--mej-sheet-header-underline);
 }
