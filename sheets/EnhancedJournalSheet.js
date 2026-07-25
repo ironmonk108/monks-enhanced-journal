@@ -728,8 +728,32 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         let results = {};
         for (let [relationshipId, relationship] of Object.entries(relationships)) {
             let entity = relationship.uuid ? await fromUuid(relationship.uuid) : game.journal.get(relationshipId);
-            if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage))
+            if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage)) {
+                // The relationship's target no longer resolves - show it to the GM so they can clean it up, but never to players
+                if (game.user.isGM) {
+                    let type = "defunct";
+                    if (!results[type])
+                        results[type] = {
+                            type: type,
+                            name: i18n("MonksEnhancedJournal.Unknown"),
+                            documents: []
+                        };
+
+                    if (results[type].documents.some(r => r.id == relationship.id && r.uuid == relationship.uuid))
+                        continue;
+
+                    relationship.id = relationship.id || relationshipId;
+                    relationship.name = relationship.name || i18n("MonksEnhancedJournal.Unknown");
+                    relationship.img = `modules/monks-enhanced-journal/assets/loading.gif`;
+                    relationship.type = type;
+                    relationship.shoptype = "";
+                    relationship.role = "";
+                    relationship.defunct = true;
+
+                    results[type].documents.push(relationship);
+                }
                 continue;
+            }
             if (entity && entity.testUserPermission(game.user, "LIMITED") && (game.user.isGM || !relationship.hidden)) {
                 let page = (entity instanceof JournalEntryPage ? entity : entity.pages.contents[0]);
                 MonksEnhancedJournal.fixType(page);
@@ -750,6 +774,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 relationship.type = type;
                 relationship.shoptype = page.getFlag("monks-enhanced-journal", "shoptype");
                 relationship.role = page.getFlag("monks-enhanced-journal", "role");
+                delete relationship.defunct;
 
                 results[type].documents.push(relationship);
             }

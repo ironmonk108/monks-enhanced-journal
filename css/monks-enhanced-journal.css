@@ -1810,3 +1810,8 @@ body.theme-light #list-item-edit .items-list header {
 .menu-dialog.prosemirror .mej-centered-form {
     width: unset;
 }
+
+.relationship-defunct {
+    text-decoration: line-through;
+    color: red;
+}
