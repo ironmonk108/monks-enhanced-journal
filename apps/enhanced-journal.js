@@ -46,6 +46,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     lastquery = '';
     _imgcontext = null;
     subsheetState = {};
+    _activateTabQueue = Promise.resolve();
 
     constructor(options) {
         super(options);
@@ -920,7 +921,16 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         return tab;
     }
 
-    async activateTab(tab, event, options) {
+    // Rapidly activating/opening tabs (e.g. duplicate-named entries opened in quick succession) can otherwise
+    // interleave the tab-activation bodies below, corrupting which tab ends up marked active and which
+    // document's content gets rendered. Queue activations so only one runs at a time.
+    activateTab(tab, event, options) {
+        const run = () => this._activateTab(tab, event, options);
+        this._activateTabQueue = this._activateTabQueue.then(run, run);
+        return this._activateTabQueue;
+    }
+
+    async _activateTab(tab, event, options) {
         this.saveScrollPos();
 
         if (await this?.subsheet?.close() === false)
@@ -990,7 +1000,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         //this.updateHistory();
         if (this.rendered)
-            this.render(true, options);
+            await this.render(true, options);
         else {
             window.setTimeout(() => {
                 $(`.journal-tab[data-tabid="${tab.id}"]`, this.element).addClass("active").siblings().removeClass("active");

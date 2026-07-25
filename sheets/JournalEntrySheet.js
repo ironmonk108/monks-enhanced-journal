@@ -626,6 +626,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
     }
 
     _synchronizeSidebar() {
+        if (!this.trueElement) return;
         const entries = Array.from(this.headingIntersections.values()).sort((a, b) => {
             return a.intersectionRect.y - b.intersectionRect.y;
         });
@@ -633,7 +634,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
             const { pageId } = entry.target.closest("[data-page-id]")?.dataset ?? {};
             const anchor = entry.target.dataset.anchor;
             let toc = this.trueElement.querySelector(`.toc [data-page-id="${pageId}"]`);
-            if (anchor) toc = toc.querySelector(`li[data-anchor="${anchor}"]`);
+            if (anchor) toc = toc?.querySelector(`li[data-anchor="${anchor}"]`);
             if (toc) {
                 toc.scrollIntoView();
                 break;
