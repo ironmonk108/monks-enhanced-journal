@@ -747,8 +747,8 @@ export class MonksEnhancedJournal {
 
 				let types = MonksEnhancedJournal.getDocumentTypes();
 				if (types[type]) {
-					MonksEnhancedJournal.fixType(page);
-					return page.sheet.render(true, { anchor: target.dataset.hash });
+					MonksEnhancedJournal.fixType(this);
+					return this.sheet.render(true, { anchor: target.dataset.hash });
 				} else
 					return this.parent.sheet.render(true, { pageId: this.id, anchor: target.dataset.hash });
 			}
