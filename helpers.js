@@ -195,4 +195,12 @@ export class MEJHelpers {
 
         return result;
     }
+
+    // Shared guard for the fake-event `sheet._onDropItem(event, itemData)` calls used
+    // throughout the module to add an item straight to an actor's sheet. Some systems'
+    // ActorSheet._onDropItem implementations don't tolerate this synthetic event shape,
+    // so those systems must fall back to actor.createEmbeddedDocuments instead.
+    static canDropOnActorSheet(sheet) {
+        return !!(sheet?._onDropItem && !["cyphersystem", "dnd4e", "dcc"].includes(game.system.id));
+    }
 }

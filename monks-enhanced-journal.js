@@ -3679,7 +3679,7 @@ export class MonksEnhancedJournal {
 					delete itemData._id;
 					if (!data.consumable) {
 						let sheet = actor.sheet;
-						if (sheet._onDropItem && game.system.id != "dcc")
+						if (MEJHelpers.canDropOnActorSheet(sheet))
 							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
 						else
 							actor.createEmbeddedDocuments("Item", [itemData]);
@@ -4532,7 +4532,7 @@ Hooks.on('dropActorSheetData', (actor, sheet, data) => {
 						if (!setting("use-generic-price"))
 							setPrice(data.data, pricename(), result.price);
 						data.uuid = `${data.uuid}${data.rewardId ? `.Rewards.${data.rewardId}` : ""}.Items.${data.itemId}`;
-						if (sheet._onDropItem && (game.system.id != "cyphersystem" && game.system.id != "dnd4e" && game.system.id != "dcc"))
+						if (MEJHelpers.canDropOnActorSheet(sheet))
 							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data.data);
 						else
 							actor.createEmbeddedDocuments("Item", [data.data]);
@@ -4560,7 +4560,10 @@ Hooks.on('dropJournalSheetData', (journal, sheet, data) => {
 						let itemQty = getValue(data.data, quantityname());
 						setValue(data.data, quantityname(), result.quantity * itemQty);
 						data.uuid = `${data.uuid}.Items.${data.itemId}`;
-						sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data);
+						if (MEJHelpers.canDropOnActorSheet(sheet))
+							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data);
+						else
+							journal.createEmbeddedDocuments("Item", [data.data]);
 					}
 				});
 			}

@@ -314,7 +314,7 @@ export class LootSheet extends EnhancedJournalSheet {
                         let itemQty = getValue(itemData, quantityname(), 1);
                         setValue(itemData, quantityname(), result.quantity * itemQty);
                         let sheet = actor.sheet;
-                        if (sheet._onDropItem)
+                        if (MEJHelpers.canDropOnActorSheet(sheet))
                             sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
                         else
                             actor.createEmbeddedDocuments("Item", [itemData]);
@@ -498,7 +498,7 @@ export class LootSheet extends EnhancedJournalSheet {
                 let itemQty = getValue(itemData, quantityname(), 1);
                 setValue(itemData, quantityname(), result.quantity * itemQty);
                 let sheet = actor.sheet;
-                if (sheet._onDropItem)
+                if (MEJHelpers.canDropOnActorSheet(sheet))
                     sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
                 else
                     actor.createEmbeddedDocuments("Item", [itemData]);
@@ -549,7 +549,7 @@ export class LootSheet extends EnhancedJournalSheet {
             let itemQty = getValue(itemData, quantityname(), 1);
             setValue(itemData, quantityname(), result.quantity * itemQty);
             let sheet = actor.sheet;
-            if (sheet._onDropItem)
+            if (MEJHelpers.canDropOnActorSheet(sheet))
                 sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
             else
                 actor.createEmbeddedDocuments("Item", [itemData]);
