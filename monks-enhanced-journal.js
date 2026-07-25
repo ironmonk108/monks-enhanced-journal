@@ -2174,8 +2174,16 @@ export class MonksEnhancedJournal {
 		for (let [k, v] of Object.entries(labels)) {
 			if (CONFIG.JournalEntryPage.sheetClasses[k] == undefined)
 				CONFIG.JournalEntryPage.sheetClasses[k] = {};
+			// Register under both the legacy unprefixed key (still used internally after
+			// MonksEnhancedJournal.fixType() patches an in-memory page.type) and the
+			// module-prefixed key that Foundry actually assigns to real JournalEntryPage
+			// documents of a module-declared subtype (e.g. "monks-enhanced-journal.shop").
+			// Without the prefixed key, page._getSheetClass() falls back to core's BaseSheet
+			// for any page that wasn't routed through fixType() first (e.g. pages created via
+			// raw API/import), crashing MEJ's AppV1-bridge renderer with "sheet.getData is not
+			// a function".
 			foundry.applications.apps.DocumentSheetConfig.registerSheet(JournalEntryPage, "monks-enhanced-journal", types[k] || foundry.appv1.sheets.JournalPageSheet, {
-				types: [k],
+				types: [k, `monks-enhanced-journal.${k}`],
 				makeDefault: true,
 				label: i18n(v)
 			});
