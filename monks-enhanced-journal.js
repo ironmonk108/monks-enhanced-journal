@@ -1152,7 +1152,7 @@ export class MonksEnhancedJournal {
 
 			let entity = this.page || this.entry;
 			if (allowed && this.entry) {
-				if (! await MonksEnhancedJournal.openJournalEntry(this.entry, options)) {
+				if (wrapped.altKey || ! await MonksEnhancedJournal.openJournalEntry(this.entry, options)) {
 					let page = this.page;
 					if (this.entry.pages.size == 1) {
 						page = this.entry.pages.contents[0];
