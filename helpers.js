@@ -66,7 +66,8 @@ export class MEJHelpers {
 
     static defaultCurrency() {
         let currency = MonksEnhancedJournal.currencies.find(c => c.convert == 0);
-        return currency?.id || "";
+        return (game.system.id == 'dsa5') ? currency?.name || "" // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+            : currency?.id || "";
     }
 
     static getSystemPrice(item, name, ignorePrice = false) {
@@ -135,7 +136,8 @@ export class MEJHelpers {
                     let val = (price * adjust) / ((tcurr.convert || 1) * adjust);
                     if (val == Math.floor(val)) {
                         curr = tcurr;
-                        currency = tcurr.id;
+                        currency = (game.system.id == 'dsa5') ? tcurr.name || "" // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+                            : tcurr.id;
                         price = Math.floor(val);
                         break;
                     }
