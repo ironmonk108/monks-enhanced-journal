@@ -1744,7 +1744,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 itemData.rarity = i18n(CONFIG.PF2E.rarityTraits[item.system?.traits?.rarity]);
             }
 
-            if (game.user.isGM || this.document.isOwner || (item.hide !== true && (flags.quantity !== 0 || setting('show-zero-quantity')))) {
+            if (game.user.isGM || this.document.isOwner || (item.hidden !== true && (flags.quantity !== 0 || setting('show-zero-quantity')))) {
                 let groupId = (!sort || sort == "name" ? this.slugify(item.type) : "");
                 if (groups[groupId] == undefined)
                     groups[groupId] = { id: groupId, name: item.type || "Unknown", items: [] };
