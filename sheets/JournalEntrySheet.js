@@ -567,7 +567,10 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
         const minLevel = Math.min(...headings.map(node => node.level));
         tocNode.querySelector(":scope > ol")?.remove();
         headings = headings.reduce((arr, { text, level, slug, element }) => {
-            if (element) element.dataset.anchor = slug;
+            if (element) {
+                element.dataset.anchor = slug;
+                element.id = slug;
+            }
             if (level < minLevel + 2) arr.push({ text, slug, level: level - minLevel + 2 });
             return arr;
         }, []);

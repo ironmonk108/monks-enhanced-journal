@@ -720,7 +720,7 @@ export class MonksEnhancedJournal {
 				this.view();
 		}
 		JournalEntry.prototype._onClickDocumentLink = async function (event) {
-			const target = event.currentTarget;
+			const target = event.target.closest("a[data-link]");
 
 			//|| ["SFDialog", "forge-compendium-browser"].includes(app?.id)
 			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab"), anchor: target.dataset.hash })) {
@@ -739,7 +739,7 @@ export class MonksEnhancedJournal {
 			}
 		}
 		JournalEntryPage.prototype._onClickDocumentLink = async function (event) {
-			const target = event.currentTarget;
+			const target = event.target.closest("a[data-link]");
 
 			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this.parent, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab"), pageId: this.id, anchor: target.dataset.hash })) {
 				let type = foundry.utils.getProperty(this, "flags.monks-enhanced-journal.type");
