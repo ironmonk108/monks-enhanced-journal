@@ -552,9 +552,9 @@ export class QuestSheet extends EnhancedJournalSheet {
 
         const dragData = { from: 'monks-enhanced-journal' };
 
-        if (li.dataset.document == 'Item') {
-            let id = li.dataset.id;
+        let id = li.dataset.id;
 
+        if (li.dataset.document == 'Item') {
             let reward = this.getReward();
             if (reward == undefined)
                 return;
