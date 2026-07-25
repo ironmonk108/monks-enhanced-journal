@@ -524,6 +524,7 @@
   "MonksEnhancedJournal.msg.NoLootAtTheMoment": "No loot at the moment",
   "MonksEnhancedJournal.msg.DragToMakeRelationship": "Drag a Monk's Enhanced Journal Entry here to make a relationship",
   "MonksEnhancedJournal.msg.NoRelationshipsAtTheMoment": "No relationships at the moment",
+  "MonksEnhancedJournal.msg.CannotWriteRelationshipToLockedCompendium": "Could not add the reciprocal relationship because that entry is in a locked compendium",
   "MonksEnhancedJournal.msg.DragJournalEntryHereToCreateShop": "Drag a Shop journal entry here to create shop a shop",
   "MonksEnhancedJournal.msg.NoShopsAtTheMoment": "No shops at the moment",
   "MonksEnhancedJournal.msg.NoObjectivesPressAddButton": "No objectives yet, press the add button to create one",
