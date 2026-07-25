@@ -1184,9 +1184,8 @@ export class MonksEnhancedJournal {
 		if (game.modules.get("lib-wrapper")?.active) {
 			libWrapper.register("monks-enhanced-journal", "foundry.canvas.placeables.Note.prototype._onClickLeft2", clickNote2, "OVERRIDE");
 		} else {
-			const oldClickNote = foundry.canvas.placeables.Note.prototype._onClickLeft2;
 			foundry.canvas.placeables.Note.prototype._onClickLeft2 = function (event) {
-				return clickNote2.call(this, oldClickNote.bind(this));
+				return clickNote2.call(this, event);
 			}
 		}
 
