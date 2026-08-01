@@ -42,20 +42,6 @@ export class LootSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.loot"),
-            template: "modules/monks-enhanced-journal/templates/sheets/loot.html",
-            dragDrop: [
-                { dragSelector: ".document.item", dropSelector: ".loot-container" },
-                { dragSelector: ".loot-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".loot-items .item-list .item .item-name", dropSelector: ".loot-character" },
-                { dragSelector: ".loot-character", dropSelector: "null" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".loot-items"]
-        });
-    }
     */
 
     static get type() {
@@ -726,20 +712,20 @@ export class LootSheet extends EnhancedJournalSheet {
     _getActorContextOptions() {
         return [
             {
-                name: "Transfer Funds",
+                label: "Transfer Funds",
                 icon: '<i class="fas fa-user"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
+                visible: () => game.user.isGM,
+                onClick: (event, li) => {
                     const id = li.id;
                     const actor = game.actors.get(id);
                     this.transferCurrency(actor);
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.RemoveActor"),
+                label: i18n("MonksEnhancedJournal.RemoveActor"),
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
+                visible: () => game.user.isGM,
+                onClick: (event, li) => {
                     const id = li.id;
                     foundry.applications.api.DialogV2.confirm({
                         window: {

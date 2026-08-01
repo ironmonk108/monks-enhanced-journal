@@ -51,19 +51,6 @@ export class SlideshowSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.slideshow"),
-            template: "modules/monks-enhanced-journal/templates/sheets/slideshow.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "entry-details" }],
-            dragDrop: [
-                { dragSelector: ".slide", dropSelector: ".slide" },
-                { dragSelector: ".slide", dropSelector: ".slideshow-body" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".tab.entry-details .tab-inner", ".tab.slides .tab-inner"]
-        });
-    }
     */
 
     static get type() {
@@ -215,14 +202,6 @@ export class SlideshowSheet extends EnhancedJournalSheet {
 
     get canPlaySound() {
         return false;
-    }
-
-    async _render(force, options = {}) {
-        await super._render(force, options);
-
-        if (!this.document.testUserPermission(game.user, "OWNER") || options.play) {
-            this.playSlideshow();
-        }
     }
 
     static async createSlideThumbnail(src) {
@@ -811,10 +790,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
     _getSlideshowContextOptions() {
         return [
             {
-                name: "MonksEnhancedJournal.EditSlide",
+                label: "MonksEnhancedJournal.EditSlide",
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM,
-                callback: elem => {
+                visible: game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));
@@ -823,10 +802,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Duplicate",
+                label: "SIDEBAR.Duplicate",
                 icon: '<i class="far fa-copy"></i>',
-                condition: () => game.user.isGM,
-                callback: elem => {
+                visible: () => game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));
@@ -834,10 +813,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Delete",
+                label: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: elem => {
+                visible: () => game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));

@@ -80,21 +80,6 @@ export class QuestSheet extends EnhancedJournalSheet {
     }
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.quest"),
-            template: "modules/monks-enhanced-journal/templates/sheets/quest.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dragSelector: ".document.actor", dropSelector: ".quest-container" },
-                { dragSelector: ".document.item", dropSelector: ".quest-container" },
-                { dragSelector: ".reward-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".objective-items .item-list .item", dropSelector: ".quest-container" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".objective-items", ".reward-container .reward-items > .item-list", ".tab.description .tab-inner"]
-        });
-    }
     */
 
     getCurrentRewardId() {
@@ -163,8 +148,7 @@ export class QuestSheet extends EnhancedJournalSheet {
                         reward.itemIds.push(item._id);
                     }
                 }
-                delete reward.items;
-                reward["-=items"] = null;
+                reward.items = new foundry.data.operators.ForcedDeletion();
                 changed = true;
             }
         }
@@ -494,8 +478,7 @@ export class QuestSheet extends EnhancedJournalSheet {
 
         let items = this.document.getFlag('monks-enhanced-journal', 'items') || {};
         for (let itemId of reward.itemIds || []) {
-            delete items[itemId];
-            items[`-=${itemId}`] = null;
+            items[itemId] = new foundry.data.operators.ForcedDeletion();
         }
         await this.document.setFlag('monks-enhanced-journal', 'items', items);
 
@@ -798,8 +781,7 @@ export class QuestSheet extends EnhancedJournalSheet {
         reward.itemIds = assignedIds;
         for (let key of Object.keys(rewardItems)) {
             if (!assignedIds.includes(key)) {
-                delete items[key];
-                items[`-=${key}`] = null;
+                items[key] = new foundry.data.operators.ForcedDeletion();
             }
         }
         this.setFlag('monks-enhanced-journal', 'items', items);

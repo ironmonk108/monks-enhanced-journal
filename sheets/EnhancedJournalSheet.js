@@ -476,7 +476,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             let document = await fromUuid(data.uuid);
             this.enhancedjournal.open(document);
         } else if (data.type == 'Item') {
-            this.addItems(data);
+            this.addItem(data);
         } else
             return false;
     }
@@ -765,18 +765,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     _getDescriptionContextOptions() {
         let menu = [
             {
-                name: "Show in Chat",
+                label: "Show in Chat",
                 icon: '<i class="fas fa-comment"></i>',
-                condition: game.user.isGM,
-                callback: () => {
+                visible: game.user.isGM,
+                onClick: () => {
                     this.copyToChat();
                 }
             },
             {
-                name: "Extract to Journal Entry",
+                label: "Extract to Journal Entry",
                 icon: '<i class="fas fa-file-export"></i>',
-                condition: game.user.isGM,
-                callback: () => {
+                visible: game.user.isGM,
+                onClick: () => {
                     this.constructor.splitJournal.call(this);
                 }
             }
@@ -786,9 +786,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             menu = menu.concat(
                 [{
                     icon: '<i class="fas fa-comment"></i>',
-                    name: 'Describe',
-                    condition: game.user.isGM,
-                    callback: () => {
+                    label: 'Describe',
+                    visible: game.user.isGM,
+                    onClick: () => {
                         const selection = NarratorTools._getSelectionText();
                         if (selection)
                             NarratorTools.chatMessage.describe(selection);
@@ -796,9 +796,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 },
                 {
                     icon: '<i class="fas fa-comment-dots"></i>',
-                    name: 'Narrate',
-                    condition: game.user.isGM,
-                    callback: () => {
+                    label: 'Narrate',
+                    visible: game.user.isGM,
+                    onClick: () => {
                         const selection = NarratorTools._getSelectionText();
                         if (selection)
                             NarratorTools.chatMessage.narrate(selection);
@@ -814,9 +814,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         let that = this;
         return [
             {
-                name: "Show Image",
+                label: "Show Image",
                 icon: '<i class="fas fa-image"></i>',
-                callback: () => {
+                onClick: () => {
                     const ip = new foundry.applications.apps.ImagePopout({
                         src: this.document.src,
                         uuid: this.document.uuid,
@@ -830,18 +830,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 }
             },
             {
-                name: "Edit Image",
+                label: "Edit Image",
                 icon: '<i class="fas fa-pencil"></i>',
-                condition: this.document.isOwner,
-                callback: () => {
+                visible: this.document.isOwner,
+                onClick: () => {
                     that._onEditImage.call(that);
                 }
             },
             {
-                name: "Clear Image",
+                label: "Clear Image",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: this.document.isOwner,
-                callback: () => {
+                visible: this.document.isOwner,
+                onClick: () => {
                     foundry.applications.api.DialogV2.confirm({
                         window: {
                             title: `Clear Item`,
@@ -868,10 +868,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     _getPersonActorContextOptions() {
         return [
             {
-                name: "SIDEBAR.Delete",
+                label: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: () => {
+                visible: () => game.user.isGM,
+                onClick: () => {
                     foundry.applications.api.DialogV2.confirm({
                         window: {
                             title: `${game.i18n.localize("SIDEBAR.Delete")} ${i18n("MonksEnhancedJournal.ActorLink")}`,
@@ -882,10 +882,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.ImportItems"),
+                label: i18n("MonksEnhancedJournal.ImportItems"),
                 icon: '<i class="fas fa-download fa-fw"></i>',
-                condition: () => game.user.isGM && this.document.type == "shop",
-                callback: () => {
+                visible: () => game.user.isGM && this.document.type == "shop",
+                onClick: () => {
                     foundry.applications.api.DialogV2.confirm({
                         window: {
                             title: i18n("MonksEnhancedJournal.ImportAllActorItems"),
@@ -896,17 +896,17 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.OpenActorSheet"),
+                label: i18n("MonksEnhancedJournal.OpenActorSheet"),
                 icon: '<i class="fas fa-user fa-fw"></i>',
-                condition: () => game.user.isGM,
-                callback: () => {
+                visible: () => game.user.isGM,
+                onClick: () => {
                     this.openActor.call(this, { newtab: true });
                 }
             },
             {
-                name: "Show Image",
+                label: "Show Image",
                 icon: '<i class="fas fa-image"></i>',
-                callback: () => {
+                onClick: () => {
                     let actorLink = this.document.getFlag('monks-enhanced-journal', 'actor');
                     let actor = game.actors.find(a => a.id == actorLink.id);
                     if (!actor)
@@ -926,12 +926,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         ];
     }
 
+    _toggleDisabled(disabled) {
+        let element = this.trueElement;
+        if (!element) return;
+        element.querySelectorAll("secret-block").forEach(b => b.revealable = !disabled);
+        const form = this.form;
+        if (!form) return;
+        for (const el of form.elements) el.disabled = disabled;
+        for (const input of form.querySelectorAll("input[type=image]")) input.disabled = disabled;
+        for (const img of form.querySelectorAll("img[data-edit]")) img.classList.toggle("disabled", disabled);
+        if (disabled) this._disableFields(form);
+    }
+
     _disableFields(form) {
-        super._disableFields(form);
         let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
         if (hasGM) {
             $('.tab.notes .editor-edit', form).removeAttr('disabled');
-            $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly').on('blur', this._onChangeInput.bind(this));
+            $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly');
         }
         //$('.editor-edit', form).css({ width: '0px !important', height: '0px !important' });
     }

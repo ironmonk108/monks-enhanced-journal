@@ -78,7 +78,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             toggleViewMode: EnhancedJournal.toggleViewMode,
             navigatePrevious: EnhancedJournal.navigatePrevious,
             navigateNext: EnhancedJournal.navigateNext,
-            activateEntry: EnhancedJournal.activateEntry
+            activateEntry: EnhancedJournal.activateEntry,
+            toggleMaximize: EnhancedJournal.toggleMaximize
         },
         position: { width: 1025, height: 700 },
         form: {
@@ -211,8 +212,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         context = foundry.utils.mergeObject(context, {
             tree: ui.journal.collection.tree,
-            entryPartial: ui.journal.constructor.entryPartial,
-            folderPartial: ui.journal.constructor.folderPartial,
             canCreateEntry: cls.canUserCreate(game.user),
             canCreateFolder: ui.journal._canCreateFolder(),
             maxFolderDepth: ui.journal.collection.maxFolderDepth,
@@ -275,15 +274,18 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _getHeaderControls() {
-        return this.subsheet?._getHeaderControls?.() || [];
+        let controls = this.subsheet?._getHeaderControls?.() || [];
+        let maximized = this.element?.classList.contains("maximized");
+        return controls.concat([{
+            icon: maximized ? "fas fa-compress-arrows-alt" : "fas fa-expand-arrows-alt",
+            label: maximized ? "MonksEnhancedJournal.Restore" : "MonksEnhancedJournal.Maximize",
+            action: "toggleMaximize",
+            visible: true
+        }]);
     }
 
     get entryType() {
         return ui.journal.collection.documentName;
-    }
-
-    get _onCreateDocument() {
-        return ui.journal._onCreateDocument;
     }
 
     get collection() {
@@ -408,7 +410,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async renderSubSheet(options = {}) {
         try {
-            const modes = foundry.appv1.sheets.JournalSheet.VIEW_MODES;
+            const modes = JournalEntrySheet.VIEW_MODES;
 
             let currentTab = this.tabs.active();
             if (!currentTab) {
@@ -583,10 +585,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             subsheet._replaceHTML.call(subsheet, result, subsheetElement, subsheetOptions);
 
             if (!this.isEditable) {
-                let originalFramed = subsheet.options.window.frame;
-                subsheet.options.window.frame = false;
                 subsheet._toggleDisabled.call(subsheet, true);
-                subsheet.options.window.frame = originalFramed;
             }
 
             if (subsheet.refresh)
@@ -604,20 +603,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (state.type == subsheet.constructor.type) {
                     for (let [partId, part] of Object.entries(parts)) {
                         let partState = state[partId] || {};
-
-                        if (partState.scrollPositions?.length) {
-                            // Replace the elements with the new ones so the scroll positions are applied to the correct elements
-                            let scrollableSelectors = (part.scrollable || []);
-                            let idx = 0;
-                            for (let i = 0; i < scrollableSelectors.length; i++) {
-                                const selector = scrollableSelectors[i];
-                                const el1 = selector === "" ? subsheetElement : subsheetElement.querySelector(selector);
-                                if (!el1) continue;
-                                if (partState.scrollPositions[idx]?.length > 0)
-                                    partState.scrollPositions[idx][0] = el1;
-                                idx++;
-                            }
-                        }
 
                         subsheet._syncPartState.call(subsheet, partId, subsheetElement, subsheetElement, partState);
                         if (partState.focus && !!partState.focusCaret) {
@@ -674,13 +659,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
             this.activateControls($('#left-journal-buttons', this.element).empty(), $('#right-journal-buttons', this.element).empty());
 
-            let controls = [];
-            for (const c of subsheet._getHeaderControls()) {
-                const visible = typeof c.visible === "function" ? c.visible.call(this) : c.visible ?? true;
-                if (visible) controls.push(this._renderHeaderControl(c));
-            }
-            this.window.controlsDropdown.replaceChildren(...controls);
-            this.window.controls.classList.toggle("hidden", !controls.length);
+            this.window.controls.classList.toggle("hidden", !Array.from(this._headerControlButtons()).length);
 
             this.document._sheet = null; //set this to null so that other things can open the sheet
             subsheet._state = subsheet.constructor.RENDER_STATES.RENDERED;
@@ -1189,9 +1168,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 let type = (entity.getFlag && entity.getFlag('monks-enhanced-journal', 'type'));
                 let icon = MonksEnhancedJournal.getIcon(type);
                 let item = {
-                    name: entity.name || i18n("MonksEnhancedJournal.Unknown"),
-                    icon: `<i class="fas ${icon}"></i>`,
-                    callback: (li) => {
+                    label: entity.name || i18n("MonksEnhancedJournal.Unknown"),
+                    icon: `fas ${icon}`,
+                    onClick: (event, li) => {
                         let idx = i;
                         this.changeHistory(idx)
                     }
@@ -1494,17 +1473,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         //don't do anything, but leave this here to prevent the regular journal page from doing anything
     }
 
-    _getHeaderButtons() {
-        let buttons = super._getHeaderButtons();
-
-        buttons.unshift({
-            label: i18n("MonksEnhancedJournal.Maximize"),
-            class: "toggle-fullscreen",
-            icon: "fas fa-expand-arrows-alt",
-            onclick: this.fullscreen.bind(this)
-        });
-
-        return buttons;
+    static toggleMaximize(event) {
+        this.fullscreen();
     }
 
     static doShowPlayers(event) {
@@ -1518,15 +1488,13 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     fullscreen() {
-        if (this.element.hasClass("maximized")) {
-            this.element.removeClass("maximized");
-            $('.toggle-fullscreen', this.element).html(`<i class="fas fa-expand-arrows-alt"></i>${i18n("MonksEnhancedJournal.Maximize")}`);
+        if (this.element.classList.contains("maximized")) {
+            this.element.classList.remove("maximized");
             this.setPosition({ width: this._previousPosition.width, height: this._previousPosition.height });
             this.setPosition({ left: this._previousPosition.left, top: this._previousPosition.top });
         } else {
-            this.element.addClass("maximized");
-            $('.toggle-fullscreen', this.element).html(`<i class="fas fa-compress-arrows-alt"></i>${i18n("MonksEnhancedJournal.Restore")}`);
-            
+            this.element.classList.add("maximized");
+
             this._previousPosition = foundry.utils.duplicate(this.position);
             this.setPosition({ left: 0, top: 0 });
             this.setPosition({ height: $('body').height(), width: $('body').width() - $('#sidebar').width() });
@@ -1560,9 +1528,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     async _createContextMenus(html) {
         this._context = new foundry.applications.ux.ContextMenu(html, ".bookmark-button", [
             {
-                name: "Open outside Enhanced Journal",
-                icon: '<i class="fas fa-file-export"></i>',
-                callback: async (li) => {
+                label: "Open outside Enhanced Journal",
+                icon: "fas fa-file-export",
+                onClick: async (event, li) => {
                     let bookmark = this.bookmarks.find(b => b.id == li.dataset.bookmarkId);
                     let document = await fromUuid(bookmark.entityId);
                     if (!document) {
@@ -1577,9 +1545,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Open in new tab",
-                icon: '<i class="fas fa-file-export"></i>',
-                callback: async (li) => {
+                label: "Open in new tab",
+                icon: "fas fa-file-export",
+                onClick: async (event, li) => {
                     let bookmark = this.bookmarks.find(b => b.id == li.dataset.bookmarkId);
                     let document = await fromUuid(bookmark.entityId);
                     if (!document) {
@@ -1592,9 +1560,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "MonksEnhancedJournal.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "MonksEnhancedJournal.Delete",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     const bookmark = this.bookmarks.find(b => b.id === li.dataset.bookmarkId);
                     this.removeBookmark(bookmark);
                 }
@@ -1603,14 +1571,14 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this._tabcontext = new foundry.applications.ux.ContextMenu(html, ".enhanced-journal-header .tab-bar", [
             {
-                name: "Open outside Enhanced Journal",
-                icon: '<i class="fas fa-file-export"></i>',
-                condition: (li) => {
+                label: "Open outside Enhanced Journal",
+                icon: "fas fa-file-export",
+                visible: (li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return false;
                     return !["blank", "folder"].includes(tab.entity?.type);
                 },
-                callback: async (li) => {
+                onClick: async (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return;
                     let document = tab.entity;
@@ -1624,27 +1592,27 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Close Tab",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "Close Tab",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab)
                         this.removeTab(tab);
                 }
             },
             {
-                name: "Close All Tabs",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close All Tabs",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     this.tabs.splice(0, this.tabs.length);
                     this.saveTabs();
                     this.addTab();
                 }
             },
             {
-                name: "Close Other Tabs",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close Other Tabs",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab) {
                         let idx = this.tabs.findIndex(t => t.id == this.contextTab);
@@ -1656,9 +1624,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Close To the right",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close To the right",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab) {
                         let idx = this.tabs.findIndex(t => t.id == this.contextTab);
@@ -1691,9 +1659,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         this._historycontext = new foundry.applications.ux.ContextMenu(this.element, ".mainbar .navigation .nav-button.history", history, { fixed: true, jQuery: false });
         this._imgcontext = new foundry.applications.ux.ContextMenu(this.element, ".journal-body.oldentry .tab.picture", [
             {
-                name: "MonksEnhancedJournal.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "MonksEnhancedJournal.Delete",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     log('Remove image on old entry');
                 }
             }

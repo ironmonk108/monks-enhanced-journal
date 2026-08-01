@@ -451,9 +451,9 @@ export class MonksEnhancedJournal {
 
 		foundry.documents.collections.Journal.prototype.constructor._showEntry = async function(entryId, mode = null, force = true, showid) {
 			let entry = await fromUuid(entryId);
-			const options = { tempOwnership: force, mode: foundry.appv1.sheets.JournalSheet.VIEW_MODES.MULTIPLE, pageIndex: 0 };
+			const options = { tempOwnership: force, mode: foundry.applications.sheets.journal.JournalEntrySheet.VIEW_MODES.MULTIPLE, pageIndex: 0 };
 			if (entry instanceof JournalEntryPage) {
-				options.mode = foundry.appv1.sheets.JournalSheet.VIEW_MODES.SINGLE;
+				options.mode = foundry.applications.sheets.journal.JournalEntrySheet.VIEW_MODES.SINGLE;
 				options.pageId = entry.id;
 				// Set temporary observer permissions for this page.
 				entry.ownership[game.userId] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
@@ -789,8 +789,8 @@ export class MonksEnhancedJournal {
 		}*/
 
 		let clickCompendiumEntry = async function (wrapped, ...args) {
-			let event = args[0];
-			let li = event.currentTarget.parentElement;
+			let [event, target] = args;
+			let li = target.closest("[data-entry-id]");
 			const document = await this.collection.getDocument(li.dataset.entryId);
 			if (document instanceof JournalEntry) {
 				if (! await MonksEnhancedJournal.openJournalEntry(document, { editable: game.user.isGM && !this.collection.locked })) {
@@ -969,9 +969,10 @@ export class MonksEnhancedJournal {
 		}, "MIXED");
 		*/
 
-		patchFunc("foundry.appv1.sheets.JournalTextPageSheet.prototype.onAutosave", function (...args) {
+		patchFunc("foundry.appv1.sheets.JournalTextPageSheet.prototype._onAutosave", function (wrapped, ...args) {
+			wrapped(...args);
 			this.document.parent?._sheet?.render(false);
-		}, "OVERRIDE");
+		});
 
 		let getPageData = function (wrapped, ...args) {
 			let pages = wrapped(...args);
@@ -1133,7 +1134,7 @@ export class MonksEnhancedJournal {
 			return oldImportFromCompendium.call(this, collection, id, updateData, options);
 		}
 
-		patchFunc("DocumentSheet.prototype._onConfigureSheet", async function (wrapped, ...args) {
+		patchFunc("foundry.appv1.api.DocumentSheet.prototype._onConfigureSheet", async function (wrapped, ...args) {
 			if (this.enhancedjournal)
 				this.document.enhancedjournal = this.enhancedjournal;
 			return wrapped(...args);
@@ -1142,7 +1143,7 @@ export class MonksEnhancedJournal {
 		let clickNote2 = async function (wrapped, ...args) {
 			const options = { newtab: setting("open-new-tab")};
 			if (this.page) {
-				options.mode = foundry.appv1.sheets.JournalSheet.VIEW_MODES.SINGLE;
+				options.mode = foundry.applications.sheets.journal.JournalEntrySheet.VIEW_MODES.SINGLE;
 				options.pageId = this.page.id;
 				options.anchor = (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.anchor") || "").slugify().replace(/["']/g, "").substring(0, 64);
 			}
@@ -1471,9 +1472,9 @@ export class MonksEnhancedJournal {
 			let context = wrapped(...args);
 
 			context.push({
-				name: i18n("MonksEnhancedJournal.ConvertToEnhancedJournal"),
-				icon: '<i class="fas fa-file-arrow-down"></i>',
-				condition: li => {
+				label: i18n("MonksEnhancedJournal.ConvertToEnhancedJournal"),
+				icon: "fas fa-file-arrow-down",
+				visible: li => {
 					let journal = game.journal.get(li.dataset.entryId);
 					if (!journal)
 						return false;
@@ -1483,7 +1484,7 @@ export class MonksEnhancedJournal {
 
 					return !MonksEnhancedJournal.getMEJType(journal);
 				},
-				callback: async (li) => {
+				onClick: async (event, li) => {
 					let journal = game.journal.get(li.dataset.entryId);
 					if (journal) {
 						let isGood = true;
@@ -1531,12 +1532,12 @@ export class MonksEnhancedJournal {
 
 			if (setting("open-outside")) {
 				context.push({
-					name: i18n("MonksEnhancedJournal.OpenInEnhancedBrowser"),
-					icon: '<i class="fas fa-link"></i>',
-					condition: li => {
+					label: i18n("MonksEnhancedJournal.OpenInEnhancedBrowser"),
+					icon: "fas fa-link",
+					visible: li => {
 						return game.user.isGM || setting("allow-player");
 					},
-					callback: async (li) => {
+					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
 						if (journal) {
 							MonksEnhancedJournal.fixType(journal);
@@ -1547,12 +1548,12 @@ export class MonksEnhancedJournal {
 				});
 			} else {
 				context.push({
-					name: i18n("MonksEnhancedJournal.OpenOutsideEnhancedBrowser"),
-					icon: '<i class="fas fa-link"></i>',
-					condition: li => {
+					label: i18n("MonksEnhancedJournal.OpenOutsideEnhancedBrowser"),
+					icon: "fas fa-link",
+					visible: li => {
 						return game.user.isGM || setting("allow-player");
 					},
-					callback: async (li) => {
+					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
 						if (journal) {
 							if (!!MonksEnhancedJournal.getMEJType(journal)) {
@@ -1568,12 +1569,12 @@ export class MonksEnhancedJournal {
 
 			if (!setting("open-new-tab")) {
 				context.push({
-					name: i18n("MonksEnhancedJournal.OpenInNewTab"),
-					icon: '<i class="fas fa-external-link-alt"></i>',
-					condition: li => {
+					label: i18n("MonksEnhancedJournal.OpenInNewTab"),
+					icon: "fas fa-external-link-alt",
+					visible: li => {
 						return game.user.isGM || setting("allow-player");
 					},
-					callback: async (li) => {
+					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
 						if (journal) {
 							MonksEnhancedJournal.fixType(journal);
@@ -1832,8 +1833,7 @@ export class MonksEnhancedJournal {
 										reward.itemIds.push(id);
 									}
 								}
-								delete reward.items;
-								reward["-=items"] = null;
+								reward.items = new foundry.data.operators.ForcedDeletion();
 							}
 							await page.setFlag('monks-enhanced-journal', "rewards", rewards);
 							await page.setFlag('monks-enhanced-journal', "items", items);
@@ -2381,7 +2381,7 @@ export class MonksEnhancedJournal {
 					shareable: false,
 					editable: false
 				});
-				img._render(true);
+				img.render(true);
 			} else
 				ui.notifications.warn(format("MonksEnhancedJournal.msg.YouDontHaveDocumentPermissions", { documentName: doc.documentName} ));
 			return true;
@@ -2544,7 +2544,7 @@ export class MonksEnhancedJournal {
 			uuid: document.uuid,
 			shareable: false,
 			editable: false
-		})._render(true);
+		}).render(true);
 
 		//if (game.user.isGM)
 		//    this._onShowPlayers({ data: { object: document } });
@@ -2809,10 +2809,10 @@ export class MonksEnhancedJournal {
 					shareable: false,
 					editable: false
 				});
-				await img._render(true);
+				await img.render(true);
 				$(img.element).attr('data-show-id', data.showid);
 			} else {
-				Journal._showEntry(data.uuid, null, true);
+				foundry.documents.collections.Journal._showEntry(data.uuid, null, true);
 			}
 		}
 	}
