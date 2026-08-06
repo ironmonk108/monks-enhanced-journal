@@ -401,7 +401,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             $(this).click(that.removeTab.bind(that, tab));
         });
 
-        $('.back-button, .forward-button', this.element).toggle(game.user.isGM || setting('allow-player')).on('click', this.navigateHistory.bind(this));
+        $('.back-button, .forward-button', this.element).toggle(MonksEnhancedJournal.isAllowedToUseEnhancedJournal()).on('click', this.navigateHistory.bind(this));
 
         return result;
     }
@@ -1039,7 +1039,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 tab.pageId = options.pageId;
                 tab.anchor = options.anchor;
 
-                if ((game.user.isGM || setting('allow-player')) && tab.entityId != undefined) {    //only save the history if the player is a GM or they get the full journal experience... and if it's not a blank tab
+                if (MonksEnhancedJournal.isAllowedToUseEnhancedJournal() && tab.entityId != undefined) {    //only save the history if the player is a GM or they get the full journal experience... and if it's not a blank tab
                     if (tab.history == undefined)
                         tab.history = [];
                     if (tab.historyIdx != undefined) {

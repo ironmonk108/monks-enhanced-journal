@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Zezwól graczom",
   "MonksEnhancedJournal.allow-player.hint": "Zezwól graczom na korzystanie z ulepszonego dziennika.",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "Moduł rzucania kostką",
   "MonksEnhancedJournal.rolling-module.hint": "Moduł używany podczas żądania rzutu kostką",
   "MonksEnhancedJournal.show-objectives.name": "Wyświetl zadania",

@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Allow Players",
   "MonksEnhancedJournal.allow-player.hint": "Allow Players to use the enhanced journal",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal",
   "MonksEnhancedJournal.rolling-module.name": "Dice Rolling Module",
   "MonksEnhancedJournal.rolling-module.hint": "Module to use when requesting a dice roll",
   "MonksEnhancedJournal.show-objectives.name": "Display Quests",

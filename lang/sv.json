@@ -7,6 +7,8 @@
   "MonksEnhancedJournal.Sidebar": "",
   "MonksEnhancedJournal.allow-player.name": "Behörighet",
   "MonksEnhancedJournal.allow-player.hint": "Tillåt spelare att använda utökade anteckningsböcker",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "Modul för tärningsslag",
   "MonksEnhancedJournal.rolling-module.hint": "Vilken modul ska användas för att be om tärningsslag",
   "MonksEnhancedJournal.show-objectives.name": "Visa uppdrag",

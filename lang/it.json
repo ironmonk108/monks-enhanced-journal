@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Consenti ai Giocatori",
   "MonksEnhancedJournal.allow-player.hint": "Consenti ai giocatori di utilizzare il diario avanzato",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "Modulo Tiro Dadi",
   "MonksEnhancedJournal.rolling-module.hint": "Modulo da usare quando si chiede un lacio di dadi",
   "MonksEnhancedJournal.show-objectives.name": "Mostra Obiettivi",
