@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "允許玩家",
   "MonksEnhancedJournal.allow-player.hint": "允許玩家使用這個增強日誌Module",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "擲骰子Module",
   "MonksEnhancedJournal.rolling-module.hint": "請求擲骰時使用的Module",
   "MonksEnhancedJournal.show-objectives.name": "顯示任務",

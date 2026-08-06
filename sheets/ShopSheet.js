@@ -17,6 +17,7 @@ export class ShopSheet extends EnhancedJournalSheet {
             adjustPrice: ShopSheet.onAdjustPrice,
             requestItem: ShopSheet.onRequestItem,
             clickItem: ShopSheet.onClickItem,
+            renderItemSheet: ShopSheet.renderItemSheet,
             toggleConsumable: ShopSheet.onToggleConsumable,
         },
     };
@@ -369,7 +370,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
                         price.value = Math.floor(price.value * buy);
-                        let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
+                        let result = await this.constructor.confirmQuantity(item, max, "MonksEnhancedJournal.Sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             let itemData = item.toObject();
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
@@ -412,7 +413,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
                         price.value = Math.floor(price.value * buy);
-                        let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
+                        let result = await this.constructor.confirmQuantity(item, max, "MonksEnhancedJournal.Sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             if (selling == "free") {
                                 //give the player the money
@@ -449,7 +450,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                         }
                     }
                 } else {
-                    let result = await ShopSheet.confirmQuantity(item, null, "transfer", false);
+                    let result = await ShopSheet.confirmQuantity(item, null, "MonksEnhancedJournal.Transfer", false);
                     if ((result?.quantity ?? 0) > 0) {
                         let itemData = item.toObject();
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename());
@@ -565,7 +566,7 @@ export class ShopSheet extends EnhancedJournalSheet {
             return false;
         }
 
-        let result = await ShopSheet.confirmQuantity(item, max, "purchase");
+        let result = await ShopSheet.confirmQuantity(item, max, "MonksEnhancedJournal.Purchase");
         if ((result?.quantity ?? 0) > 0) {
             let price = MEJHelpers.getPrice(data.cost);
 
@@ -587,16 +588,31 @@ export class ShopSheet extends EnhancedJournalSheet {
                 else {
                     let itemData = foundry.utils.duplicate(item);
                     delete itemData._id;
-                    let itemQty = getValue(itemData, quantityname(), 1);
-                    setValue(itemData, quantityname(), result.quantity * itemQty);
                     if (!setting("use-generic-price"))
                         setPrice(itemData, pricename(), result.price);
-                    if (!data.consumable) {
-                        let sheet = actor.sheet;
-                        if (sheet._onDropItem)
-                            sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
-                        else
-                            actor.createEmbeddedDocuments("Item", [itemData]);
+                    let itemQty = getValue(itemData, quantityname(), 1);
+
+                    // make sure to stack the item to any identical ones in the target inventory
+                    let existing = actor.items.getName(itemData.name);
+                    if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, result.quantity)) {
+                        setValue(itemData, quantityname(), result.quantity * itemQty);
+
+                        if (!data.consumable) {
+                            let sheet = actor.sheet;
+
+                            if (sheet._onDropItem
+                                && itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
+                                sheet._onDropItem({
+                                    preventDefault: () => {
+                                    }, target: {
+                                        closest: () => {
+                                        }
+                                    }
+                                }, itemData);
+                            else {
+                                actor.createEmbeddedDocuments("Item", [itemData]);
+                            }
+                        }
                     }
 
                     MonksEnhancedJournal.emit("purchaseItem",
@@ -611,6 +627,31 @@ export class ShopSheet extends EnhancedJournalSheet {
                 }
             }
         }
+    }
+
+    static async addPurchasedItemToExistingStack(existing, selectedQuantity) {
+        let addedToExisting = false;
+        // This is a temporary hack proven so far only for dnd5e and dsa5. Any other system still to be clarified
+        if (game.system.id === 'dnd5e' || game.system.id === 'dsa5') {
+            let newQuantity = parseInt(getValue(existing, quantityname(), 1));
+            newQuantity += selectedQuantity;
+
+            switch (game.system.id) {
+                case 'dnd5e':
+                    await existing.update({"system.quantity": newQuantity});
+                    addedToExisting = true;
+                    break;
+                case 'dsa5':
+                    await existing.update({"system.quantity.value": newQuantity});
+                    addedToExisting = true;
+                    break;
+                default:
+                    // not verified for other systems yet, therefore skipped.
+                    //setValue(existing, quantityname(), newQuantity);
+                    break;
+            }
+        }
+        return addedToExisting;
     }
 
     async createSellMessage(item, actor) {
@@ -674,6 +715,21 @@ export class ShopSheet extends EnhancedJournalSheet {
             return item.sheet.render(true);
     }
 
+    static renderItemSheet(event, target) {
+        const items = this.document.getFlag("monks-enhanced-journal", "items");
+        if (!items)
+            return {};
+        const _id = target.attributes?.getNamedItem("data-id")?.nodeValue;
+        if (!_id)
+            return;
+        const item = items[_id];
+        const worldItem = new CONFIG.Item.documentClass(item);
+        if (!worldItem?.sheet ||!worldItem.ownership)
+            return;
+        worldItem.ownership.default = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
+        worldItem.sheet.render(true);
+    }
+
     static canAfford(item, actor) {
         //find the currency
         let price = MEJHelpers.getPrice(typeof item == "string" ? item : foundry.utils.getProperty(item, "flags.monks-enhanced-journal.cost"));
@@ -690,7 +746,8 @@ export class ShopSheet extends EnhancedJournalSheet {
             } else {
                 let totalDefault = 0;
                 for (let curr of MonksEnhancedJournal.currencies) {
-                    totalDefault += (this.getCurrency(actor, curr.id) * (curr.convert || 1));
+                    let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                    totalDefault += (this.getCurrency(actor, currIdentifier) * (curr.convert || 1));
                 }
                 let check = MonksEnhancedJournal.currencies.find(c => c.id == price.currency);
                 totalDefault = totalDefault / (check?.convert || 1);
@@ -740,7 +797,7 @@ export class ShopSheet extends EnhancedJournalSheet {
 
             let price = MEJHelpers.getPrice(cost);
 
-            let result = await ShopSheet.confirmQuantity(item, max, "purchase");
+            let result = await ShopSheet.confirmQuantity(item, max, "MonksEnhancedJournal.Purchase");
             if ((result?.quantity ?? 0) > 0) {
                 price = result.price;
                 if (game.user.isGM) {

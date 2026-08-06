@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Spielern erlauben",
   "MonksEnhancedJournal.allow-player.hint": "Erlaube Spielern, Enhanced Journal zu benutzen",
+  "MonksEnhancedJournal.allow-gm.name": "Für GM erlauben",
+  "MonksEnhancedJournal.allow-gm.hint": "Erlaube GMs, Enhanced Journal zu benutzen",
   "MonksEnhancedJournal.rolling-module.name": "Würfelmodule",
   "MonksEnhancedJournal.rolling-module.hint": "Würfelmodul zum Anfordern eines Würfelwurfs",
   "MonksEnhancedJournal.show-objectives.name": "Quests anzeigen",
@@ -98,7 +100,7 @@
   "MonksEnhancedJournal.Monsters": "Monster",
   "MonksEnhancedJournal.DeleteMonster": "Lösche Monster",
   "MonksEnhancedJournal.Items": "Gegenstände",
-  "MonksEnhancedJournal.Qty": "Qty",
+  "MonksEnhancedJournal.Qty": "Menge",
   "MonksEnhancedJournal.Quantity": "Anzahl",
   "MonksEnhancedJournal.Remaining": "Verbleibend",
   "MonksEnhancedJournal.Price": "Preis",
@@ -299,8 +301,8 @@
   "MonksEnhancedJournal.UpdateEntry": "Eintrag aktualisieren",
   "MonksEnhancedJournal.SoldOut": "Ausverkauft",
   "MonksEnhancedJournal.Unavailable": "Nicht verfügbar",
-  "MonksEnhancedJournal.Purchase": "kauft/kaufen",
-  "MonksEnhancedJournal.Take": "nimmt/nehmen",
+  "MonksEnhancedJournal.Purchase": "kaufen",
+  "MonksEnhancedJournal.Take": "nehmen",
   "MonksEnhancedJournal.ActorWantsToPurchase": "{alias} möchte einen Gegenstand <b>{verb}</b>",
   "MonksEnhancedJournal.ActorPurchasedAnItem": "{alias} {verb} einen Gegenstand",
   "MonksEnhancedJournal.HowManyWouldYouLike": "Wie viel möchtest Du {verb}?",
@@ -374,9 +376,9 @@
   "MonksEnhancedJournal.AddSound": "Hintergrund-Soundeffekt hinzufügen",
   "MonksEnhancedJournal.SelectCoordinates": "Koordinaten auswählen",
   "MonksEnhancedJournal.StartCombat": "Kampf starten",
-  "MonksEnhancedJournal.Buy": "Kaufen",
-  "MonksEnhancedJournal.Sell": "Verkaufen",
-  "MonksEnhancedJournal.Trade": "Handeln",
+  "MonksEnhancedJournal.Buy": "kaufen",
+  "MonksEnhancedJournal.Sell": "verkaufen",
+  "MonksEnhancedJournal.Trade": "handeln",
   "MonksEnhancedJournal.ConvertShopItems": "Gegenstände umwandeln",
   "MonksEnhancedJournal.MakeOffering": "Ein Angebot unterbreiten",
   "MonksEnhancedJournal.CancelOffering": "Angebot stornieren",
@@ -530,5 +532,9 @@
   "MonksEnhancedJournal.currency.tavs": "Tavs",
   "MonksEnhancedJournal.currency.hammer": "Hammer",
   "MonksEnhancedJournal.purchasing.hidden": "Versteckt",
-  "MonksEnhancedJournal.purchasing.visible": "Sichtbar"
+  "MonksEnhancedJournal.purchasing.visible": "Sichtbar",
+
+  "MonksEnhancedJournal.HoursOfOperation": "Öffnungszeiten",
+  "MonksEnhancedJournal.Description": "Description",
+  "MonksEnhancedJournal.Notes": "Notizen"
 }

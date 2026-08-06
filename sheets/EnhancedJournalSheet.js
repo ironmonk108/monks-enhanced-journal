@@ -1029,11 +1029,19 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         if (value < 0 && setting("purchase-conversion")) {
             let currencies = foundry.utils.duplicate(MonksEnhancedJournal.currencies || []).filter(c => c.convert != undefined);
             for (let curr of currencies) {
-                curr.value = parseInt(this.getCurrency(actor, curr.id) || 0);
+                let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                curr.value = parseInt(this.getCurrency(actor, currIdentifier) || 0);
             }
 
-            changes = currencies.reduce((a, v) => ({ ...a, [v.id]: v.value }), {});
-            let denomIdx = currencies.findIndex(c => c.id == denomination);
+            let denomIdx;
+            if (game.system.id == 'dsa5') { // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                changes = currencies.reduce((a, v) => ({ ...a, [v.name]: v.value }), {});
+                denomIdx = currencies.findIndex(c => c.name == denomination);
+            }
+            else {
+                changes = currencies.reduce((a, v) => ({ ...a, [v.id]: v.value }), {});
+                denomIdx = currencies.findIndex(c => c.id == denomination);
+            }
             if (denomIdx == -1)
                 return;
 
@@ -1065,7 +1073,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                         remainder -= used;
                         
                         let unused = available - used;
-                        changes[currencies[idx].id] = Math.floor(unused / rate);
+                        let currIdentifier = (game.system.id == 'dsa5') ? currencies[idx].name : currencies[idx].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                        changes[currIdentifier] -= used / rate; // Substraction is required to ensure that overstanding amounts of lower denominations won't be cut off.
                         unused -= Math.floor(unused / rate) * rate;
 
                         if (idx < denomIdx && unused > 0) {
@@ -1074,8 +1083,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                             while (unused > 0 && jdx < currencies.length) {
                                 let r = (currencies[jdx].convert || 1) / (currencies[denomIdx].convert || 1);
                                 let disperse = unused / r;
-                                changes[currencies[jdx].id] += Math.floor(disperse);
+                                let currIdentifier = (game.system.id == 'dsa5') ? currencies[jdx].name : currencies[jdx].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                                changes[currIdentifier] += Math.floor(disperse);
                                 unused -= Math.floor(disperse) * r;
+
+                                // We also need to remove the dispersed amount from the higher denomination
+                                currIdentifier = (game.system.id == 'dsa5') ? currencies[jdx-1].name : currencies[jdx-1].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                                changes[currIdentifier] = Math.floor(changes[currIdentifier]);
 
                                 jdx++;
                             }
@@ -1089,8 +1103,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             //changes[denomination] += value;
 
             for (let curr of Object.keys(changes)) {
-                let orig = currencies.find(c => c.id == curr);
-                if (changes[curr] == orig.value)
+                let orig;
+                if (game.system.id == 'dsa5') { // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                    orig = currencies.find(c => c.name == curr);
+                } else {
+                    orig = currencies.find(c => c.id == curr);
+                }
+                if (orig !== undefined && changes[curr] == orig.value)
                     delete changes[curr];
             }
         } else
@@ -1130,10 +1149,12 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 let coinage = actor.items.find(i => { return i.type == "money" && i.name == k });
                 if (coinage) {
                     updates[`system.quantity`] = { value: v };
-                    promises.push(coinage.update(updates));
+                    await(new Promise(resolve =>
+                        resolve(coinage.update(updates))));
+                    // for some weird reason, dsa5 has issues with Promise.all(promises): only the last update gets processed. Therefore, we need to process them one by one.
                 }
             }
-            return Promise.all(promises);
+            return null; // Promise.all(promises) won't work correctly here - see above.
         } else if (game.system.id == 'wfrp4e') {
             let promises = [];
             for (let [k, v] of Object.entries(changes)) {
@@ -1642,7 +1663,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             items = newItems;
             await this.document.setFlag("monks-enhanced-journal", "items", items);
         }
-        
+
         let groups = {};
         for (let [key, item] of Object.entries(items)) {
             if (!key || !item)
@@ -1776,6 +1797,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
         for (let group of Object.values(groups)) {
             group.collapsed = this.document._itemList[group.id];
+            group.countVisible = group.items.filter(i => i.hidden === false).length;
         }
 
         return groups;
@@ -1927,7 +1949,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
         let quantity = 1;
         let data = {
-            msg: format("MonksEnhancedJournal.HowManyWouldYouLike", { verb: verb }),
+            msg: format("MonksEnhancedJournal.HowManyWouldYouLike", { verb: format(verb) }),
             img: details.img,
             name: details.name,
             quantity: quantity,
@@ -3017,7 +3039,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             return;
 
         let item = new CONFIG.Item.documentClass(itemData);
-        let chatData = foundry.utils.getProperty(item, "system.description");
+        let chatData = EnhancedJournalSheet.createItemChatData(item);
         if (item.getChatData && item.type != "spell") {
             try {
                 let cdata = await item.getChatData({ secrets: false }, item);
@@ -3090,7 +3112,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                         });
                         if (chatData.price != undefined) {
                             let price = chatData.price;
-                            if (price.denomination)
+                            if (price?.denomination)
                                 price = `${price.value} ${price.denomination}`;
                             props.append(`<span class="tag">${i18n("MonksEnhancedJournal.Price")}: ${price}</span>`);
                         }
@@ -3554,11 +3576,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 delete itemData._id;
                 let itemQty = getValue(itemData, quantityname(), 1);
                 setValue(itemData, quantityname(), item.qty * itemQty);
-                let sheet = destActor.sheet;
-                if (sheet._onDropItem)
-                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
-                else
-                    destActor.createEmbeddedDocuments("Item", [itemData]);
+
+                // make sure to stack the item to any identical ones in the target inventory
+                let existing = destActor.items.getName(itemData.name);
+                if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, parseInt(itemQty))) {
+                    let sheet = destActor.sheet;
+                    if (sheet._onDropItem
+                        && itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
+                        sheet._onDropItem({
+                            preventDefault: () => {
+                            }, target: {
+                                closest: () => {
+                                }
+                            }
+                        }, itemData);
+                    else
+                        destActor.createEmbeddedDocuments("Item", [itemData]);
+                }
             }
             // Save the image if we're about to delete it
             let realitem = offer.items.find(i => i.id == item.id);
@@ -3681,6 +3715,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
         if (name) {
             await this.document.update({ name: name });
+        }
+    }
+
+    static createItemChatData(item) {
+        if (game.system.id === "dsa5") {
+            // simulate what would be returned by dnd5e, pf and other already supported systems, according to the original code
+            let chatData = new Object();
+            chatData.properties = [];
+            let prop = new Object();
+            prop.name = item.name;
+            chatData.properties.push(prop);
+            chatData.price = item.system.price.value;
+            chatData.description = item.system.description.value;
+            return chatData;
+        }
+        else {
+            foundry.utils.getProperty(item, "system.description");
         }
     }
 }

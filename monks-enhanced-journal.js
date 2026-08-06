@@ -162,7 +162,7 @@ export class MonksEnhancedJournal {
 	static emit(action, args = {}) {
 		args.action = action;
 		args.senderId = game.user.id;
-		game.socket.emit(MonksEnhancedJournal.SOCKET, args, (resp) => { });
+		game.socket.emit(MonksEnhancedJournal.SOCKET, args);
 	}
 
 	static getSystemPrice(item) {
@@ -1534,7 +1534,7 @@ export class MonksEnhancedJournal {
 					name: i18n("MonksEnhancedJournal.OpenInEnhancedBrowser"),
 					icon: '<i class="fas fa-link"></i>',
 					condition: li => {
-						return game.user.isGM || setting("allow-player");
+						return MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 					},
 					callback: async (li) => {
 						let journal = game.journal.get(li.dataset.entryId);
@@ -1550,7 +1550,7 @@ export class MonksEnhancedJournal {
 					name: i18n("MonksEnhancedJournal.OpenOutsideEnhancedBrowser"),
 					icon: '<i class="fas fa-link"></i>',
 					condition: li => {
-						return game.user.isGM || setting("allow-player");
+						return MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 					},
 					callback: async (li) => {
 						let journal = game.journal.get(li.dataset.entryId);
@@ -1571,7 +1571,7 @@ export class MonksEnhancedJournal {
 					name: i18n("MonksEnhancedJournal.OpenInNewTab"),
 					icon: '<i class="fas fa-external-link-alt"></i>',
 					condition: li => {
-						return game.user.isGM || setting("allow-player");
+						return MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 					},
 					callback: async (li) => {
 						let journal = game.journal.get(li.dataset.entryId);
@@ -2308,7 +2308,7 @@ export class MonksEnhancedJournal {
 	}
 
 	static async openJournalEntry(doc, options = {}) {
-		if (!game.user.isGM && !setting('allow-player'))
+		if (!MonksEnhancedJournal.isAllowedToUseEnhancedJournal())
 			return false;
 
 		if (game.modules.get('monks-common-display')?.active) {
@@ -3215,7 +3215,7 @@ export class MonksEnhancedJournal {
 			let id = this.dataset.entryId;
 			let document = game.journal.get(id);
 
-			let canShow = (game.user.isGM || setting('allow-player'));
+			let canShow = MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 
 			let docIcon = "fa-book";
 			let type = "journalbook";
@@ -3320,6 +3320,10 @@ export class MonksEnhancedJournal {
 				$(this).append(permissions);
 			}
 		});
+	}
+
+	static isAllowedToUseEnhancedJournal() {
+		return game.user.isGM && setting('allow-gm') || !game.user.isGM && setting('allow-player');
 	}
 
 	static refreshDirectory(data) {
@@ -3670,11 +3674,22 @@ export class MonksEnhancedJournal {
 						setPrice(itemData, pricename(), { value: data.sell, currency: data.currency });
 					delete itemData._id;
 					if (!data.consumable) {
-						let sheet = actor.sheet;
-						if (sheet._onDropItem)
-							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
-						else
-							actor.createEmbeddedDocuments("Item", [itemData]);
+						// make sure to stack the item to any identical ones in the target inventory
+						let existing = actor.items.getName(itemData.name);
+						if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, parseInt(itemQty))) {
+							let sheet = actor.sheet;
+							if (sheet._onDropItem
+								&& itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
+							sheet._onDropItem({
+									preventDefault: () => {
+									}, target: {
+										closest: () => {
+										}
+									}
+								}, itemData);
+							else
+								actor.createEmbeddedDocuments("Item", [itemData]);
+						}
 					}
 					//deduct the gold
 					if (data.sell > 0)

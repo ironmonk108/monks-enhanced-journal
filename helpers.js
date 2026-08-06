@@ -32,14 +32,19 @@ export class MEJHelpers {
     }
 
     static setValue(item, name, value = 1, options = {}) {
-        let prop = (item.system != undefined ? item.system : item);
+        let prop = (item.system !== undefined ? item.system : item);
         let data = foundry.utils.getProperty(prop, name);
-        foundry.utils.setProperty(prop, name, (data && data.hasOwnProperty("value") && !value.hasOwnProperty("value") && !options.overwrite ? Object.assign(data, { value: value }) : value));
+        let newValue =
+            (data && data.hasOwnProperty("value") && !value.hasOwnProperty("value") && !options.overwrite)
+                ? Object.assign(data, { value: value })
+                : value;
+        foundry.utils.setProperty(prop, name, newValue);
     }
 
     static defaultCurrency() {
         let currency = MonksEnhancedJournal.currencies.find(c => c.convert == 0);
-        return currency?.id || "";
+        return (game.system.id == 'dsa5') ? currency?.name || "" // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+            : currency?.id || "";
     }
 
     static getSystemPrice(item, name, ignorePrice = false) {
@@ -108,7 +113,8 @@ export class MEJHelpers {
                     let val = (price * adjust) / ((tcurr.convert || 1) * adjust);
                     if (val == Math.floor(val)) {
                         curr = tcurr;
-                        currency = tcurr.id;
+                        currency = (game.system.id === 'dsa5') ? tcurr.name || "" // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
+                            : tcurr.id ;
                         price = Math.floor(val);
                         break;
                     }
