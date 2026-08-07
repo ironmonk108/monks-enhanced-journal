@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "拡張機能をプレイヤーに開放する",
   "MonksEnhancedJournal.allow-player.hint": "プレイヤーも資料の拡張機能が使用できるようになります。",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "ダイスロール用モジュール",
   "MonksEnhancedJournal.rolling-module.hint": "ダイスロールを要求するときに使用するモジュールを指定します。",
   "MonksEnhancedJournal.show-objectives.name": "クエストログの表示",

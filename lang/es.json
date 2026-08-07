@@ -9,6 +9,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Permitir a jugadores",
   "MonksEnhancedJournal.allow-player.hint": "Permitir usar Enhanced Journal a los jugadores",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "Módulo de tiradas de dados",
   "MonksEnhancedJournal.rolling-module.hint": "Módulo que se usará al pedir una tirada de dados",
   "MonksEnhancedJournal.show-objectives.name": "Mostrar misiones",

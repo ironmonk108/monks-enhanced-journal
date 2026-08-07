@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Autoriser les joueurs",
   "MonksEnhancedJournal.allow-player.hint": "Autoriser les joueurs à utiliser Enhanced Journal",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM (to be translated)",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal (to be translated)",
   "MonksEnhancedJournal.rolling-module.name": "Module de lancé de dé",
   "MonksEnhancedJournal.rolling-module.hint": "Module à utiliser lors de la requête d'un jet de dé",
   "MonksEnhancedJournal.show-objectives.name": "Afficher les quêtes",

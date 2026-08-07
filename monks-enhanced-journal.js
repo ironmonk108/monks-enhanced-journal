@@ -1535,7 +1535,7 @@ export class MonksEnhancedJournal {
 					label: i18n("MonksEnhancedJournal.OpenInEnhancedBrowser"),
 					icon: "fas fa-link",
 					visible: li => {
-						return game.user.isGM || setting("allow-player");
+						return MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 					},
 					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
@@ -1551,7 +1551,7 @@ export class MonksEnhancedJournal {
 					label: i18n("MonksEnhancedJournal.OpenOutsideEnhancedBrowser"),
 					icon: "fas fa-link",
 					visible: li => {
-						return game.user.isGM || setting("allow-player");
+						return MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 					},
 					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
@@ -1572,7 +1572,7 @@ export class MonksEnhancedJournal {
 					label: i18n("MonksEnhancedJournal.OpenInNewTab"),
 					icon: "fas fa-external-link-alt",
 					visible: li => {
-						return game.user.isGM || setting("allow-player");
+						return MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 					},
 					onClick: async (event, li) => {
 						let journal = game.journal.get(li.dataset.entryId);
@@ -2316,7 +2316,7 @@ export class MonksEnhancedJournal {
 	}
 
 	static async openJournalEntry(doc, options = {}) {
-		if (!game.user.isGM && !setting('allow-player'))
+		if (!MonksEnhancedJournal.isAllowedToUseEnhancedJournal())
 			return false;
 
 		if (game.modules.get('monks-common-display')?.active) {
@@ -3223,7 +3223,7 @@ export class MonksEnhancedJournal {
 			let id = this.dataset.entryId;
 			let document = game.journal.get(id);
 
-			let canShow = (game.user.isGM || setting('allow-player'));
+			let canShow = MonksEnhancedJournal.isAllowedToUseEnhancedJournal();
 
 			let docIcon = "fa-book";
 			let type = "journalbook";
@@ -3328,6 +3328,10 @@ export class MonksEnhancedJournal {
 				$(this).append(permissions);
 			}
 		});
+	}
+
+	static isAllowedToUseEnhancedJournal() {
+		return game.user.isGM && setting('allow-gm') || !game.user.isGM && setting('allow-player');
 	}
 
 	static refreshDirectory(data) {
