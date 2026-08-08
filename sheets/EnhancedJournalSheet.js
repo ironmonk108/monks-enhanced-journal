@@ -3600,16 +3600,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             destActor = game.actors.find(a => a.id == actorLink.id);
 
         for (let [k, v] of Object.entries(offering.currency)) {
-            if (v > 0 && parseInt(this.constructor.getCurrency(actor, k) || 0) < v) {
+            let checkKey = (game.system.id == 'dsa5' ? (MonksEnhancedJournal.currencies.find(c => c.id == k)?.name ?? k) : k); // dsa5 coins resolve by name, see #795
+            if (v > 0 && parseInt(this.constructor.getCurrency(actor, checkKey) || 0) < v) {
                 ui.notifications.error(`${actor.name} no longer has enough ${k}, cannot accept this offering`);
                 return;
             }
         }
 
         for (let [k, v] of Object.entries(offering.currency)) {
-            this.addCurrency(actor, k, -v);
+            let checkKey = (game.system.id == 'dsa5' ? (MonksEnhancedJournal.currencies.find(c => c.id == k)?.name ?? k) : k); // dsa5 coins resolve by name, see #795
+            this.addCurrency(actor, checkKey, -v);
             if (destActor)
-                this.addCurrency(destActor, k, v);
+                this.addCurrency(destActor, checkKey, v);
         }
 
         for (let item of offering.items) {
