@@ -303,8 +303,8 @@ export class ShopSheet extends EnhancedJournalSheet {
         }
     }
 
-    async _onDropItem(event) {
-        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    async _onDropItem(event, data) {
+        data = data ?? foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == 'Folder') {
             if (!this.document.isOwner)

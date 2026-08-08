@@ -202,6 +202,6 @@ export class MEJHelpers {
     // ActorSheet._onDropItem implementations don't tolerate this synthetic event shape,
     // so those systems must fall back to actor.createEmbeddedDocuments instead.
     static canDropOnActorSheet(sheet) {
-        return !!(sheet?._onDropItem && !["cyphersystem", "dnd4e", "dcc"].includes(game.system.id));
+        return !!(sheet?._onDropItem && !["cyphersystem", "dnd4e", "dcc", "pf2e"].includes(game.system.id));
     }
 }

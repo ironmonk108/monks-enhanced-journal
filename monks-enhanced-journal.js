@@ -1599,6 +1599,7 @@ export class MonksEnhancedJournal {
 
 		let journalSheetDrop = async function (wrapped, ...args) {
 			let result = await wrapped(...args);
+			const event = args[0];
 
 			if (!this._canDragDrop()) return;
 

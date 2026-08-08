@@ -283,8 +283,8 @@ export class LootSheet extends EnhancedJournalSheet {
         
     }
 
-    async _onDropLootItem(event, target) {
-        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    async _onDropLootItem(event, data) {
+        data = data ?? foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == 'Item') {
             let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
@@ -346,7 +346,7 @@ export class LootSheet extends EnhancedJournalSheet {
                         return;
 
                     //Only allow players to drop things from their own player onto the loot sheet
-                    if (!this.document.isOwner && !(item.actor.id || entry))
+                    if (!this.document.isOwner && !(item.actor?.id || entry))
                         return;
 
                     let result = await LootSheet.confirmQuantity(item, max, "transfer", false);
