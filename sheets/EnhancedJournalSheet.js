@@ -511,6 +511,11 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             .attr('entity-id', this.document.id)
             .attr('entity-uuid', this.document.uuid);
 
+        if (game.system.id == "pf2e") {
+            $(this.trueElement).addClass("journal-entry-page");
+            $('.editor-display[data-key="text.content"]', this.trueElement).addClass("journal-page-content");
+        }
+
         if (!this.enhancedjournal) {
             $(this.trueElement).removeClass('dnd5e2 dnd5e2-journal');
 
