@@ -46,6 +46,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     lastquery = '';
     _imgcontext = null;
     subsheetState = {};
+    _activateTabQueue = Promise.resolve();
 
     constructor(options) {
         super(options);
@@ -78,7 +79,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             toggleViewMode: EnhancedJournal.toggleViewMode,
             navigatePrevious: EnhancedJournal.navigatePrevious,
             navigateNext: EnhancedJournal.navigateNext,
-            activateEntry: EnhancedJournal.activateEntry
+            activateEntry: EnhancedJournal.activateEntry,
+            toggleMaximize: EnhancedJournal.toggleMaximize
         },
         position: { width: 1025, height: 700 },
         form: {
@@ -133,6 +135,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         await super._preFirstRender(context, options);
 
         this.tabs = foundry.utils.duplicate(game.user.getFlag('monks-enhanced-journal', 'tabs') || [{ "id": makeid(), "text": i18n("MonksEnhancedJournal.NewTab"), "active": true, "history": [] }]);
+        this.removeDuplicateTab();
         this.tabs = this.tabs.map(t => { delete t.entity; return t; })
         this.tabs.active = (findone = true) => {
             let tab = this.tabs.find(t => t.active);
@@ -211,8 +214,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         context = foundry.utils.mergeObject(context, {
             tree: ui.journal.collection.tree,
-            entryPartial: ui.journal.constructor.entryPartial,
-            folderPartial: ui.journal.constructor.folderPartial,
             canCreateEntry: cls.canUserCreate(game.user),
             canCreateFolder: ui.journal._canCreateFolder(),
             maxFolderDepth: ui.journal.collection.maxFolderDepth,
@@ -275,15 +276,18 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _getHeaderControls() {
-        return this.subsheet?._getHeaderControls?.() || [];
+        let controls = this.subsheet?._getHeaderControls?.() || [];
+        let maximized = this.element?.classList.contains("maximized");
+        return controls.concat([{
+            icon: maximized ? "fas fa-compress-arrows-alt" : "fas fa-expand-arrows-alt",
+            label: maximized ? "MonksEnhancedJournal.Restore" : "MonksEnhancedJournal.Maximize",
+            action: "toggleMaximize",
+            visible: true
+        }]);
     }
 
     get entryType() {
         return ui.journal.collection.documentName;
-    }
-
-    get _onCreateDocument() {
-        return ui.journal._onCreateDocument;
     }
 
     get collection() {
@@ -382,7 +386,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         if (this.element) {
             MonksEnhancedJournal.updateDirectory(this.element, false);
             this.activateDirectoryListeners(this.element);
-            this.renderSubSheet(options);
         }
 
         let that = this;
@@ -401,14 +404,20 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             $(this).click(that.removeTab.bind(that, tab));
         });
 
-        $('.back-button, .forward-button', this.element).toggle(game.user.isGM || setting('allow-player')).on('click', this.navigateHistory.bind(this));
+        $('.back-button, .forward-button', this.element).toggle(MonksEnhancedJournal.isAllowedToUseEnhancedJournal()).on('click', this.navigateHistory.bind(this));
+
+        // Awaited (_onRender is awaited by render(), under its render semaphore) so that render() doesn't
+        // resolve until the subsheet content, this.document and the active tab's entity have actually been
+        // committed.  Otherwise the next queued tab change starts while this one is still assigning content.
+        if (this.element)
+            await this.renderSubSheet(options);
 
         return result;
     }
 
     async renderSubSheet(options = {}) {
         try {
-            const modes = foundry.appv1.sheets.JournalSheet.VIEW_MODES;
+            const modes = JournalEntrySheet.VIEW_MODES;
 
             let currentTab = this.tabs.active();
             if (!currentTab) {
@@ -557,6 +566,14 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 subsheet._createDocumentIdLink(subsheetElement)
 
             $('.content', this.element).attr('entity-type', this.document.type).attr('entity-id', this.document.id).attr('entity-uuid', this.document.uuid);
+            if (game.system.id == "pf2e") {
+                // pf2e's own CSS scopes trait/tag styling behind a `.journal-entry-page .journal-page-content` descendant
+                // selector. In the standalone/windowed path (EnhancedJournalSheet#_onRender) this ancestor class lands
+                // on the sheet root; the tabbed shell here renders subsheets by hand and never calls _onRender (verified
+                // empirically), so without this the `journal-page-content` class added to subsheetElement below has no
+                // `journal-entry-page` ancestor and pf2e's styling silently never applies in the tabbed view.
+                $('.content', this.element).addClass("journal-entry-page");
+            }
             //extract special classes
             /*
             if (setting("extract-extra-classes")) {
@@ -583,10 +600,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             subsheet._replaceHTML.call(subsheet, result, subsheetElement, subsheetOptions);
 
             if (!this.isEditable) {
-                let originalFramed = subsheet.options.window.frame;
-                subsheet.options.window.frame = false;
                 subsheet._toggleDisabled.call(subsheet, true);
-                subsheet.options.window.frame = originalFramed;
             }
 
             if (subsheet.refresh)
@@ -604,20 +618,6 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (state.type == subsheet.constructor.type) {
                     for (let [partId, part] of Object.entries(parts)) {
                         let partState = state[partId] || {};
-
-                        if (partState.scrollPositions?.length) {
-                            // Replace the elements with the new ones so the scroll positions are applied to the correct elements
-                            let scrollableSelectors = (part.scrollable || []);
-                            let idx = 0;
-                            for (let i = 0; i < scrollableSelectors.length; i++) {
-                                const selector = scrollableSelectors[i];
-                                const el1 = selector === "" ? subsheetElement : subsheetElement.querySelector(selector);
-                                if (!el1) continue;
-                                if (partState.scrollPositions[idx]?.length > 0)
-                                    partState.scrollPositions[idx][0] = el1;
-                                idx++;
-                            }
-                        }
 
                         subsheet._syncPartState.call(subsheet, partId, subsheetElement, subsheetElement, partState);
                         if (partState.focus && !!partState.focusCaret) {
@@ -674,13 +674,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
             this.activateControls($('#left-journal-buttons', this.element).empty(), $('#right-journal-buttons', this.element).empty());
 
-            let controls = [];
-            for (const c of subsheet._getHeaderControls()) {
-                const visible = typeof c.visible === "function" ? c.visible.call(this) : c.visible ?? true;
-                if (visible) controls.push(this._renderHeaderControl(c));
-            }
-            this.window.controlsDropdown.replaceChildren(...controls);
-            this.window.controls.classList.toggle("hidden", !controls.length);
+            this.window.controls.classList.toggle("hidden", !Array.from(this._headerControlButtons()).length);
 
             this.document._sheet = null; //set this to null so that other things can open the sheet
             subsheet._state = subsheet.constructor.RENDER_STATES.RENDERED;
@@ -898,7 +892,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             tab.history = tab.history.filter(h => h != entityId);
 
             if (tab.active && this.rendered)
-                this.render(true);  //if this entity was being shown on the active tab, then refresh the journal
+                this.queueTabChange(() => this.render(true));  //if this entity was being shown on the active tab, then refresh the journal
         }
 
         this.saveTabs();
@@ -932,7 +926,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         else {
             this.saveTabs();
             if (options.refresh)
-                this.render(true, { focus: true });
+                this.queueTabChange(() => this.render(true, { focus: true }));
         }
 
         this.updateRecent(tab.entity);
@@ -940,14 +934,29 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         return tab;
     }
 
-    async activateTab(tab, event, options) {
+    // Rapidly activating/opening/updating tabs (e.g. duplicate-named entries opened in quick succession) can
+    // otherwise interleave the tab bodies below, corrupting which tab ends up marked active and which
+    // document's content gets rendered. Queue tab changes so only one runs at a time.
+    // Only external entry points may queue; anything called from inside a queued body has to run inline
+    // (see the inline option on removeTab), otherwise it would finish after the body that asked for it.
+    queueTabChange(fn) {
+        this._activateTabQueue = this._activateTabQueue.then(fn, fn);
+        this._activateTabQueue.catch(() => { }); //observe failures, the next queued change might never come
+        return this._activateTabQueue;
+    }
+
+    activateTab(tab, event, options) {
+        return this.queueTabChange(() => this._activateTab(tab, event, options));
+    }
+
+    async _activateTab(tab, event, options) {
         this.saveScrollPos();
 
         if (await this?.subsheet?.close() === false)
             return false;
 
         if (tab == undefined)
-            tab = this.addTab();
+            tab = this.addTab(null, { activate: false, refresh: false });   //we're activating it ourselves below
 
         if (event != undefined)
             event.preventDefault();
@@ -969,14 +978,15 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 document.sheet.render(true);
             }
         } else if (event?.shiftKey) {
-            // Close this tab
-            this.removeTab(tab, event);
+            // Close this tab, waiting for it to pick the tab that takes its place, otherwise that
+            // activation would land after this one
+            await this.removeTab(tab, event, { inline: true });
             tab = this.tabs.active(false);
             if (!tab) {
                 if (this.tabs.length)
                     tab = this.tabs[0];
                 else
-                    tab = this.addTab();
+                    tab = this.addTab(null, { activate: false, refresh: false });
             }
         }
 
@@ -1010,7 +1020,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         //this.updateHistory();
         if (this.rendered)
-            this.render(true, options);
+            await this.render(true, options);
         else {
             window.setTimeout(() => {
                 $(`.journal-tab[data-tabid="${tab.id}"]`, this.element).addClass("active").siblings().removeClass("active");
@@ -1023,6 +1033,10 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     updateTab(tab, entity, options = {}) {
+        return this.queueTabChange(() => this._updateTab(tab, entity, options));
+    }
+
+    async _updateTab(tab, entity, options = {}) {
         if (!entity)
             return;
 
@@ -1039,7 +1053,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 tab.pageId = options.pageId;
                 tab.anchor = options.anchor;
 
-                if ((game.user.isGM || setting('allow-player')) && tab.entityId != undefined) {    //only save the history if the player is a GM or they get the full journal experience... and if it's not a blank tab
+                if (MonksEnhancedJournal.isAllowedToUseEnhancedJournal() && tab.entityId != undefined) {    //only save the history if the player is a GM or they get the full journal experience... and if it's not a blank tab
                     if (tab.history == undefined)
                         tab.history = [];
                     if (tab.historyIdx != undefined) {
@@ -1068,10 +1082,13 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.rendered)
             return;
 
-        this.render(true, foundry.utils.mergeObject({ focus: true }, options));
+        await this.render(true, foundry.utils.mergeObject({ focus: true }, options));
     }
 
-    removeTab(tab, event) {
+    async removeTab(tab, event, options = {}) {
+        if (event != undefined)
+            event.preventDefault();
+
         if (typeof tab == 'string')
             tab = this.tabs.find(t => t.id == tab);
 
@@ -1081,18 +1098,36 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             $('.journal-tab[data-tabid="' + tab.id + '"]', this.element).remove();
         }
 
+        // when called from inside a queued tab change the replacement tab has to be activated inline,
+        // queueing it would run it after the body that removed this tab
+        const activate = (t) => options.inline ? this._activateTab(t) : this.activateTab(t);
+
         if (this.tabs.length == 0) {
-            this.addTab();
+            await activate(this.addTab(null, { activate: false, refresh: false }));
         } else {
             if (tab.active) {
                 let nextIdx = (idx >= this.tabs.length ? idx - 1 : idx);
-                if (!this.activateTab(nextIdx))
+                if (!(await activate(nextIdx)))
                     this.saveTabs();
             }
         }
+    }
 
-        if (event != undefined)
-            event.preventDefault();
+    removeDuplicateTab() {
+        // The saved tab list can end up with more than one tab pointing at the same document, keep the
+        // first tab for each entity and drop the rest, making sure the active tab isn't lost with them
+        let tabs = [];
+        for (let tab of this.tabs) {
+            let existing = (tab.entityId ? tabs.find(t => t.entityId == tab.entityId) : null);
+            if (existing) {
+                if (tab.active)
+                    existing.active = true;
+            } else
+                tabs.push(tab);
+        }
+
+        if (tabs.length)
+            this.tabs = tabs;
     }
 
     saveTabs() {
@@ -1189,9 +1224,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 let type = (entity.getFlag && entity.getFlag('monks-enhanced-journal', 'type'));
                 let icon = MonksEnhancedJournal.getIcon(type);
                 let item = {
-                    name: entity.name || i18n("MonksEnhancedJournal.Unknown"),
-                    icon: `<i class="fas ${icon}"></i>`,
-                    callback: (li) => {
+                    label: entity.name || i18n("MonksEnhancedJournal.Unknown"),
+                    icon: `fas ${icon}`,
+                    onClick: (event, li) => {
                         let idx = i;
                         this.changeHistory(idx)
                     }
@@ -1266,7 +1301,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     async open(entity, newtab, options) {
         //if there are no tabs, then create one
         if (this.tabs.length == 0) {
-            this.addTab(entity);
+            this.addTab(entity, Object.assign({ activate: true, refresh: true }, options));
         } else {
             if (newtab === true) {
                 //the journal is getting created
@@ -1275,7 +1310,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (tab != undefined)
                     this.activateTab(tab, null, options);
                 else
-                    this.addTab(entity);
+                    this.addTab(entity, Object.assign({ activate: true, refresh: true }, options));
             } else {
                 if (await this?.subsheet?.close() !== false) {
                     // Check to see if this entity already exists in the tab list
@@ -1290,7 +1325,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async updateRecent(entity) {
-        if (entity.id && entity.type != "blank") {
+        if (entity?.id && entity.type != "blank") {
             let recent = game.user.getFlag("monks-enhanced-journal", "_recentlyViewed") || [];
             recent.findSplice(e => e.id == entity.id || typeof e != 'object');
             recent.unshift({ id: entity.id, uuid: entity.uuid, name: entity.name, type: entity.getFlag("monks-enhanced-journal", "type") });
@@ -1402,7 +1437,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
             if (data.tabid) {
-                const target = event.target.closest(".journal-tab") || null;
+                const target = event.target.closest(".journal-tab");
+                if (!target) return;
                 let tabs = foundry.utils.duplicate(this.tabs);
 
                 if (data.tabid === target.dataset.tabid) return; // Don't drop on yourself
@@ -1431,7 +1467,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                     flags: { 'monks-enhanced-journal': { 'tabs': tabs } }
                 }, { render: false });
             } else if (data.bookmarkId) {
-                const target = event.target.closest(".bookmark-button") || null;
+                const target = event.target.closest(".bookmark-button");
+                if (!target) return;
                 let bookmarks = foundry.utils.duplicate(this.bookmarks);
 
                 if (data.bookmarkId === target.dataset.bookmarkId) return; // Don't drop on yourself
@@ -1494,17 +1531,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         //don't do anything, but leave this here to prevent the regular journal page from doing anything
     }
 
-    _getHeaderButtons() {
-        let buttons = super._getHeaderButtons();
-
-        buttons.unshift({
-            label: i18n("MonksEnhancedJournal.Maximize"),
-            class: "toggle-fullscreen",
-            icon: "fas fa-expand-arrows-alt",
-            onclick: this.fullscreen.bind(this)
-        });
-
-        return buttons;
+    static toggleMaximize(event) {
+        this.fullscreen();
     }
 
     static doShowPlayers(event) {
@@ -1518,15 +1546,13 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     fullscreen() {
-        if (this.element.hasClass("maximized")) {
-            this.element.removeClass("maximized");
-            $('.toggle-fullscreen', this.element).html(`<i class="fas fa-expand-arrows-alt"></i>${i18n("MonksEnhancedJournal.Maximize")}`);
+        if (this.element.classList.contains("maximized")) {
+            this.element.classList.remove("maximized");
             this.setPosition({ width: this._previousPosition.width, height: this._previousPosition.height });
             this.setPosition({ left: this._previousPosition.left, top: this._previousPosition.top });
         } else {
-            this.element.addClass("maximized");
-            $('.toggle-fullscreen', this.element).html(`<i class="fas fa-compress-arrows-alt"></i>${i18n("MonksEnhancedJournal.Restore")}`);
-            
+            this.element.classList.add("maximized");
+
             this._previousPosition = foundry.utils.duplicate(this.position);
             this.setPosition({ left: 0, top: 0 });
             this.setPosition({ height: $('body').height(), width: $('body').width() - $('#sidebar').width() });
@@ -1560,9 +1586,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     async _createContextMenus(html) {
         this._context = new foundry.applications.ux.ContextMenu(html, ".bookmark-button", [
             {
-                name: "Open outside Enhanced Journal",
-                icon: '<i class="fas fa-file-export"></i>',
-                callback: async (li) => {
+                label: "Open outside Enhanced Journal",
+                icon: "fas fa-file-export",
+                onClick: async (event, li) => {
                     let bookmark = this.bookmarks.find(b => b.id == li.dataset.bookmarkId);
                     let document = await fromUuid(bookmark.entityId);
                     if (!document) {
@@ -1577,9 +1603,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Open in new tab",
-                icon: '<i class="fas fa-file-export"></i>',
-                callback: async (li) => {
+                label: "Open in new tab",
+                icon: "fas fa-file-export",
+                onClick: async (event, li) => {
                     let bookmark = this.bookmarks.find(b => b.id == li.dataset.bookmarkId);
                     let document = await fromUuid(bookmark.entityId);
                     if (!document) {
@@ -1592,9 +1618,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "MonksEnhancedJournal.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "MonksEnhancedJournal.Delete",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     const bookmark = this.bookmarks.find(b => b.id === li.dataset.bookmarkId);
                     this.removeBookmark(bookmark);
                 }
@@ -1603,14 +1629,14 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this._tabcontext = new foundry.applications.ux.ContextMenu(html, ".enhanced-journal-header .tab-bar", [
             {
-                name: "Open outside Enhanced Journal",
-                icon: '<i class="fas fa-file-export"></i>',
-                condition: (li) => {
+                label: "Open outside Enhanced Journal",
+                icon: "fas fa-file-export",
+                visible: (li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return false;
                     return !["blank", "folder"].includes(tab.entity?.type);
                 },
-                callback: async (li) => {
+                onClick: async (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return;
                     let document = tab.entity;
@@ -1624,27 +1650,27 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Close Tab",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "Close Tab",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab)
                         this.removeTab(tab);
                 }
             },
             {
-                name: "Close All Tabs",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close All Tabs",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     this.tabs.splice(0, this.tabs.length);
                     this.saveTabs();
                     this.addTab();
                 }
             },
             {
-                name: "Close Other Tabs",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close Other Tabs",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab) {
                         let idx = this.tabs.findIndex(t => t.id == this.contextTab);
@@ -1656,9 +1682,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             },
             {
-                name: "Close To the right",
-                icon: '<i class="fas fa-dumpster"></i>',
-                callback: li => {
+                label: "Close To the right",
+                icon: "fas fa-dumpster",
+                onClick: (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (tab) {
                         let idx = this.tabs.findIndex(t => t.id == this.contextTab);
@@ -1691,9 +1717,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         this._historycontext = new foundry.applications.ux.ContextMenu(this.element, ".mainbar .navigation .nav-button.history", history, { fixed: true, jQuery: false });
         this._imgcontext = new foundry.applications.ux.ContextMenu(this.element, ".journal-body.oldentry .tab.picture", [
             {
-                name: "MonksEnhancedJournal.Delete",
-                icon: '<i class="fas fa-trash"></i>',
-                callback: li => {
+                label: "MonksEnhancedJournal.Delete",
+                icon: "fas fa-trash",
+                onClick: (event, li) => {
                     log('Remove image on old entry');
                 }
             }

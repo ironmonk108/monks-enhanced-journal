@@ -66,25 +66,6 @@ export class EncounterSheet extends EnhancedJournalSheet {
         }
     };
 
-    /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.encounter"),
-            template: "modules/monks-enhanced-journal/templates/sheets/encounter.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dragSelector: ".document.actor", dropSelector: ".encounter-container" },
-                { dragSelector: ".document.item", dropSelector: ".encounter-container" },
-                { dragSelector: ".encounter-monsters .item-list .item .item-image", dropSelector: "null" },
-                { dragSelector: ".encounter-items .item-list .item .item-name", dropSelector: "null" },
-                //{ dragSelector: ".create-encounter", dropSelector: "null" },
-                //{ dragSelector: ".create-combat", dropSelector: "null" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".tab.description .tab-inner", ".encounter-content", ".encounter-items", ".encounter-dcs"]
-        });
-    }*/
-
     static get type() {
         return 'encounter';
     }
@@ -354,11 +335,11 @@ export class EncounterSheet extends EnhancedJournalSheet {
             } else
                 await this.addActor(dragData);
         }
-        else if (data.type == 'Folder') {
+        else if (dragData.type == 'Folder') {
             if (!this.document.isOwner)
                 return false;
             // Import items from the folder
-            let folder = await fromUuid(data.uuid);
+            let folder = await fromUuid(dragData.uuid);
             if (folder) {
                 for (let actor of folder.contents) {
                     if (actor instanceof Actor) {

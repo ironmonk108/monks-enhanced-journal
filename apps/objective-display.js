@@ -154,10 +154,13 @@ export class ObjectiveDisplay extends HandlebarsApplicationMixin(ApplicationV2) 
         MonksEnhancedJournal.openJournalEntry(page);
     }
 
-    async close(options) {
-        if (options?.properClose) {
-            super.close(options);
-            MonksEnhancedJournal.objdisp;
+    async close(options = {}) {
+        if (!options.properClose) {
+            // closed via the window control: persist the toggle off so refreshObjectives doesn't reopen it
+            await game.settings.set('monks-enhanced-journal', 'show-dialog', false);
+            ui.controls.render();
         }
+        MonksEnhancedJournal.objdisp = null;
+        return super.close(options);
     }
 }

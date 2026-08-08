@@ -1,6 +1,6 @@
 import { setting, i18n, format, log, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname } from "../monks-enhanced-journal.js";
 import { EnhancedJournalSheet } from "../sheets/EnhancedJournalSheet.js";
-import { getValue, setValue, setPrice, MEJHelpers } from "../helpers.js";
+import { getValue, setValue, setPrice, MEJHelpers, distributeCurrency } from "../helpers.js";
 import { AdjustPrice } from "../apps/adjust-price.js";
 
 export class ShopSheet extends EnhancedJournalSheet {
@@ -61,21 +61,6 @@ export class ShopSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.shop"),
-            template: "modules/monks-enhanced-journal/templates/sheets/shop.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dragSelector: ".document.actor", dropSelector: ".shop-container" },
-                { dragSelector: ".document.item", dropSelector: ".shop-container" },
-                { dragSelector: ".shop-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".actor-img img", dropSelector: "null" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".shop-items > .item-list", ".tab.description .tab-inner"]
-        });
-    }
     */
 
     static get type() {
@@ -318,8 +303,8 @@ export class ShopSheet extends EnhancedJournalSheet {
         }
     }
 
-    async _onDropItem(event) {
-        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    async _onDropItem(event, data) {
+        data = data ?? foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == 'Folder') {
             if (!this.document.isOwner)
@@ -364,16 +349,22 @@ export class ShopSheet extends EnhancedJournalSheet {
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename());
                         let price = MEJHelpers.getPrice(sysPrice);
                         let origPrice = price.value;
+                        let origCurrency = price.currency;
                         let adjustment = this.sheetSettings()?.adjustment || {};
                         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
-                        price.value = Math.floor(price.value * buy);
+                        let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+                        // never let a nonzero buy price truncate to free; pay 1 of the lowest denomination instead
+                        if (price.value * buy > 0 && converted.value == 0)
+                            converted.value = 1;
+                        price.value = converted.value;
+                        price.currency = converted.currency;
                         let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             let itemData = item.toObject();
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
-                            foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + price.currency);
+                            foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + origCurrency);
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.lock", true);
                             foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", actor.name);
                             this.addItem({ data: itemData });
@@ -407,11 +398,17 @@ export class ShopSheet extends EnhancedJournalSheet {
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename());
                         let price = MEJHelpers.getPrice(sysPrice);
                         let origPrice = price.value;
+                        let origCurrency = price.currency;
                         let adjustment = this.sheetSettings()?.adjustment || {};
                         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
-                        price.value = Math.floor(price.value * buy);
+                        let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+                        // never let a nonzero buy price truncate to free; pay 1 of the lowest denomination instead
+                        if (price.value * buy > 0 && converted.value == 0)
+                            converted.value = 1;
+                        price.value = converted.value;
+                        price.currency = converted.currency;
                         let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
                         if ((result?.quantity ?? 0) > 0) {
                             if (selling == "free") {
@@ -421,7 +418,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                                 //add the item to the shop
                                 let itemData = item.toObject();
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
-                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + price.currency);
+                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + origCurrency);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.lock", true);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", actor.name);
 
@@ -440,7 +437,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                             } else {
                                 let itemData = item.toObject();
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.quantity", result.quantity);
-                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + price.currency);
+                                foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.price", origPrice + " " + origCurrency);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.lock", true);
                                 foundry.utils.setProperty(itemData, "flags.monks-enhanced-journal.from", actor.name);
 
@@ -592,11 +589,20 @@ export class ShopSheet extends EnhancedJournalSheet {
                     if (!setting("use-generic-price"))
                         setPrice(itemData, pricename(), result.price);
                     if (!data.consumable) {
-                        let sheet = actor.sheet;
-                        if (sheet._onDropItem)
-                            sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
-                        else
-                            actor.createEmbeddedDocuments("Item", [itemData]);
+                        let existing = actor.items.find(i => i.name === itemData.name && i.type === itemData.type);
+                        if (existing) {
+                            let existingQty = getValue(existing, quantityname(), 1);
+                            let addQty = getValue(itemData, quantityname(), 1);
+                            let update = { system: {} };
+                            foundry.utils.setProperty(update.system, quantityname(), existingQty + addQty);
+                            await existing.update(update);
+                        } else {
+                            let sheet = actor.sheet;
+                            if (MEJHelpers.canDropOnActorSheet(sheet))
+                                sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
+                            else
+                                actor.createEmbeddedDocuments("Item", [itemData]);
+                        }
                     }
 
                     MonksEnhancedJournal.emit("purchaseItem",
@@ -618,8 +624,12 @@ export class ShopSheet extends EnhancedJournalSheet {
         let price = MEJHelpers.getPrice(data.price);
         let adjustment = this.sheetSettings()?.adjustment || {};
         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
-        data.sell = Math.floor(price.value * buy);
-        data.currency = price.currency;
+        let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+        // never let a nonzero buy price truncate to free; pay 1 of the lowest denomination instead
+        if (price.value * buy > 0 && converted.value == 0)
+            converted.value = 1;
+        data.sell = converted.value;
+        data.currency = converted.currency;
         data.maxquantity = data.quantity;
         data.quantity = Math.max(Math.min(data.maxquantity, data.quantity), 1);
         data.total = data.quantity * data.sell;
@@ -690,9 +700,10 @@ export class ShopSheet extends EnhancedJournalSheet {
             } else {
                 let totalDefault = 0;
                 for (let curr of MonksEnhancedJournal.currencies) {
-                    totalDefault += (this.getCurrency(actor, curr.id) * (curr.convert || 1));
+                    let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+                    totalDefault += (this.getCurrency(actor, currIdentifier) * (curr.convert || 1));
                 }
-                let check = MonksEnhancedJournal.currencies.find(c => c.id == price.currency);
+                let check = MonksEnhancedJournal.currencies.find(c => (game.system.id == 'dsa5' ? c.name : c.id) == price.currency); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
                 totalDefault = totalDefault / (check?.convert || 1);
 
                 return totalDefault >= price.value;
@@ -873,15 +884,19 @@ export class ShopSheet extends EnhancedJournalSheet {
         let settingDefaults = setting("adjustment-defaults") || {};
         let adjustment = foundry.utils.mergeObject(settingDefaults, formData.adjustment || {});
 
-        let items = this.options.document.getFlag('monks-enhanced-journal', 'items') || {};
+        let items = this.document.getFlag('monks-enhanced-journal', 'items') || {};
 
         for (let item of Object.values(items)) {
             let sell = adjustment[item.type]?.sell ?? adjustment.default.sell ?? 1;
             let price = MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
-            let cost = Math.max(Math.ceil((price.value * sell), 1)) + " " + price.currency;
+            let converted = distributeCurrency(price.value * sell, price.currency, MonksEnhancedJournal.currencies);
+            // never let a priced item become free after conversion; charge 1 of the lowest denomination instead
+            if (price.value * sell > 0 && converted.value == 0)
+                converted.value = 1;
+            let cost = converted.value + " " + converted.currency;
             foundry.utils.setProperty(item, "flags.monks-enhanced-journal.cost", cost);
         }
 
-        await this.options.document.update({ "flags.monks-enhanced-journal.items": items }, { focus: false });
+        await this.document.update({ "flags.monks-enhanced-journal.items": items }, { focus: false });
     }
 }

@@ -312,47 +312,73 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 **/
 /*-----------------------------------Page Backgrounds-----------------------------------*/
 .monks-enhanced-journal[background-image='parchment'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment.webp') repeat;
+    --mej-background: url('../assets/apsjournal/parchment.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='darkParchment'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment-medium.webp') repeat;
+    --mej-background: url('../assets/apsjournal/parchment-medium.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='marbleBlack'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-black.webp') repeat;
+    --mej-background: url('../assets/apsjournal/marble-black.webp') repeat;
+    --mej-itemlist-item-name: rgb(var(--mej-light-1));
+    --mej-sheet-color: rgb(var(--mej-light-6));
+    --mej-sheet-header-input-color: rgb(var(--mej-light-0));
+    --mej-sheet-header-name-color: rgb(var(--mej-light-0));
+    --mej-sheet-header-detail-input-color: rgb(var(--mej-light-5));
+    --mej-sheet-header-label-color: rgb(var(--mej-light-3));
+    --mej-sheet-tab-color-active: rgb(var(--mej-light-6));
+    --mej-sheet-input-background: rgb(var(--mej-dark-2));
+    --mej-itemlist-control-color: rgb(var(--mej-light-6));
+    --mej-itemlist-colour: rgb(var(--mej-light-3));
+    --mej-itemlist-header-colour: rgb(var(--mej-dark-0));
+    --mej-itemlist-input-color: rgb(var(--mej-light-3));
+    --mej-header-nav-input-color: rgb(var(--mej-light-6));
+    --mej-itemlist-input-background: rgb(var(--mej-dark-2));
+    --mej-blank-color: rgb(var(--mej-light-2));
+    --mej-itemlist-control-color-hover: rgb(var(--mej-light-0));
+    --mej-sheet-header-search-border: rgb(var(--mej-light-6));
+    --mej-sheet-header-search-color: rgb(var(--mej-light-2));
+    --mej-sheet-header-search-background: rgb(var(--mej-dark-1));
+    --mej-sheet-header-search-background-hover: rgba(var(--mej-dark-2));
+    --mej-sheet-input-color: rgb(var(--mej-light-2));
+    --mej-slideshow-add-slide: rgb(var(--mej-light-2));
+}
+
+.monks-enhanced-journal[background-image='marbleBlack'] .editor-edit {
+    color: rgb(var(--mej-dark-2));
 }
 
 .monks-enhanced-journal[background-image='marbleWhite'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-white.webp') repeat;
+    --mej-background: url('../assets/apsjournal/marble-white.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='metalBrushed'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/metal-brushed.webp') repeat;
+    --mej-background: url('../assets/apsjournal/metal-brushed.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='paperCotton'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/paper-cotton.webp') repeat;
+    --mej-background: url('../assets/apsjournal/paper-cotton.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='paperCrumpled'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/paper-crumpled.webp') repeat;
+    --mej-background: url('../assets/apsjournal/paper-crumpled.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='paperCrumpledYellowed'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/paper-crumpled-yellowed.webp') repeat;
+    --mej-background: url('../assets/apsjournal/paper-crumpled-yellowed.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='paperRecycled'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/paper-recycled.webp') repeat;
+    --mej-background: url('../assets/apsjournal/paper-recycled.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='paperRice'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/paper-rice.webp') repeat;
+    --mej-background: url('../assets/apsjournal/paper-rice.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='solidBlack'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-black.webp') repeat;
+    --mej-background: url('../assets/apsjournal/solid-black.webp') repeat;
     --mej-itemlist-item-name: rgb(var(--mej-light-1));
     --mej-sheet-color: rgb(var(--mej-light-6));
     --mej-sheet-header-detail-input-color: rgb(var(--mej-light-5));
@@ -380,111 +406,111 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .monks-enhanced-journal[background-image='solidGrey'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-grey.webp') repeat;
+    --mej-background: url('../assets/apsjournal/solid-grey.webp') repeat;
     --mej-instruction: rgb(var(--mej-light-2));
     --mej-slideshow-add-slide: rgb(var(--mej-light-2));
 }
 
 .monks-enhanced-journal[background-image='solidWhite'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-white.webp') repeat;
+    --mej-background: url('../assets/apsjournal/solid-white.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='woodAlpine'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-alpine.webp') repeat;
+    --mej-background: url('../assets/apsjournal/wood-alpine.webp') repeat;
 }
 
 .monks-enhanced-journal[background-image='woodPine'] {
-    --mej-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-pine.webp') repeat;
+    --mej-background: url('../assets/apsjournal/wood-pine.webp') repeat;
 }
 
 /*---------------------------------Sidebar Backgrounds---------------------------------*/
 .monks-enhanced-journal[sidebar-image='granite'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/granite.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/granite.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/granite.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/granite.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='marbleBlack'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-black.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-black.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/marble-black.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/marble-black.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='marbleWhite'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-white.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/marble-white.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/marble-white.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/marble-white.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='metalBrushed'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/metal-brushed.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/metal-brushed.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/metal-brushed.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/metal-brushed.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='metalGalvanized'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/metal-galvanized.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/metal-galvanized.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/metal-galvanized.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/metal-galvanized.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='parchment'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/parchment.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/parchment.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='darkParchment'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment-medium.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment-medium.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/parchment-medium.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/parchment-medium.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='leather'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/light-leather.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/light-leather.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/light-leather.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/light-leather.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='darkLeather'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/leather.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/leather.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/leather.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/leather.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='solidBlack'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-black.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-black.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/solid-black.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/solid-black.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='solidGrey'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-grey.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-grey.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/solid-grey.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/solid-grey.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-dark-0));
 }
 
 .monks-enhanced-journal[sidebar-image='solidWhite'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-white.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/solid-white.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/solid-white.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/solid-white.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-dark-0));
 }
 
 .monks-enhanced-journal[sidebar-image='woodAlpine'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-alpine.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-alpine.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/wood-alpine.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/wood-alpine.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='woodCottagePine'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-cottage-pine.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-cottage-pine.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/wood-cottage-pine.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/wood-cottage-pine.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
 .monks-enhanced-journal[sidebar-image='woodPine'] {
-    --mej-sidebar-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-pine.webp') repeat;
-    --mej-adventure-toc-background: url('/modules/monks-enhanced-journal/assets/apsjournal/wood-pine.webp') repeat;
+    --mej-sidebar-background: url('../assets/apsjournal/wood-pine.webp') repeat;
+    --mej-adventure-toc-background: url('../assets/apsjournal/wood-pine.webp') repeat;
     --mej-sidebar-document-color: rgb(var(--mej-light-0));
 }
 
@@ -493,7 +519,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .monks-enhanced-journal[background-image='parchment'] .content[entity-type='encounter'] {
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment-bloody.webp') no-repeat center;
+    background: url('../assets/apsjournal/parchment-bloody.webp') no-repeat center;
     background-size: cover;
 }
 
@@ -720,7 +746,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-purple-light);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/purple-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/purple-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -729,7 +755,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/cards.webp') no-repeat center;
+    background: url('../assets/apsjournal/cards.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -738,7 +764,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/purple-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/purple-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -802,7 +828,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-green);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/green-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/green-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -811,7 +837,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/scroll.webp') no-repeat center;
+    background: url('../assets/apsjournal/scroll.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -820,7 +846,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/green-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/green-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -883,7 +909,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid rgb(var(--mej-light-7));
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/black-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/black-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -892,7 +918,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/black-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/black-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -940,7 +966,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-blue);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/blue-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/blue-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -949,7 +975,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/blue-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/blue-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -997,7 +1023,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-cyan);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/cyan-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/cyan-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -1006,7 +1032,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/cyan-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/cyan-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -1054,7 +1080,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-orange);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/orange-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/orange-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -1063,7 +1089,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/orange-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/orange-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -1111,7 +1137,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-primary);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/red-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/red-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -1120,7 +1146,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/red-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/red-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -1168,7 +1194,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-yellow);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/yellow-item-bg.webp') no-repeat center;
+    background: url('../assets/apsjournal/yellow-item-bg.webp') no-repeat center;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -1177,7 +1203,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/yellow-item.webp') no-repeat center;
+    background: url('../assets/apsjournal/yellow-item.webp') no-repeat center;
     min-height: 270px;
     min-width: 270px;
 }
@@ -1225,7 +1251,7 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
     color: rgb(var(--mej-light-0));
     border: 2px solid var(--apsj-red);
     border-radius: 0.5em;
-    background: url('/modules/monks-enhanced-journal/assets/apsjournal/parchment-bloody.webp') no-repeat;
+    background: url('../assets/apsjournal/parchment-bloody.webp') no-repeat;
     background-size: cover;
     box-shadow: 0 3px 15px rgba(var(--mej-dark-0), 0.75);
 }
@@ -1276,11 +1302,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-blue::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-blue.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-blue.webp');
 }
 
 .apsj-icon-left.apsj-blue::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-blue.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-blue.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-blue .apsj-h2 {
@@ -1298,11 +1324,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-cyan::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-cyan.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-cyan.webp');
 }
 
 .apsj-icon-left.apsj-cyan::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-cyan.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-cyan.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-cyan .apsj-h2 {
@@ -1320,11 +1346,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-green::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-green.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-green.webp');
 }
 
 .apsj-icon-left.apsj-green::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-green.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-green.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-green .apsj-h2 {
@@ -1342,11 +1368,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-orange::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-orange.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-orange.webp');
 }
 
 .apsj-icon-left.apsj-orange::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-orange.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-orange.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-orange .apsj-h2 {
@@ -1364,11 +1390,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-purple::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-purple.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-purple.webp');
 }
 
 .apsj-icon-left.apsj-purple::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-purple.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-purple.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-purple .apsj-h2 {
@@ -1386,11 +1412,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-red::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-red.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-red.webp');
 }
 
 .apsj-icon-left.apsj-red::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-red.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-red.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-red .apsj-h2 {
@@ -1408,11 +1434,11 @@ body[inline-roll-styling="apsj"] a.tile-trigger-link i {
 }
 
 .apsj-icon-right.apsj-yellow::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-right-yellow.webp');
+    content: url('../assets/apsjournal/dialogue-icon-right-yellow.webp');
 }
 
 .apsj-icon-left.apsj-yellow::before {
-    content: url('/modules/monks-enhanced-journal/assets/apsjournal/dialogue-icon-left-yellow.webp');
+    content: url('../assets/apsjournal/dialogue-icon-left-yellow.webp');
 }
 
 .apsj-block.apsj-dialogue.apsj-yellow .apsj-h2 {

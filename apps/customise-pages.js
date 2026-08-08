@@ -167,7 +167,7 @@ export class CustomisePages extends HandlebarsApplicationMixin(ApplicationV2) {
         let parts = key.split('.');
         for (let i = 0; i < parts.length; i++) {
             let p = parts[i];
-            const t = getType(this);
+            const t = foundry.utils.getType(this);
             if (!((t === "Object") || (t === "Array"))) break;
             if (i === parts.length - 1) {
                 delete this[p];

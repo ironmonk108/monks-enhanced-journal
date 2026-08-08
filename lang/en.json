@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Allow Players",
   "MonksEnhancedJournal.allow-player.hint": "Allow Players to use the enhanced journal",
+  "MonksEnhancedJournal.allow-gm.name": "Allow GM",
+  "MonksEnhancedJournal.allow-gm.hint": "Allow GMs to use the enhanced journal",
   "MonksEnhancedJournal.rolling-module.name": "Dice Rolling Module",
   "MonksEnhancedJournal.rolling-module.hint": "Module to use when requesting a dice roll",
   "MonksEnhancedJournal.show-objectives.name": "Display Quests",
@@ -488,6 +490,7 @@
 
   "MonksEnhancedJournal.msg.NoPlayersSelected": "No players selected to send this entry to",
   "MonksEnhancedJournal.msg.CannotAddItemType": "Cannot add item of this type",
+  "MonksEnhancedJournal.msg.CouldNotCreateItemFromRollTableText": "This system has no generic item type, so these roll table results were skipped: {results}",
   "MonksEnhancedJournal.msg.YouDontHaveTokenPermissions": "You do not have permission to create a new Token for the {actorname} Actor.",
   "MonksEnhancedJournal.msg.YouDontHaveDocumentPermissions": "You do not have permission to view this {documentName} sheet.",
   "MonksEnhancedJournal.msg.YouDontHaveDocumentUsePermissions": "You do not have permission to use this {documentName}.",
@@ -524,6 +527,7 @@
   "MonksEnhancedJournal.msg.NoLootAtTheMoment": "No loot at the moment",
   "MonksEnhancedJournal.msg.DragToMakeRelationship": "Drag a Monk's Enhanced Journal Entry here to make a relationship",
   "MonksEnhancedJournal.msg.NoRelationshipsAtTheMoment": "No relationships at the moment",
+  "MonksEnhancedJournal.msg.CannotWriteRelationshipToLockedCompendium": "Could not add the reciprocal relationship because that entry is in a locked compendium",
   "MonksEnhancedJournal.msg.DragJournalEntryHereToCreateShop": "Drag a Shop journal entry here to create shop a shop",
   "MonksEnhancedJournal.msg.NoShopsAtTheMoment": "No shops at the moment",
   "MonksEnhancedJournal.msg.NoObjectivesPressAddButton": "No objectives yet, press the add button to create one",

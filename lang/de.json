@@ -6,6 +6,8 @@
 
   "MonksEnhancedJournal.allow-player.name": "Spielern erlauben",
   "MonksEnhancedJournal.allow-player.hint": "Erlaube Spielern, Enhanced Journal zu benutzen",
+  "MonksEnhancedJournal.allow-gm.name": "Für GM erlauben",
+  "MonksEnhancedJournal.allow-gm.hint": "Erlaube GMs, Enhanced Journal zu benutzen",
   "MonksEnhancedJournal.rolling-module.name": "Würfelmodule",
   "MonksEnhancedJournal.rolling-module.hint": "Würfelmodul zum Anfordern eines Würfelwurfs",
   "MonksEnhancedJournal.show-objectives.name": "Quests anzeigen",

@@ -42,20 +42,6 @@ export class LootSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.loot"),
-            template: "modules/monks-enhanced-journal/templates/sheets/loot.html",
-            dragDrop: [
-                { dragSelector: ".document.item", dropSelector: ".loot-container" },
-                { dragSelector: ".loot-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".loot-items .item-list .item .item-name", dropSelector: ".loot-character" },
-                { dragSelector: ".loot-character", dropSelector: "null" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".loot-items"]
-        });
-    }
     */
 
     static get type() {
@@ -297,8 +283,8 @@ export class LootSheet extends EnhancedJournalSheet {
         
     }
 
-    async _onDropLootItem(event, target) {
-        let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    async _onDropLootItem(event, data) {
+        data = data ?? foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
         if (data.type == 'Item') {
             let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
@@ -328,7 +314,7 @@ export class LootSheet extends EnhancedJournalSheet {
                         let itemQty = getValue(itemData, quantityname(), 1);
                         setValue(itemData, quantityname(), result.quantity * itemQty);
                         let sheet = actor.sheet;
-                        if (sheet._onDropItem)
+                        if (MEJHelpers.canDropOnActorSheet(sheet))
                             sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
                         else
                             actor.createEmbeddedDocuments("Item", [itemData]);
@@ -360,7 +346,7 @@ export class LootSheet extends EnhancedJournalSheet {
                         return;
 
                     //Only allow players to drop things from their own player onto the loot sheet
-                    if (!this.document.isOwner && !(item.actor.id || entry))
+                    if (!this.document.isOwner && !(item.actor?.id || entry))
                         return;
 
                     let result = await LootSheet.confirmQuantity(item, max, "transfer", false);
@@ -450,7 +436,7 @@ export class LootSheet extends EnhancedJournalSheet {
             if (hasChanged)
                 this.document.setFlag('monks-enhanced-journal', 'actors', actors);
         } else if (data.type == 'Item') {
-            this._onDropLootItem(event, target);
+            this._onDropLootItem(event, data);
         }
         log('drop data', event, data);
     }
@@ -512,7 +498,7 @@ export class LootSheet extends EnhancedJournalSheet {
                 let itemQty = getValue(itemData, quantityname(), 1);
                 setValue(itemData, quantityname(), result.quantity * itemQty);
                 let sheet = actor.sheet;
-                if (sheet._onDropItem)
+                if (MEJHelpers.canDropOnActorSheet(sheet))
                     sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
                 else
                     actor.createEmbeddedDocuments("Item", [itemData]);
@@ -563,7 +549,7 @@ export class LootSheet extends EnhancedJournalSheet {
             let itemQty = getValue(itemData, quantityname(), 1);
             setValue(itemData, quantityname(), result.quantity * itemQty);
             let sheet = actor.sheet;
-            if (sheet._onDropItem)
+            if (MEJHelpers.canDropOnActorSheet(sheet))
                 sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData );
             else
                 actor.createEmbeddedDocuments("Item", [itemData]);
@@ -726,20 +712,20 @@ export class LootSheet extends EnhancedJournalSheet {
     _getActorContextOptions() {
         return [
             {
-                name: "Transfer Funds",
+                label: "Transfer Funds",
                 icon: '<i class="fas fa-user"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
+                visible: () => game.user.isGM,
+                onClick: (event, li) => {
                     const id = li.id;
                     const actor = game.actors.get(id);
                     this.transferCurrency(actor);
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.RemoveActor"),
+                label: i18n("MonksEnhancedJournal.RemoveActor"),
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: li => {
+                visible: () => game.user.isGM,
+                onClick: (event, li) => {
                     const id = li.id;
                     foundry.applications.api.DialogV2.confirm({
                         window: {

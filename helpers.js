@@ -16,6 +16,33 @@ export let setPrice = (item, name, price) => {
     return MEJHelpers.setPrice(item, name, price);
 }
 
+// Convert a fractional amount in a given denomination down through lower
+// denominations using the system's conversion rates, so no value is truncated.
+// Walks `currencies` (the module's per-system currency list, ordered from the
+// highest denomination to the lowest, each with a `convert` rate relative to
+// the default currency) from `denomination` downward, carrying the fractional
+// remainder into the next lower unit until the amount is a whole number or
+// there are no more denominations to convert into. Returns a single
+// { value, currency } pair - the same shape MEJHelpers.getPrice() produces -
+// so callers can drop it straight into their "value currency" strings.
+export function distributeCurrency(value, denomination, currencies) {
+    let list = (currencies || []).filter(c => c.convert != undefined);
+    let idx = list.findIndex(c => (game.system.id == 'dsa5' ? c.name : c.id) == denomination); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+    if (idx == -1)
+        return { value: Math.floor(value), currency: denomination };
+
+    let isWhole = (v) => Math.abs(v - Math.round(v)) < 1e-6;
+
+    let i = idx;
+    while (!isWhole(value) && i < list.length - 1) {
+        let rate = (list[i].convert || 1) / (list[i + 1].convert || 1);
+        value = value * rate;
+        i++;
+    }
+
+    return { value: (isWhole(value) ? Math.round(value) : Math.floor(value)), currency: (game.system.id == 'dsa5' ? list[i].name : list[i].id) };
+}
+
 export class MEJHelpers {
     static getValue(item, name, defvalue = 0) {
         name = name || pricename();
@@ -39,7 +66,8 @@ export class MEJHelpers {
 
     static defaultCurrency() {
         let currency = MonksEnhancedJournal.currencies.find(c => c.convert == 0);
-        return currency?.id || "";
+        return (game.system.id == 'dsa5') ? currency?.name || "" // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+            : currency?.id || "";
     }
 
     static getSystemPrice(item, name, ignorePrice = false) {
@@ -54,11 +82,27 @@ export class MEJHelpers {
             cost = getValue(item, name, null);
         }
         if (cost) {
-            for (let curr of ["pp", "gp", "sp", "cp", "gc", "ss", "bp"]) {
-                if (cost[curr] && cost[curr] != "0" && cost[curr] != 0) {
-                    cost = `${cost[curr]} ${curr}`;
-                    break;
-                }
+            // some systems (e.g. wfrp4e's gc/ss/bp) store price as several denominations
+            // at once, so collect every non-zero one instead of stopping at the first
+            let denominations = ["pp", "gp", "sp", "cp", "gc", "ss", "bp"].filter(curr => cost[curr] && cost[curr] != "0" && cost[curr] != 0);
+            if (game.system.id == "wfrp4e" && denominations.length > 1) {
+                // sum everything into the lowest denomination present (the last one in
+                // the list above) using the system's own currency conversion, so no
+                // part of a mixed-denomination price gets silently dropped
+                // NOTE: amount * (baseRate / rate) is only correct for wfrp4e's inverted
+                // convert convention (bp:240 = 240 per gc); other systems' tables are
+                // value-in-reference-terms (e.g. dnd5e pp:10 = 1pp worth 10gp), so this
+                // summing is gated to wfrp4e until a non-inverted formula is added
+                let base = denominations[denominations.length - 1];
+                let baseRate = MonksEnhancedJournal.currencies.find(c => c.id == base)?.convert || 1;
+                let total = denominations.reduce((sum, curr) => {
+                    let rate = MonksEnhancedJournal.currencies.find(c => c.id == curr)?.convert || 1;
+                    return sum + (parseInt(cost[curr]) * (baseRate / rate));
+                }, 0);
+                cost = `${Math.round(total)} ${base}`;
+            } else if (denominations.length >= 1) {
+                let curr = denominations[0];
+                cost = `${cost[curr]} ${curr}`;
             }
         }
 
@@ -108,7 +152,8 @@ export class MEJHelpers {
                     let val = (price * adjust) / ((tcurr.convert || 1) * adjust);
                     if (val == Math.floor(val)) {
                         curr = tcurr;
-                        currency = tcurr.id;
+                        currency = (game.system.id == 'dsa5') ? tcurr.name || "" // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+                            : tcurr.id;
                         price = Math.floor(val);
                         break;
                     }
@@ -116,7 +161,8 @@ export class MEJHelpers {
 
                 if (!curr) {
                     curr = MonksEnhancedJournal.currencies[MonksEnhancedJournal.currencies.length - 1];
-                    currency = curr.id;
+                    currency = (game.system.id == 'dsa5') ? curr.name || "" // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
+                        : curr.id;
                     price = Math.floor(price / (curr.convert || 1));
                 }
             } else
@@ -145,9 +191,17 @@ export class MEJHelpers {
 
     static toDefaultCurrency(price) {
         let value = (typeof price == "string" ? MEJHelpers.getPrice(price, "price") : price);
-        let currency = MonksEnhancedJournal.currencies.find(c => c.id == value.currency);
+        let currency = MonksEnhancedJournal.currencies.find(c => (game.system.id == 'dsa5' ? c.name : c.id) == value.currency); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
         let result = (currency?.convert || 1) * value.value;
 
         return result;
+    }
+
+    // Shared guard for the fake-event `sheet._onDropItem(event, itemData)` calls used
+    // throughout the module to add an item straight to an actor's sheet. Some systems'
+    // ActorSheet._onDropItem implementations don't tolerate this synthetic event shape,
+    // so those systems must fall back to actor.createEmbeddedDocuments instead.
+    static canDropOnActorSheet(sheet) {
+        return !!(sheet?._onDropItem && !["cyphersystem", "dnd4e", "dcc", "pf2e"].includes(game.system.id));
     }
 }
