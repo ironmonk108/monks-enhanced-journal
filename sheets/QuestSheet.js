@@ -628,8 +628,14 @@ export class QuestSheet extends EnhancedJournalSheet {
             for (let id of ids)
                 reordered[id] = objectives[id];
 
-            this.document.flags['monks-enhanced-journal'].objectives = reordered;
-            this.document.setFlag('monks-enhanced-journal', 'objectives', reordered);
+            // setFlag/update diff & merge by value, not key order: an object-valued flag with the
+            // same key set and same per-key values (only reordered) diffs to "no change" and is
+            // silently skipped entirely (confirmed empirically — even update(..., {recursive:false})
+            // and update(..., {diff:false}) both no-op here, in-memory and server-side). Unset the
+            // flag first so the follow-up setFlag has no prior value to diff against and genuinely
+            // writes the new key order.
+            await this.document.unsetFlag('monks-enhanced-journal', 'objectives');
+            await this.document.setFlag('monks-enhanced-journal', 'objectives', reordered);
         } else if (data.type == 'Folder') {
             if (!this.document.isOwner)
                 return false;
