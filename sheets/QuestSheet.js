@@ -331,6 +331,16 @@ export class QuestSheet extends EnhancedJournalSheet {
         }).bind(html);
 
         new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".objective-items",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropRewardItem.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
             dragSelector: ".item-list .item-name",
             permissions: {
                 dragstart: this._canDragItemStart.bind(this)
@@ -597,22 +607,29 @@ export class QuestSheet extends EnhancedJournalSheet {
                 this.addItem(data);
         } else if (data.type == 'Objective') {
             //re-order objectives
-            let objectives = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.objectives || []);
+            // Objectives are persisted as an object keyed by id (see _prepareBodyContext's
+            // array->object migration and Objectives#save), not an array, so reorder by key order.
+            let objectives = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.objectives || {});
+            let ids = Object.keys(objectives);
 
-            let from = objectives.findIndex(a => a.id == data.id);
-            let to = objectives.length - 1;
-            if (!$(event.target).hasClass('objectives')) {
-                const target = event.target.closest(".item") || null;
+            let from = ids.indexOf(data.id);
+            let to = ids.length - 1;
+            const target = event.target.closest(".item");
+            if (target) {
                 if (data.id === target.dataset.id) return; // Don't drop on yourself
-                to = objectives.findIndex(a => a.id == target.dataset.id);
+                to = ids.indexOf(target.dataset.id);
             }
-            if (from == to)
+            if (from == to || from == -1 || to == -1)
                 return;
 
-            objectives.splice(to, 0, objectives.splice(from, 1)[0]);
+            ids.splice(to, 0, ids.splice(from, 1)[0]);
 
-            this.document.flags['monks-enhanced-journal'].objectives = objectives;
-            this.document.setFlag('monks-enhanced-journal', 'objectives', objectives);
+            let reordered = {};
+            for (let id of ids)
+                reordered[id] = objectives[id];
+
+            this.document.flags['monks-enhanced-journal'].objectives = reordered;
+            this.document.setFlag('monks-enhanced-journal', 'objectives', reordered);
         } else if (data.type == 'Folder') {
             if (!this.document.isOwner)
                 return false;
