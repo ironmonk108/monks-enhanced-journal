@@ -2566,9 +2566,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             if (journal && journal.pages.size > 0) {
                 let page = journal.pages.contents[0];
                 if (journal.isOwner && page.isOwner) {
-                    page.unsetFlag('monks-enhanced-journal', `relationships.${id}`);
+                    page.unsetFlag('monks-enhanced-journal', `relationships.${this.document.parent?.id ?? this.document.id}`);
                 } else {
-                    MonksEnhancedJournal.emit("deleteRelationship", { uuid: journal.uuid, id: this.document.id, page: this.document.id });
+                    MonksEnhancedJournal.emit("deleteRelationship", { uuid: journal.uuid, id: this.document.parent?.id ?? this.document.id, page: this.document.id });
                 }
             }
         }
