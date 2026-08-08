@@ -355,6 +355,9 @@ export class ShopSheet extends EnhancedJournalSheet {
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
                         let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+                        // never let a nonzero buy price truncate to free; pay 1 of the lowest denomination instead
+                        if (price.value * buy > 0 && converted.value == 0)
+                            converted.value = 1;
                         price.value = converted.value;
                         price.currency = converted.currency;
                         let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
@@ -401,6 +404,9 @@ export class ShopSheet extends EnhancedJournalSheet {
                         if (buy == -1)
                             return ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotSellItem"));
                         let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+                        // never let a nonzero buy price truncate to free; pay 1 of the lowest denomination instead
+                        if (price.value * buy > 0 && converted.value == 0)
+                            converted.value = 1;
                         price.value = converted.value;
                         price.currency = converted.currency;
                         let result = await this.constructor.confirmQuantity(item, max, "sell", true, price);
@@ -619,6 +625,9 @@ export class ShopSheet extends EnhancedJournalSheet {
         let adjustment = this.sheetSettings()?.adjustment || {};
         let buy = adjustment[item.type]?.buy ?? adjustment.default.buy ?? 0.5;
         let converted = distributeCurrency(price.value * buy, price.currency, MonksEnhancedJournal.currencies);
+        // never let a nonzero buy price truncate to free; pay 1 of the lowest denomination instead
+        if (price.value * buy > 0 && converted.value == 0)
+            converted.value = 1;
         data.sell = converted.value;
         data.currency = converted.currency;
         data.maxquantity = data.quantity;

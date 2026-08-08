@@ -3596,6 +3596,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             destActor = game.actors.find(a => a.id == actorLink.id);
 
         for (let [k, v] of Object.entries(offering.currency)) {
+            if (v > 0 && parseInt(this.constructor.getCurrency(actor, k) || 0) < v) {
+                ui.notifications.error(`${actor.name} no longer has enough ${k}, cannot accept this offering`);
+                return;
+            }
+        }
+
+        for (let [k, v] of Object.entries(offering.currency)) {
             this.addCurrency(actor, k, -v);
             if (destActor)
                 this.addCurrency(destActor, k, v);
