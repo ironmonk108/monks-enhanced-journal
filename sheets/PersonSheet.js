@@ -81,7 +81,7 @@ export class PersonSheet extends EnhancedJournalSheet {
             let attributes = {};
             let sheetSettings = {};
             let flags = foundry.utils.getProperty(context, "data.flags.monks-enhanced-journal") || {};
-            let defaultSettings = this.document.constructor.sheetSettings() || {};
+            let defaultSettings = this.sheetSettings() || {};
 
             for (let attr of Object.keys(defaultSettings.attributes)) {
                 attributes[attr] = flags[attr] || "";

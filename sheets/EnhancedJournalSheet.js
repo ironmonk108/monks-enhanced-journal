@@ -1872,7 +1872,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     static async getDocument(data, type, notify = true) {
         let document;
         if (data.data) {
-            document = new CONFIG.Item.documentClass(data.data, {});
+            let cls = CONFIG.Actor.documentClass.TYPES.includes(data.data.type) ? CONFIG.Actor : CONFIG.Item;
+            document = new cls.documentClass(data.data, {});
         } else if (data.pack) {
             const pack = game.packs.get(data.pack);
             let id = data.id;
