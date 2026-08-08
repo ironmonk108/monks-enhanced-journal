@@ -610,6 +610,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
 
     async _renderPageView(element, sheet) {
         await sheet.render({ force: true });
+        if (!sheet.element) return;
         sheet.element.removeAttribute("class");
         element.append(sheet.element);
     }

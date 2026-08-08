@@ -1293,7 +1293,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     async open(entity, newtab, options) {
         //if there are no tabs, then create one
         if (this.tabs.length == 0) {
-            this.addTab(entity);
+            this.addTab(entity, Object.assign({ activate: true, refresh: true }, options));
         } else {
             if (newtab === true) {
                 //the journal is getting created
@@ -1302,7 +1302,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (tab != undefined)
                     this.activateTab(tab, null, options);
                 else
-                    this.addTab(entity);
+                    this.addTab(entity, Object.assign({ activate: true, refresh: true }, options));
             } else {
                 if (await this?.subsheet?.close() !== false) {
                     // Check to see if this entity already exists in the tab list
@@ -1317,7 +1317,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async updateRecent(entity) {
-        if (entity.id && entity.type != "blank") {
+        if (entity?.id && entity.type != "blank") {
             let recent = game.user.getFlag("monks-enhanced-journal", "_recentlyViewed") || [];
             recent.findSplice(e => e.id == entity.id || typeof e != 'object');
             recent.unshift({ id: entity.id, uuid: entity.uuid, name: entity.name, type: entity.getFlag("monks-enhanced-journal", "type") });
@@ -1429,7 +1429,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             let data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
 
             if (data.tabid) {
-                const target = event.target.closest(".journal-tab") || null;
+                const target = event.target.closest(".journal-tab");
+                if (!target) return;
                 let tabs = foundry.utils.duplicate(this.tabs);
 
                 if (data.tabid === target.dataset.tabid) return; // Don't drop on yourself
@@ -1458,7 +1459,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                     flags: { 'monks-enhanced-journal': { 'tabs': tabs } }
                 }, { render: false });
             } else if (data.bookmarkId) {
-                const target = event.target.closest(".bookmark-button") || null;
+                const target = event.target.closest(".bookmark-button");
+                if (!target) return;
                 let bookmarks = foundry.utils.duplicate(this.bookmarks);
 
                 if (data.bookmarkId === target.dataset.bookmarkId) return; // Don't drop on yourself
