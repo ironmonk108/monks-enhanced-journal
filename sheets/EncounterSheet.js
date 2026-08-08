@@ -66,8 +66,6 @@ export class EncounterSheet extends EnhancedJournalSheet {
         }
     };
 
-    /*
-
     static get type() {
         return 'encounter';
     }
