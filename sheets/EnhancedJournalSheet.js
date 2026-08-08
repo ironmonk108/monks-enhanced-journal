@@ -1061,15 +1061,16 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     }
 
     static async addCurrency(actor, denomination, value) {
+        let ident = (c) => (game.system.id == 'dsa5' ? c.name : c.id); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
         let changes = {};
         if (value < 0 && setting("purchase-conversion")) {
             let currencies = foundry.utils.duplicate(MonksEnhancedJournal.currencies || []).filter(c => c.convert != undefined);
             for (let curr of currencies) {
-                curr.value = parseInt(this.getCurrency(actor, curr.id) || 0);
+                curr.value = parseInt(this.getCurrency(actor, ident(curr)) || 0);
             }
 
-            changes = currencies.reduce((a, v) => ({ ...a, [v.id]: v.value }), {});
-            let denomIdx = currencies.findIndex(c => c.id == denomination);
+            changes = currencies.reduce((a, v) => ({ ...a, [ident(v)]: v.value }), {});
+            let denomIdx = currencies.findIndex(c => ident(c) == denomination);
             if (denomIdx == -1)
                 return;
 
@@ -1101,7 +1102,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                         remainder -= used;
                         
                         let unused = available - used;
-                        changes[currencies[idx].id] = Math.floor(unused / rate);
+                        changes[ident(currencies[idx])] = Math.floor(unused / rate);
                         unused -= Math.floor(unused / rate) * rate;
 
                         if (idx < denomIdx && unused > 0) {
@@ -1110,7 +1111,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                             while (unused > 0 && jdx < currencies.length) {
                                 let r = (currencies[jdx].convert || 1) / (currencies[denomIdx].convert || 1);
                                 let disperse = unused / r;
-                                changes[currencies[jdx].id] += Math.floor(disperse);
+                                changes[ident(currencies[jdx])] += Math.floor(disperse);
                                 unused -= Math.floor(disperse) * r;
 
                                 jdx++;
@@ -1125,7 +1126,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             //changes[denomination] += value;
 
             for (let curr of Object.keys(changes)) {
-                let orig = currencies.find(c => c.id == curr);
+                let orig = currencies.find(c => ident(c) == curr);
                 if (changes[curr] == orig.value)
                     delete changes[curr];
             }
