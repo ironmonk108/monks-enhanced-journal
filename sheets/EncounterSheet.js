@@ -337,11 +337,11 @@ export class EncounterSheet extends EnhancedJournalSheet {
             } else
                 await this.addActor(dragData);
         }
-        else if (data.type == 'Folder') {
+        else if (dragData.type == 'Folder') {
             if (!this.document.isOwner)
                 return false;
             // Import items from the folder
-            let folder = await fromUuid(data.uuid);
+            let folder = await fromUuid(dragData.uuid);
             if (folder) {
                 for (let actor of folder.contents) {
                     if (actor instanceof Actor) {

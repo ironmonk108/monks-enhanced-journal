@@ -2957,11 +2957,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         if (EnhancedJournalSheet.isLootActor(lootSheet)) {
             if (lootSheet == "item-piles") {
                 if (entity instanceof Folder || lootEntity == "root") {
-                    let ipOptions = {
-                        position: { x: ptAvg.x / ptAvg.count, y: ptAvg.y / ptAvg.count },
-                        //items,
-                        //itemPileFlags: { enabled: true }
-                    };
+                    let ipOptions = {};
 
                     let folder = entity;
                     let foldernames = [];

@@ -116,7 +116,7 @@ export class PlaceSheet extends EnhancedJournalSheet {
             for (let attr of Object.keys(defaultSettings.attributes)) {
                 attributes[attr] = flags[attr] || "";
                 if (fields[attr] != undefined)
-                    sheetSettings[attr].shown = !!fields[attr]?.value;
+                    sheetSettings[attr] = { shown: !!fields[attr]?.value };
             }
             foundry.utils.setProperty(context, "data.flags.monks-enhanced-journal.attributes", attributes);
             foundry.utils.setProperty(context, "data.flags.monks-enhanced-journal.sheet-settings.attributes", sheetSettings);
