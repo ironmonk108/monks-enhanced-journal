@@ -241,7 +241,7 @@ export class ProseMirrorPlugin {
 
 			if (existing && $cursor) {
 				const [node, pos] = existing;
-				const selection = TextSelection.create(state.doc, pos, pos + node.nodeSize);
+				const selection = ProseMirror.TextSelection.create(state.doc, pos, pos + node.nodeSize);
 				tr.setSelection(selection);
 			}
 

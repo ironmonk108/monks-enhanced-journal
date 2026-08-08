@@ -506,12 +506,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     async _onRender(context, options) {
         super._onRender(context, options);
 
+        $(this.trueElement)
+            .attr('entity-type', this.document.type)
+            .attr('entity-id', this.document.id)
+            .attr('entity-uuid', this.document.uuid);
+
         if (!this.enhancedjournal) {
-            $(this.trueElement)
-                .attr('entity-type', this.document.type)
-                .attr('entity-id', this.document.id)
-                .attr('entity-uuid', this.document.uuid)
-                .removeClass('dnd5e2 dnd5e2-journal');
+            $(this.trueElement).removeClass('dnd5e2 dnd5e2-journal');
 
             if (setting('background-image') != 'none') {
                 $(this.trueElement).attr("background-image", setting('background-image'));
