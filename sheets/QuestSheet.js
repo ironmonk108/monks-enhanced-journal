@@ -633,9 +633,17 @@ export class QuestSheet extends EnhancedJournalSheet {
             // silently skipped entirely (confirmed empirically — even update(..., {recursive:false})
             // and update(..., {diff:false}) both no-op here, in-memory and server-side). Unset the
             // flag first so the follow-up setFlag has no prior value to diff against and genuinely
-            // writes the new key order.
-            await this.document.unsetFlag('monks-enhanced-journal', 'objectives');
-            await this.document.setFlag('monks-enhanced-journal', 'objectives', reordered);
+            // writes the new key order. If the setFlag fails after the unsetFlag succeeded (network
+            // blip, hook error, permission race), restore the pre-reorder value rather than leaving
+            // the flag deleted.
+            try {
+                await this.document.unsetFlag('monks-enhanced-journal', 'objectives');
+                await this.document.setFlag('monks-enhanced-journal', 'objectives', reordered);
+            } catch (err) {
+                console.error("Monk's Enhanced Journal | failed to persist objective reorder, restoring previous order", err);
+                await this.document.setFlag('monks-enhanced-journal', 'objectives', objectives).catch(() => {});
+                throw err;
+            }
         } else if (data.type == 'Folder') {
             if (!this.document.isOwner)
                 return false;
