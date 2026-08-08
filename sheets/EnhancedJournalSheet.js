@@ -1145,8 +1145,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                     if (items.length)
                         coinage = items[0];
                 } else {
-                    updates[`system.quantity`] = v;
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity": v }));
                 }
             }
             return Promise.all(promises);
@@ -1156,8 +1155,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 let currency = MonksEnhancedJournal.currencies.find(c => c.id == k);
                 let coinage = actor.items.find(i => { return i.type == "currency" && i.name == currency });
                 if (coinage) {
-                    updates[`system.quantity`] = v;
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity": v }));
                 }
             }
             return Promise.all(promises);
@@ -1166,8 +1164,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             for (let [k, v] of Object.entries(changes)) {
                 let coinage = actor.items.find(i => { return i.type == "money" && i.name == k });
                 if (coinage) {
-                    updates[`system.quantity`] = { value: v };
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity": { value: v } }));
                 }
             }
             return Promise.all(promises);
@@ -1183,8 +1180,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                     if (items.length)
                         coinage = items[0];
                 } else {
-                    updates[`system.quantity.value`] = v;
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity.value": v }));
                 }
             }
             return Promise.all(promises);
