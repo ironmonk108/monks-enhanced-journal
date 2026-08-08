@@ -566,6 +566,14 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 subsheet._createDocumentIdLink(subsheetElement)
 
             $('.content', this.element).attr('entity-type', this.document.type).attr('entity-id', this.document.id).attr('entity-uuid', this.document.uuid);
+            if (game.system.id == "pf2e") {
+                // pf2e's own CSS scopes trait/tag styling behind a `.journal-entry-page .journal-page-content` descendant
+                // selector. In the standalone/windowed path (EnhancedJournalSheet#_onRender) this ancestor class lands
+                // on the sheet root; the tabbed shell here renders subsheets by hand and never calls _onRender (verified
+                // empirically), so without this the `journal-page-content` class added to subsheetElement below has no
+                // `journal-entry-page` ancestor and pf2e's styling silently never applies in the tabbed view.
+                $('.content', this.element).addClass("journal-entry-page");
+            }
             //extract special classes
             /*
             if (setting("extract-extra-classes")) {
