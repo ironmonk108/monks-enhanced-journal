@@ -1875,6 +1875,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     static async getDocument(data, type, notify = true) {
         let document;
         if (data.data) {
+            // Assumes Actor and Item subtype names don't overlap in practice; falls back to Item when the type isn't a known Actor subtype.
             let cls = CONFIG.Actor.documentClass.TYPES.includes(data.data.type) ? CONFIG.Actor : CONFIG.Item;
             document = new cls.documentClass(data.data, {});
         } else if (data.pack) {

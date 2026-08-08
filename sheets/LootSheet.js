@@ -436,7 +436,7 @@ export class LootSheet extends EnhancedJournalSheet {
             if (hasChanged)
                 this.document.setFlag('monks-enhanced-journal', 'actors', actors);
         } else if (data.type == 'Item') {
-            this._onDropLootItem(event, target);
+            this._onDropLootItem(event, data);
         }
         log('drop data', event, data);
     }

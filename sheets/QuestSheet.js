@@ -641,8 +641,8 @@ export class QuestSheet extends EnhancedJournalSheet {
                 await this.document.setFlag('monks-enhanced-journal', 'objectives', reordered);
             } catch (err) {
                 console.error("Monk's Enhanced Journal | failed to persist objective reorder, restoring previous order", err);
+                ui.notifications.error("Failed to reorder objectives — original order restored");
                 await this.document.setFlag('monks-enhanced-journal', 'objectives', objectives).catch(() => {});
-                throw err;
             }
         } else if (data.type == 'Folder') {
             if (!this.document.isOwner)
