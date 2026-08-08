@@ -4565,7 +4565,9 @@ Hooks.on('dropJournalSheetData', (journal, sheet, data) => {
 						let itemQty = getValue(data.data, quantityname());
 						setValue(data.data, quantityname(), result.quantity * itemQty);
 						data.uuid = `${data.uuid}.Items.${data.itemId}`;
-						sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, data);
+						let dropHandler = sheet._onDropItem ?? sheet._onDropLootItem;
+						if (dropHandler)
+							dropHandler.call(sheet, { preventDefault: () => { }, target: { closest: () => { } } }, data);
 					}
 				});
 			}
