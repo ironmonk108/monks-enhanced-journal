@@ -43,7 +43,9 @@ export let setting = key => {
 };
 
 export let quantityname = () => {
-	return MonksEnhancedJournal.quantityname
+	let name = MonksEnhancedJournal.quantityname;
+	if (game.system.id === 'dsa5') name = `${name}.value`;
+	return name;
 }
 export let pricename = () => {
 	return MonksEnhancedJournal.pricename;

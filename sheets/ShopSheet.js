@@ -595,7 +595,7 @@ export class ShopSheet extends EnhancedJournalSheet {
                             let existingQty = getValue(existing, quantityname(), 1);
                             let addQty = getValue(itemData, quantityname(), 1);
                             let update = { system: {} };
-                            foundry.utils.setProperty(update.system, quantityname(), existingQty + addQty);
+                            foundry.utils.setProperty(update.system, quantityname(), parseInt(existingQty) + parseInt(addQty));
                             await existing.update(update);
                         } else {
                             let sheet = actor.sheet;
