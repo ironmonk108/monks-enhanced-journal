@@ -3681,16 +3681,12 @@ export class MonksEnhancedJournal {
 						itemData = await cls.createScrollFromSpell(itemData);
 					}
 					let itemQty = getValue(itemData, quantityname(), 1);
-					setValue(itemData, quantityname(), purchaseQty * itemQty);
+					setValue(itemData, quantityname(), parseInt(purchaseQty) * parseInt(itemQty));
 					if (data.sell > 0 && !setting("use-generic-price"))
 						setPrice(itemData, pricename(), { value: data.sell, currency: data.currency });
 					delete itemData._id;
 					if (!data.consumable) {
-						let sheet = actor.sheet;
-						if (MEJHelpers.canDropOnActorSheet(sheet))
-							sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
-						else
-							actor.createEmbeddedDocuments("Item", [itemData]);
+						await MonksEnhancedJournal.addOrStackToInventory(actor, itemData);
 					}
 					//deduct the gold
 					if (data.sell > 0)
@@ -3786,6 +3782,29 @@ export class MonksEnhancedJournal {
 		}
 
 		message.update({ content: content[0].outerHTML, flags: { 'monks-enhanced-journal': { accepted: !!accepted, offered: !!offered, approved: !!approved } } });
+	}
+
+	static async addOrStackToInventory(actor, itemData) {
+		let existing = actor.items.find(i => i.name === itemData.name && i.type === itemData.type);
+		if (existing) {
+			let existingQty = getValue(existing, quantityname(), 1);
+			let addQty = getValue(itemData, quantityname(), 1);
+			let update = {system: {}};
+			foundry.utils.setProperty(update.system, quantityname(), parseInt(existingQty) + parseInt(addQty));
+			await existing.update(update);
+		} else {
+			let sheet = actor.sheet;
+			if (MEJHelpers.canDropOnActorSheet(sheet))
+				sheet._onDropItem({
+					preventDefault: () => {
+					}, target: {
+						closest: () => {
+						}
+					}
+				}, itemData);
+			else
+				actor.createEmbeddedDocuments("Item", [itemData]);
+		}
 	}
 
 	static updateSale(event) {
