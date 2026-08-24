@@ -2605,15 +2605,14 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             let item = await EnhancedJournalSheet.getDocument(d);
 
             if (item) {
-                let oldId = (item._id || item.id)?.replace("Item.", "");
                 let existingItem = Object.values(this.getItemList()).find(i => {
-                    let parentId = i.flags["monks-enhanced-journal"]?.parentId?.replace("Item.", "");
-                    return (!!oldId && !!parentId && parentId == oldId);
+                    return (i.name === item.name);
                 });
                 if (existingItem) {
                     // Increase quantity if already exists
                     existingItem = items[existingItem._id];
-                    let quantity = parseInt(foundry.utils.getProperty(existingItem, "flags.monks-enhanced-journal.quantity")) + 1;
+                    let addedQty = foundry.utils.getProperty(item, "flags.monks-enhanced-journal.quantity")
+                    let quantity = parseInt(foundry.utils.getProperty(existingItem, "flags.monks-enhanced-journal.quantity")) + addedQty;
                     foundry.utils.setProperty(existingItem, "flags.monks-enhanced-journal.quantity", quantity);
                     let remaining = parseInt(foundry.utils.getProperty(existingItem, "flags.monks-enhanced-journal.remaining")) + 1;
                     foundry.utils.setProperty(existingItem, "flags.monks-enhanced-journal.remaining", remaining);
