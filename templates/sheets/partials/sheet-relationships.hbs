@@ -16,7 +16,7 @@
             <li class="item flexrow" data-id="{{document.id}}" data-uuid="{{document.uuid}}" data-document="JournalEntry" draggable="false">
                 <div class="item-name clickable">
                     <img class="item-image large actor-icon" src="{{document.img}}" onerror="if (!this.imgerr) { this.imgerr = true; this.src = 'modules/monks-enhanced-journal/assets/{{document.type}}.png' }" />
-                    <div><a data-action="openRelationship">{{#if document.pack}}<i class="fas fa-atlas" data-tooltip="{{localize 'MonksEnhancedJournal.FromCompendium'}}"></i> {{/if}}{{document.name}}</a></div>
+                    <div><a data-action="openRelationship"{{#if document.defunct}} class="relationship-defunct"{{/if}}>{{#if document.pack}}<i class="fas fa-atlas" data-tooltip="{{localize 'MonksEnhancedJournal.FromCompendium'}}"></i> {{/if}}{{document.name}}</a></div>
                 </div>
 
                 {{#if ../../additionalField}}

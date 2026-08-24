@@ -99,7 +99,7 @@ export class ApplicationSheetConfig extends HandlebarsApplicationMixin(Applicati
         if (defaultSheetChanged) {
             const { colorScheme } = game.settings.get("core", "uiConfig");
             theme = theme || colorScheme.applications || "dark"
-            $(`.sheet.${this.#type}`).removeClass('theme-light theme-dark').addClass(`theme-${theme}`);
+            $('.monks-enhanced-journal.themed').removeClass('theme-light theme-dark').addClass(`theme-${theme}`);
         }
     }
 }

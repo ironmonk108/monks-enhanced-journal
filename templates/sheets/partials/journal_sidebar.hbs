@@ -1,5 +1,10 @@
 <aside class="sidebar journal-sidebar flexcol">
 
+    {{!-- Page search --}}
+    <search class="journal-search flexrow">
+        <input type="search" placeholder="{{localize 'SIDEBAR.Search' types=(localize 'DOCUMENT.JournalEntryPages')}}" autocomplete="off">
+    </search>
+
     {{!-- Table of Contents --}}
     <nav class="toc" data-tooltip-direction="RIGHT">
         <ol>

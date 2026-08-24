@@ -2554,7 +2554,7 @@ body.theme-light #make-offering {
     line-height: 24px;
 }
 
-#objective-display header > :not(h1) {
+#objective-display header > :not(h1):not([data-action="close"]) {
     display: none !important;
 }
 

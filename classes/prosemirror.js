@@ -9,42 +9,23 @@ export class ProseMirrorPlugin {
 
 			let font_sizes = [8, 10, 12, 14, 18, 24, 36, 48];
 
-			let marks = {
-				fontsize: {
-					attrs: {
-						fontsize: {}
-					},
-					inclusive: true,
-					parseDOM: [{ tag: "span", getAttrs: dom => ({ fontsize: dom.style.fontSize }) }],
-					toDOM: (mark) => {
-						return ["span", { style: `font-size: ${mark.attrs.fontsize}px` }]
-					}
-				},
-				mejreadaloud: {
-					attrs: {},
-					inclusive: true,
-					parseDOM: [{ tag: "section" }],
-					toDOM: () => {
-						return ["section", { class: "readaloud" }]
-					}
-				}
-			}
-
-			let schema = new ProseMirror.Schema({ nodes: menu.schema.spec.nodes, marks: menu.schema.spec.marks.append(marks) });
-			menu.schema.marks.fontsize = schema.marks.fontsize;
-			menu.schema.marks.mejreadaloud = schema.marks.mejreadaloud;
-
+			// Use the core "size" mark, which is already registered on the schema with
+			// matching DOM/String serializer entries, instead of monkey-patching a
+			// duplicate mark onto menu.schema.marks. The schema's serializers are cached
+			// the first time they're built (e.g. by the chat editor), so a mark added
+			// after that point is never picked up and throws when the page is saved.
 			items.fontsize = {
 				cssClass: 'mej-menu-fontsize',
 				title: "Font Size",
 				entries: font_sizes.map((fontsize) => {
+					let size = `${fontsize}px`;
 					return {
 						action: `size${fontsize}`,
 						title: `${fontsize}px`,
 						style: `font-size: ${fontsize}px;line-height: ${Math.max(24, fontsize)}px`,
-						mark: menu.schema.marks.fontsize,
-						attrs: { fontsize },
-						cmd: ProseMirror.commands.toggleMark(menu.schema.marks.fontsize, { fontsize })
+						mark: menu.schema.marks.size,
+						attrs: { size },
+						cmd: ProseMirror.commands.toggleMark(menu.schema.marks.size, { size })
 					}
 				}),
 			};
@@ -84,21 +65,10 @@ export class ProseMirrorPlugin {
 		if (menu.view.dom.closest('.monks-journal-sheet,.journal-sheet.journal-entry-page')) {
 			const scopes = menu.constructor._MENU_ITEM_SCOPES;
 
-			let marks = {
-				color: {
-					attrs: {
-						color: {}
-					},
-					inclusive: true,
-					parseDOM: [{ tag: "span", getAttrs: dom => ({ color: dom.style.color }) }],
-					toDOM: (mark) => {
-						return ["span", { style: `color: ${mark.attrs.color}` }]
-					}
-				}
-			}
-
-			let schema = new ProseMirror.Schema({ nodes: menu.schema.spec.nodes, marks: menu.schema.spec.marks.append(marks) });
-			menu.schema.marks.color = schema.marks.color;
+			// menu.schema.marks.color is already the core "color" mark, which is
+			// registered on the schema with matching serializer entries; no need to
+			// patch a duplicate mark in (see getProseMirrorMenuDropDowns for why that
+			// broke saving).
 
 			items.splice(5, 0, {
 				action: "background-colour",
@@ -271,7 +241,7 @@ export class ProseMirrorPlugin {
 
 			if (existing && $cursor) {
 				const [node, pos] = existing;
-				const selection = TextSelection.create(state.doc, pos, pos + node.nodeSize);
+				const selection = ProseMirror.TextSelection.create(state.doc, pos, pos + node.nodeSize);
 				tr.setSelection(selection);
 			}
 

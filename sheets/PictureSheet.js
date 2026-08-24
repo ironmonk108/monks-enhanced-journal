@@ -38,11 +38,9 @@ export class PictureSheet extends EnhancedJournalSheet {
     async _prepareBodyContext(context, options) {
         context = await super._prepareBodyContext(context, options);
 
-        context.placeholder = "MonksEnhancedJournal.Picture";
+        context.placeholder = i18n("MonksEnhancedJournal.Picture");
 
-        return foundry.utils.mergeObject(context, {
-            placeholder: i18n("MonksEnhancedJournal.PictureName"),
-        });
+        return context;
     }
 
     _prepareSubmitData(event, form, formData, updateData) {

@@ -51,19 +51,6 @@ export class SlideshowSheet extends EnhancedJournalSheet {
     };
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.slideshow"),
-            template: "modules/monks-enhanced-journal/templates/sheets/slideshow.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "entry-details" }],
-            dragDrop: [
-                { dragSelector: ".slide", dropSelector: ".slide" },
-                { dragSelector: ".slide", dropSelector: ".slideshow-body" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".tab.entry-details .tab-inner", ".tab.slides .tab-inner"]
-        });
-    }
     */
 
     static get type() {
@@ -217,14 +204,6 @@ export class SlideshowSheet extends EnhancedJournalSheet {
         return false;
     }
 
-    async _render(force, options = {}) {
-        await super._render(force, options);
-
-        if (!this.document.testUserPermission(game.user, "OWNER") || options.play) {
-            this.playSlideshow();
-        }
-    }
-
     static async createSlideThumbnail(src) {
         if (!src) return null;
         try {
@@ -308,12 +287,14 @@ export class SlideshowSheet extends EnhancedJournalSheet {
         }).observe(html);
 
         $('.add-slide', html).click(this.addSlide.bind(this));
-        $('.nav-button.play').click(this.playSlideshow.bind(this));
-        $('.nav-button.pause').click(this.pauseSlideshow.bind(this));
-        $('.nav-button.stop').click(this.stopSlideshow.bind(this));
+        $('.nav-button.play', html).click(this.playSlideshow.bind(this));
+        $('.nav-button.pause', html).click(this.pauseSlideshow.bind(this));
+        $('.nav-button.stop', html).click(this.stopSlideshow.bind(this));
 
         let size = ($('.slideshow-body .slide-textarea', html).outerWidth() || 182) / 50;
         $('.slideshow-body .slide-textarea', html).css({ 'font-size': `${size}px` });
+
+        this.updateButtons();
     }
 
     async close(options) {
@@ -811,10 +792,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
     _getSlideshowContextOptions() {
         return [
             {
-                name: "MonksEnhancedJournal.EditSlide",
+                label: "MonksEnhancedJournal.EditSlide",
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM,
-                callback: elem => {
+                visible: game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));
@@ -823,10 +804,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Duplicate",
+                label: "SIDEBAR.Duplicate",
                 icon: '<i class="far fa-copy"></i>',
-                condition: () => game.user.isGM,
-                callback: elem => {
+                visible: () => game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));
@@ -834,10 +815,10 @@ export class SlideshowSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Delete",
+                label: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: elem => {
+                visible: () => game.user.isGM,
+                onClick: (event, elem) => {
                     let li = $(elem).closest('.slide');
                     const id = li.data("slideId");
                     //const slide = this.document.flags["monks-enhanced-journal"].slides.get(li.data("entityId"));

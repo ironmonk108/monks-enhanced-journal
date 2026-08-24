@@ -4,7 +4,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 export class EditCurrency extends HandlebarsApplicationMixin(ApplicationV2) {
     constructor(options) {
         super(options);
-        this.currency = MonksEnhancedJournal.currencies;
+        this.currency = foundry.utils.duplicate(MonksEnhancedJournal.currencies);
     }
 
     static DEFAULT_OPTIONS = {
@@ -89,11 +89,12 @@ export class EditCurrency extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     changeData(event) {
-        let currid = event.currentTarget.closest('li.item').dataset.id;
+        let idx = Number(event.currentTarget.closest('li.item').dataset.idx);
         let prop = $(event.currentTarget).attr("name");
 
-        let currency = this.currency.find(c => c.id == currid);
+        let currency = this.currency[idx];
         if (currency) {
+            let currid = currency.id;
             let val = $(event.currentTarget).val();
             if (prop == "convert") {
                 if (isNaN(val))
@@ -116,13 +117,13 @@ export class EditCurrency extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     static removeCurrency(event, target) {
-        let currid = target.closest('li.item').dataset.id;
-        this.currency.findSplice(s => s.id === currid);
+        let idx = Number(target.closest('li.item').dataset.idx);
+        this.currency.splice(idx, 1);
         this.refresh();
     }
 
     static resetCurrency() {
-        this.currency = MonksEnhancedJournal.defaultCurrencies;
+        this.currency = foundry.utils.duplicate(MonksEnhancedJournal.defaultCurrencies);
         this.refresh();
     }
 

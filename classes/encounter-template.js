@@ -31,6 +31,15 @@ export class EncounterTemplate extends foundry.canvas.placeables.MeasuredTemplat
 
     /* -------------------------------------------- */
 
+    /**
+     * The anchor position recorded when placement begins, used to compute
+     * distance/direction as the mouse moves.
+     * @type {{x: number, y: number}}
+     */
+    #origin;
+
+    /* -------------------------------------------- */
+
     get isVisible() {
         return game.user.isGM;
     }
@@ -168,10 +177,11 @@ export class EncounterTemplate extends foundry.canvas.placeables.MeasuredTemplat
         canvas.stage.off("pointermove", this.#events.move);
         canvas.stage.on("pointermove", this.#events.size);
         this.#stage = 1;
+        this.#origin = { x: this.document.x, y: this.document.y };
     }
 
     _onSizePlacement(event) {
-        const { origin } = event.interactionData;
+        const origin = this.#origin ?? { x: this.document.x, y: this.document.y };
         event.stopPropagation();
         event.stopImmediatePropagation();
 
@@ -198,7 +208,9 @@ export class EncounterTemplate extends foundry.canvas.placeables.MeasuredTemplat
  * @param {Event} event  Triggering event that ended the placement.
  */
     async _finishPlacement(event) {
-        this.layer._onDragLeftCancel(event);
+        // don't route through _onDragLeftCancel: it requires event.interactionData, which raw
+        // stage/native events don't carry — clear the preview container directly
+        this.layer.clearPreviewContainer();
         canvas.stage.off("pointermove", this.#events.move);
         canvas.stage.off("pointermove", this.#events.size);
         canvas.stage.off("pointerdown", this.#events.position);

@@ -1,4 +1,4 @@
-﻿import { setting, i18n, format, log, warn, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname, getVolume } from "../monks-enhanced-journal.js";
+﻿import { setting, i18n, format, log, warn, error, makeid, MonksEnhancedJournal, quantityname, pricename, currencyname, getVolume } from "../monks-enhanced-journal.js";
 import { CustomisePage } from "../apps/customise-page.js";
 import { EditSound } from "../apps/editsound.js";
 import { MakeOffering } from "../apps/make-offering.js";
@@ -476,7 +476,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             let document = await fromUuid(data.uuid);
             this.enhancedjournal.open(document);
         } else if (data.type == 'Item') {
-            this.addItems(data);
+            this.addItem(data);
         } else
             return false;
     }
@@ -506,12 +506,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     async _onRender(context, options) {
         super._onRender(context, options);
 
+        $(this.trueElement)
+            .attr('entity-type', this.document.type)
+            .attr('entity-id', this.document.id)
+            .attr('entity-uuid', this.document.uuid);
+
+        if (game.system.id == "pf2e") {
+            $(this.trueElement).addClass("journal-entry-page");
+            $('.editor-display[data-key="text.content"]', this.trueElement).addClass("journal-page-content");
+        }
+
         if (!this.enhancedjournal) {
-            $(this.trueElement)
-                .attr('entity-type', this.document.type)
-                .attr('entity-id', this.document.id)
-                .attr('entity-uuid', this.document.uuid)
-                .removeClass('dnd5e2 dnd5e2-journal');
+            $(this.trueElement).removeClass('dnd5e2 dnd5e2-journal');
 
             if (setting('background-image') != 'none') {
                 $(this.trueElement).attr("background-image", setting('background-image'));
@@ -728,8 +734,32 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         let results = {};
         for (let [relationshipId, relationship] of Object.entries(relationships)) {
             let entity = relationship.uuid ? await fromUuid(relationship.uuid) : game.journal.get(relationshipId);
-            if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage))
+            if (!(entity instanceof JournalEntry || entity instanceof JournalEntryPage)) {
+                // The relationship's target no longer resolves - show it to the GM so they can clean it up, but never to players
+                if (game.user.isGM) {
+                    let type = "defunct";
+                    if (!results[type])
+                        results[type] = {
+                            type: type,
+                            name: i18n("MonksEnhancedJournal.Unknown"),
+                            documents: []
+                        };
+
+                    if (results[type].documents.some(r => r.id == relationship.id && r.uuid == relationship.uuid))
+                        continue;
+
+                    relationship.id = relationship.id || relationshipId;
+                    relationship.name = relationship.name || i18n("MonksEnhancedJournal.Unknown");
+                    relationship.img = `modules/monks-enhanced-journal/assets/loading.gif`;
+                    relationship.type = type;
+                    relationship.shoptype = "";
+                    relationship.role = "";
+                    relationship.defunct = true;
+
+                    results[type].documents.push(relationship);
+                }
                 continue;
+            }
             if (entity && entity.testUserPermission(game.user, "LIMITED") && (game.user.isGM || !relationship.hidden)) {
                 let page = (entity instanceof JournalEntryPage ? entity : entity.pages.contents[0]);
                 MonksEnhancedJournal.fixType(page);
@@ -750,6 +780,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 relationship.type = type;
                 relationship.shoptype = page.getFlag("monks-enhanced-journal", "shoptype");
                 relationship.role = page.getFlag("monks-enhanced-journal", "role");
+                delete relationship.defunct;
 
                 results[type].documents.push(relationship);
             }
@@ -765,18 +796,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     _getDescriptionContextOptions() {
         let menu = [
             {
-                name: "Show in Chat",
+                label: "Show in Chat",
                 icon: '<i class="fas fa-comment"></i>',
-                condition: game.user.isGM,
-                callback: () => {
+                visible: game.user.isGM,
+                onClick: () => {
                     this.copyToChat();
                 }
             },
             {
-                name: "Extract to Journal Entry",
+                label: "Extract to Journal Entry",
                 icon: '<i class="fas fa-file-export"></i>',
-                condition: game.user.isGM,
-                callback: () => {
+                visible: game.user.isGM,
+                onClick: () => {
                     this.constructor.splitJournal.call(this);
                 }
             }
@@ -786,9 +817,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             menu = menu.concat(
                 [{
                     icon: '<i class="fas fa-comment"></i>',
-                    name: 'Describe',
-                    condition: game.user.isGM,
-                    callback: () => {
+                    label: 'Describe',
+                    visible: game.user.isGM,
+                    onClick: () => {
                         const selection = NarratorTools._getSelectionText();
                         if (selection)
                             NarratorTools.chatMessage.describe(selection);
@@ -796,9 +827,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 },
                 {
                     icon: '<i class="fas fa-comment-dots"></i>',
-                    name: 'Narrate',
-                    condition: game.user.isGM,
-                    callback: () => {
+                    label: 'Narrate',
+                    visible: game.user.isGM,
+                    onClick: () => {
                         const selection = NarratorTools._getSelectionText();
                         if (selection)
                             NarratorTools.chatMessage.narrate(selection);
@@ -814,9 +845,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         let that = this;
         return [
             {
-                name: "Show Image",
+                label: "Show Image",
                 icon: '<i class="fas fa-image"></i>',
-                callback: () => {
+                onClick: () => {
                     const ip = new foundry.applications.apps.ImagePopout({
                         src: this.document.src,
                         uuid: this.document.uuid,
@@ -830,18 +861,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 }
             },
             {
-                name: "Edit Image",
+                label: "Edit Image",
                 icon: '<i class="fas fa-pencil"></i>',
-                condition: this.document.isOwner,
-                callback: () => {
+                visible: this.document.isOwner,
+                onClick: () => {
                     that._onEditImage.call(that);
                 }
             },
             {
-                name: "Clear Image",
+                label: "Clear Image",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: this.document.isOwner,
-                callback: () => {
+                visible: this.document.isOwner,
+                onClick: () => {
                     foundry.applications.api.DialogV2.confirm({
                         window: {
                             title: `Clear Item`,
@@ -868,10 +899,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     _getPersonActorContextOptions() {
         return [
             {
-                name: "SIDEBAR.Delete",
+                label: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: () => {
+                visible: () => game.user.isGM,
+                onClick: () => {
                     foundry.applications.api.DialogV2.confirm({
                         window: {
                             title: `${game.i18n.localize("SIDEBAR.Delete")} ${i18n("MonksEnhancedJournal.ActorLink")}`,
@@ -882,10 +913,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.ImportItems"),
+                label: i18n("MonksEnhancedJournal.ImportItems"),
                 icon: '<i class="fas fa-download fa-fw"></i>',
-                condition: () => game.user.isGM && this.document.type == "shop",
-                callback: () => {
+                visible: () => game.user.isGM && this.document.type == "shop",
+                onClick: () => {
                     foundry.applications.api.DialogV2.confirm({
                         window: {
                             title: i18n("MonksEnhancedJournal.ImportAllActorItems"),
@@ -896,17 +927,17 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 }
             },
             {
-                name: i18n("MonksEnhancedJournal.OpenActorSheet"),
+                label: i18n("MonksEnhancedJournal.OpenActorSheet"),
                 icon: '<i class="fas fa-user fa-fw"></i>',
-                condition: () => game.user.isGM,
-                callback: () => {
+                visible: () => game.user.isGM,
+                onClick: () => {
                     this.openActor.call(this, { newtab: true });
                 }
             },
             {
-                name: "Show Image",
+                label: "Show Image",
                 icon: '<i class="fas fa-image"></i>',
-                callback: () => {
+                onClick: () => {
                     let actorLink = this.document.getFlag('monks-enhanced-journal', 'actor');
                     let actor = game.actors.find(a => a.id == actorLink.id);
                     if (!actor)
@@ -926,12 +957,23 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         ];
     }
 
+    _toggleDisabled(disabled) {
+        let element = this.trueElement;
+        if (!element) return;
+        element.querySelectorAll("secret-block").forEach(b => b.revealable = !disabled);
+        const form = this.form;
+        if (!form) return;
+        for (const el of form.elements) el.disabled = disabled;
+        for (const input of form.querySelectorAll("input[type=image]")) input.disabled = disabled;
+        for (const img of form.querySelectorAll("img[data-edit]")) img.classList.toggle("disabled", disabled);
+        if (disabled) this._disableFields(form);
+    }
+
     _disableFields(form) {
-        super._disableFields(form);
         let hasGM = (game.users.find(u => u.isGM && u.active) != undefined);
         if (hasGM) {
             $('.tab.notes .editor-edit', form).removeAttr('disabled');
-            $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly').on('blur', this._onChangeInput.bind(this));
+            $(`textarea[name="flags.monks-enhanced-journal.${game.user.id}.notes"]`, form).removeAttr('disabled').removeAttr('readonly');
         }
         //$('.editor-edit', form).css({ width: '0px !important', height: '0px !important' });
     }
@@ -1025,23 +1067,16 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     }
 
     static async addCurrency(actor, denomination, value) {
+        let ident = (c) => (game.system.id == 'dsa5' ? c.name : c.id); // dsa5's currency items are named after the real coin, not the module's placeholder id, see #795
         let changes = {};
         if (value < 0 && setting("purchase-conversion")) {
             let currencies = foundry.utils.duplicate(MonksEnhancedJournal.currencies || []).filter(c => c.convert != undefined);
             for (let curr of currencies) {
-                let currIdentifier = (game.system.id == 'dsa5') ? curr.name : curr.id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
-                curr.value = parseInt(this.getCurrency(actor, currIdentifier) || 0);
+                curr.value = parseInt(this.getCurrency(actor, ident(curr)) || 0);
             }
 
-            let denomIdx;
-            if (game.system.id == 'dsa5') { // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
-                changes = currencies.reduce((a, v) => ({ ...a, [v.name]: v.value }), {});
-                denomIdx = currencies.findIndex(c => c.name == denomination);
-            }
-            else {
-                changes = currencies.reduce((a, v) => ({ ...a, [v.id]: v.value }), {});
-                denomIdx = currencies.findIndex(c => c.id == denomination);
-            }
+            changes = currencies.reduce((a, v) => ({ ...a, [ident(v)]: v.value }), {});
+            let denomIdx = currencies.findIndex(c => ident(c) == denomination);
             if (denomIdx == -1)
                 return;
 
@@ -1073,8 +1108,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                         remainder -= used;
                         
                         let unused = available - used;
-                        let currIdentifier = (game.system.id == 'dsa5') ? currencies[idx].name : currencies[idx].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
-                        changes[currIdentifier] -= used / rate; // Substraction is required to ensure that overstanding amounts of lower denominations won't be cut off.
+                        changes[ident(currencies[idx])] = Math.floor(unused / rate);
                         unused -= Math.floor(unused / rate) * rate;
 
                         if (idx < denomIdx && unused > 0) {
@@ -1083,13 +1117,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                             while (unused > 0 && jdx < currencies.length) {
                                 let r = (currencies[jdx].convert || 1) / (currencies[denomIdx].convert || 1);
                                 let disperse = unused / r;
-                                let currIdentifier = (game.system.id == 'dsa5') ? currencies[jdx].name : currencies[jdx].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
-                                changes[currIdentifier] += Math.floor(disperse);
+                                changes[ident(currencies[jdx])] += Math.floor(disperse);
                                 unused -= Math.floor(disperse) * r;
-
-                                // We also need to remove the dispersed amount from the higher denomination
-                                currIdentifier = (game.system.id == 'dsa5') ? currencies[jdx-1].name : currencies[jdx-1].id; // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
-                                changes[currIdentifier] = Math.floor(changes[currIdentifier]);
 
                                 jdx++;
                             }
@@ -1103,13 +1132,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             //changes[denomination] += value;
 
             for (let curr of Object.keys(changes)) {
-                let orig;
-                if (game.system.id == 'dsa5') { // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/795
-                    orig = currencies.find(c => c.name == curr);
-                } else {
-                    orig = currencies.find(c => c.id == curr);
-                }
-                if (orig !== undefined && changes[curr] == orig.value)
+                let orig = currencies.find(c => ident(c) == curr);
+                if (changes[curr] == orig.value)
                     delete changes[curr];
             }
         } else
@@ -1127,8 +1151,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                     if (items.length)
                         coinage = items[0];
                 } else {
-                    updates[`system.quantity`] = v;
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity": v }));
                 }
             }
             return Promise.all(promises);
@@ -1138,8 +1161,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 let currency = MonksEnhancedJournal.currencies.find(c => c.id == k);
                 let coinage = actor.items.find(i => { return i.type == "currency" && i.name == currency });
                 if (coinage) {
-                    updates[`system.quantity`] = v;
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity": v }));
                 }
             }
             return Promise.all(promises);
@@ -1148,13 +1170,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             for (let [k, v] of Object.entries(changes)) {
                 let coinage = actor.items.find(i => { return i.type == "money" && i.name == k });
                 if (coinage) {
-                    updates[`system.quantity`] = { value: v };
-                    await(new Promise(resolve =>
-                        resolve(coinage.update(updates))));
-                    // for some weird reason, dsa5 has issues with Promise.all(promises): only the last update gets processed. Therefore, we need to process them one by one.
+                    promises.push(coinage.update({ "system.quantity": { value: v } }));
                 }
             }
-            return null; // Promise.all(promises) won't work correctly here - see above.
+            return Promise.all(promises);
         } else if (game.system.id == 'wfrp4e') {
             let promises = [];
             for (let [k, v] of Object.entries(changes)) {
@@ -1167,8 +1186,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                     if (items.length)
                         coinage = items[0];
                 } else {
-                    updates[`system.quantity.value`] = v;
-                    promises.push(coinage.update(updates));
+                    promises.push(coinage.update({ "system.quantity.value": v }));
                 }
             }
             return Promise.all(promises);
@@ -1754,7 +1772,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 itemData.rarity = i18n(CONFIG.PF2E.rarityTraits[item.system?.traits?.rarity]);
             }
 
-            if (game.user.isGM || this.document.isOwner || (item.hide !== true && (flags.quantity !== 0 || setting('show-zero-quantity')))) {
+            if (game.user.isGM || this.document.isOwner || (item.hidden !== true && (flags.quantity !== 0 || setting('show-zero-quantity')))) {
                 let groupId = (!sort || sort == "name" ? this.slugify(item.type) : "");
                 if (groups[groupId] == undefined)
                     groups[groupId] = { id: groupId, name: item.type || "Unknown", items: [] };
@@ -1858,7 +1876,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     static async getDocument(data, type, notify = true) {
         let document;
         if (data.data) {
-            document = new CONFIG.Item.documentClass(data.data, {});
+            // Assumes Actor and Item subtype names don't overlap in practice; falls back to Item when the type isn't a known Actor subtype.
+            let cls = CONFIG.Actor.documentClass.TYPES.includes(data.data.type) ? CONFIG.Actor : CONFIG.Item;
+            document = new cls.documentClass(data.data, {});
         } else if (data.pack) {
             const pack = game.packs.get(data.pack);
             let id = data.id;
@@ -2317,6 +2337,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                         let currency = that.document.getFlag('monks-enhanced-journal', "currency") || {};
                         let currChanged = false;
+                        let skippedTextResults = [];
 
                         for (let i = 0; i < numberof; i++) {
                             const available = table.results.filter(r => !r.drawn);
@@ -2345,7 +2366,10 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                                         }
                                         break;
                                     default:
-                                        if (foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type") == 'loot') {
+                                        let text = tableresult.text;
+                                        let isCurrencyText = (text.startsWith("{") && text.endsWith("}") && text.length > 2) || (text.startsWith("[[/award") && text.endsWith("]]"));
+
+                                        if (isCurrencyText && foundry.utils.getProperty(this.document, "flags.monks-enhanced-journal.type") == 'loot') {
                                             async function tryRoll(formula) {
                                                 try {
                                                     return (await (new Roll(formula)).roll({ async: true })).total || 1;
@@ -2354,7 +2378,6 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                                                 }
                                             }
 
-                                            let text = tableresult.text;
                                             let textCoins = [];
                                             if (text.startsWith("{") && text.endsWith("}") && text.length > 2) {
                                                 let splitStr = (text.indexOf("[") > -1 && text.indexOf("]") > -1) ? "," : " ";
@@ -2397,6 +2420,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                                                 let value = await tryRoll(tc.formula);
                                                 currency[tc.coin] = (currency[tc.coin] || 0) + value;
                                                 currChanged = true;
+                                            }
+                                        } else if (itemtype == "items" && text) {
+                                            // Plain text result, not a currency formula - create a generic item so it isn't silently dropped
+                                            if (CONFIG.Item.typeLabels.loot) {
+                                                item = new Item.implementation({ name: text, type: "loot" });
+                                            } else {
+                                                skippedTextResults.push(text);
                                             }
                                         }
                                 }
@@ -2494,6 +2524,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                         if (currChanged)
                             await that.document.setFlag('monks-enhanced-journal', "currency", currency);
+
+                        if (skippedTextResults.length)
+                            ui.notifications.warn(format("MonksEnhancedJournal.msg.CouldNotCreateItemFromRollTableText", { results: skippedTextResults.join(", ") }));
                     }
                 }
             },
@@ -2538,9 +2571,9 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             if (journal && journal.pages.size > 0) {
                 let page = journal.pages.contents[0];
                 if (journal.isOwner && page.isOwner) {
-                    page.unsetFlag('monks-enhanced-journal', `relationships.${id}`);
+                    page.unsetFlag('monks-enhanced-journal', `relationships.${this.document.parent?.id ?? this.document.id}`);
                 } else {
-                    MonksEnhancedJournal.emit("deleteRelationship", { uuid: journal.uuid, id: this.document.id, page: this.document.id });
+                    MonksEnhancedJournal.emit("deleteRelationship", { uuid: journal.uuid, id: this.document.parent?.id ?? this.document.id, page: this.document.id });
                 }
             }
         }
@@ -2562,24 +2595,6 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         let relationships = this.document.getFlag('monks-enhanced-journal', 'relationships') || {};
         relationships[li.dataset.id].hidden = !relationships[li.dataset.id].hidden;
         await this.document.setFlag('monks-enhanced-journal', 'relationships', relationships);
-
-
-        // Toggle 
-        let journal;
-        if (li.dataset.uuid) {
-            journal = await fromUuid(li.dataset.uuid);
-        } else {
-            journal = game.journal.get(li.dataset.id);
-        }
-        if (journal && (journal instanceof JournalEntryPage || journal.pages.size > 0)) {
-            let page = journal instanceof JournalEntryPage ? journal : journal.pages.contents[0];
-            let otherRelationships = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
-            let otherRelationship = Object.values(otherRelationships).find(value => value.uuid == this.document.uuid || value.uuid == this.document.parent.uuid);
-            if (otherRelationship) {
-                otherRelationship.hidden = !otherRelationship.hidden;
-                page.setFlag('monks-enhanced-journal', "relationships", otherRelationships);
-            }
-        }
     }
 
     async addItem(data) {
@@ -2608,7 +2623,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
 
                         let itemData = item.toObject();
                         if ((itemData.type === "spell") && game.system.id == 'dnd5e') {
-                            itemData = await EncounterSheet.createScrollFromSpell(itemData);
+                            itemData = await EnhancedJournalSheet.createScrollFromSpell(itemData);
                         }
 
                         let sysPrice = MEJHelpers.getSystemPrice(item, pricename()); //MEJHelpers.getPrice(foundry.utils.getProperty(item, "flags.monks-enhanced-journal.price"));
@@ -2695,25 +2710,6 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             if (items[id]) {
                 items[id].hidden = !items[id].hidden;
                 await this.document.setFlag('monks-enhanced-journal', collection, items);
-            }
-
-            if (collection == "relationships") {
-                // Toggle 
-                let journal;
-                if (li.dataset.uuid) {
-                    journal = await fromUuid(li.dataset.uuid);
-                } else {
-                    journal = game.journal.get(li.dataset.id);
-                }
-                if (journal && (journal instanceof JournalEntryPage || journal.pages.size > 0)) {
-                    let page = journal instanceof JournalEntryPage ? journal : journal.pages.contents[0];
-                    let otherRelationships = foundry.utils.duplicate(foundry.utils.getProperty(page, "flags.monks-enhanced-journal.relationships") || {});
-                    let otherRelationship = Object.values(otherRelationships).find(value => value.uuid == this.document.uuid || value.uuid == this.document.parent.uuid);
-                    if (otherRelationship) {
-                        otherRelationship.hidden = !otherRelationship.hidden;
-                        page.setFlag('monks-enhanced-journal', "relationships", otherRelationships);
-                    }
-                }
             }
         }
     }
@@ -2930,11 +2926,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         if (EnhancedJournalSheet.isLootActor(lootSheet)) {
             if (lootSheet == "item-piles") {
                 if (entity instanceof Folder || lootEntity == "root") {
-                    let ipOptions = {
-                        position: { x: ptAvg.x / ptAvg.count, y: ptAvg.y / ptAvg.count },
-                        //items,
-                        //itemPileFlags: { enabled: true }
-                    };
+                    let ipOptions = {};
 
                     let folder = entity;
                     let foldernames = [];
@@ -3148,7 +3140,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 return;
 
             relationships[relationship.id] = relationship;
-            this.document.setFlag("monks-enhanced-journal", "relationships", relationships);
+            try {
+                await this.document.setFlag("monks-enhanced-journal", "relationships", relationships);
+            } catch (err) {
+                error(err);
+                ui.notifications.warn(i18n("MonksEnhancedJournal.msg.CannotWriteRelationshipToLockedCompendium"));
+                return;
+            }
 
             //add the reverse relationship
             if (cascade) {
@@ -3157,7 +3155,7 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 if (original.isOwner && orgPage.isOwner) {
                     MonksEnhancedJournal.fixType(orgPage);
                     let sheet = orgPage.sheet;
-                    sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: true }, false);
+                    await sheet.addRelationship({ id: this.document.parent.id, uuid: this.document.parent.uuid, hidden: true }, false);
                 } else {
                     MonksEnhancedJournal.emit("addRelationship", { uuid: relationship.uuid, relationship: { id: this.document.parent.id, uuid: this.document.parent.uuid }, page: this.document.id, hidden: true });
                 }
@@ -3187,7 +3185,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         } = itemData.system;
 
         // Get scroll data
-        const scrollUuid = `Compendium.${CONFIG.DND5E.sourcePacks.ITEMS}.${CONFIG.DND5E.spellScrollIds[level]}`;
+        const spellScrollId = CONFIG.DND5E.spellScrollIds[level];
+        const scrollUuid = spellScrollId?.startsWith("Compendium.") ? spellScrollId : `Compendium.${CONFIG.DND5E.sourcePacks.ITEMS}.${spellScrollId}`;
         const scrollItem = await fromUuid(scrollUuid);
         const scrollData = scrollItem.toObject();
         delete scrollData._id;
@@ -3565,9 +3564,18 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
             destActor = game.actors.find(a => a.id == actorLink.id);
 
         for (let [k, v] of Object.entries(offering.currency)) {
-            this.addCurrency(actor, k, -v);
+            let checkKey = (game.system.id == 'dsa5' ? (MonksEnhancedJournal.currencies.find(c => c.id == k)?.name ?? k) : k); // dsa5 coins resolve by name, see #795
+            if (v > 0 && parseInt(this.constructor.getCurrency(actor, checkKey) || 0) < v) {
+                ui.notifications.error(`${actor.name} no longer has enough ${k}, cannot accept this offering`);
+                return;
+            }
+        }
+
+        for (let [k, v] of Object.entries(offering.currency)) {
+            let checkKey = (game.system.id == 'dsa5' ? (MonksEnhancedJournal.currencies.find(c => c.id == k)?.name ?? k) : k); // dsa5 coins resolve by name, see #795
+            this.addCurrency(actor, checkKey, -v);
             if (destActor)
-                this.addCurrency(destActor, k, v);
+                this.addCurrency(destActor, checkKey, v);
         }
 
         for (let item of offering.items) {
@@ -3576,23 +3584,11 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 delete itemData._id;
                 let itemQty = getValue(itemData, quantityname(), 1);
                 setValue(itemData, quantityname(), item.qty * itemQty);
-
-                // make sure to stack the item to any identical ones in the target inventory
-                let existing = destActor.items.getName(itemData.name);
-                if (existing === undefined || !await ShopSheet.addPurchasedItemToExistingStack(existing, parseInt(itemQty))) {
-                    let sheet = destActor.sheet;
-                    if (sheet._onDropItem
-                        && itemData.toObject == 'function') // Temporary dsa5 hack (until further investigation) for https://github.com/ironmonk108/monks-enhanced-journal/issues/794
-                        sheet._onDropItem({
-                            preventDefault: () => {
-                            }, target: {
-                                closest: () => {
-                                }
-                            }
-                        }, itemData);
-                    else
-                        destActor.createEmbeddedDocuments("Item", [itemData]);
-                }
+                let sheet = destActor.sheet;
+                if (MEJHelpers.canDropOnActorSheet(sheet))
+                    sheet._onDropItem({ preventDefault: () => { }, target: { closest: () => { } } }, itemData);
+                else
+                    destActor.createEmbeddedDocuments("Item", [itemData]);
             }
             // Save the image if we're about to delete it
             let realitem = offer.items.find(i => i.id == item.id);

@@ -138,7 +138,7 @@ export class TransferCurrency extends HandlebarsApplicationMixin(ApplicationV2) 
                 remainder[k] = (remainder[k] ?? 0) - v;
             }
         }
-        if (game.user.isGM || this.document.isOwner) {
+        if (game.user.isGM || this.options.document.isOwner) {
             await this.options.document.setFlag('monks-enhanced-journal', 'currency', remainder);
         } else {
             // Send this to the GM to update the loot sheet currency

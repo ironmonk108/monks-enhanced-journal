@@ -1,2 +1,4 @@
 .vs/
 .svn/
+.playwright-mcp/
+.obsidian/

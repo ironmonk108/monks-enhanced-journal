@@ -173,7 +173,7 @@
     --mej-sheet-button-background: rgb(192, 192, 192);
     --mej-sheet-button-background-hover: var(--mej-sheet-button-background);
     --mej-sheet-button-color: var(--mej-sheet-color);
-    --mej-slideshow-loading-background: url("/modules/monks-enhanced-journal/assets/loading.gif") no-repeat center center cover;
+    --mej-slideshow-loading-background: url("../assets/loading.gif") no-repeat center center cover;
 }
 
 #enhanced-journal-sheet > menu.controls-dropdown {
@@ -1664,7 +1664,7 @@ body[inline-roll-styling="true"] a.tile-trigger-link i {
 
 .edit-currency .items-list header,
 .edit-currency .items-list ol {
-    grid-template-columns: 80px auto 80px 40px;
+    grid-template-columns: minmax(80px, auto) auto minmax(80px, auto) minmax(40px, auto);
 }
 
 #list-item-edit .items-list header,
@@ -1809,4 +1809,9 @@ body.theme-light #list-item-edit .items-list header {
 
 .menu-dialog.prosemirror .mej-centered-form {
     width: unset;
+}
+
+.relationship-defunct {
+    text-decoration: line-through;
+    color: var(--mej-sheet-header-underline);
 }

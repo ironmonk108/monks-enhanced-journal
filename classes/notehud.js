@@ -102,10 +102,4 @@ export class NoteHUD extends HandlebarsApplicationMixin(BasePlaceableHUD) {
         }
     }
 
-    _updatePosition(position) {
-        position = super._updatePosition(position);
-        position.left = position.left - (this.document.iconSize / 2);
-        position.top = position.top - (this.document.iconSize / 2);
-        return position;
-    }
 }

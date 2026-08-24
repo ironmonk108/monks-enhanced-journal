@@ -44,11 +44,9 @@ export class TextEntrySheet extends EnhancedJournalSheet {
     async _prepareBodyContext(context, options) {
         context = await super._prepareBodyContext(context, options);
 
-        context.placeholder = "MonksEnhancedJournal.JournalEntryName";
+        context.placeholder = i18n("MonksEnhancedJournal.JournalEntryName");
 
-        return foundry.utils.mergeObject(context, {
-            placeholder: i18n("MonksEnhancedJournal.JournalName"),
-        });
+        return context;
     }
 }
 

@@ -80,21 +80,6 @@ export class QuestSheet extends EnhancedJournalSheet {
     }
 
     /*
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: i18n("MonksEnhancedJournal.sheettype.quest"),
-            template: "modules/monks-enhanced-journal/templates/sheets/quest.html",
-            tabs: [{ navSelector: ".tabs", contentSelector: ".sheet-body", initial: "description" }],
-            dragDrop: [
-                { dragSelector: ".document.actor", dropSelector: ".quest-container" },
-                { dragSelector: ".document.item", dropSelector: ".quest-container" },
-                { dragSelector: ".reward-items .item-list .item .item-name", dropSelector: "null" },
-                { dragSelector: ".objective-items .item-list .item", dropSelector: ".quest-container" },
-                { dragSelector: ".sheet-icon", dropSelector: "#board" }
-            ],
-            scrollY: [".objective-items", ".reward-container .reward-items > .item-list", ".tab.description .tab-inner"]
-        });
-    }
     */
 
     getCurrentRewardId() {
@@ -163,8 +148,7 @@ export class QuestSheet extends EnhancedJournalSheet {
                         reward.itemIds.push(item._id);
                     }
                 }
-                delete reward.items;
-                reward["-=items"] = null;
+                reward.items = new foundry.data.operators.ForcedDeletion();
                 changed = true;
             }
         }
@@ -347,6 +331,16 @@ export class QuestSheet extends EnhancedJournalSheet {
         }).bind(html);
 
         new foundry.applications.ux.DragDrop.implementation({
+            dropSelector: ".objective-items",
+            permissions: {
+                drop: () => game.user.isGM || this.document.isOwner
+            },
+            callbacks: {
+                drop: this._onDropRewardItem.bind(this)
+            }
+        }).bind(html);
+
+        new foundry.applications.ux.DragDrop.implementation({
             dragSelector: ".item-list .item-name",
             permissions: {
                 dragstart: this._canDragItemStart.bind(this)
@@ -442,7 +436,7 @@ export class QuestSheet extends EnhancedJournalSheet {
         foundry.utils.setProperty(submitData, "flags.monks-enhanced-journal.rewards", rewards);
 
         let reward = rewards[this.getCurrentRewardId()];
-        if (reward?.currency !== undefined)
+        if (reward)
             reward.currency = foundry.utils.getProperty(submitData, "flags.monks-enhanced-journal.currency") || {};
 
         // Make sure to include all the objectives data if you're updating data
@@ -495,8 +489,7 @@ export class QuestSheet extends EnhancedJournalSheet {
 
         let items = this.document.getFlag('monks-enhanced-journal', 'items') || {};
         for (let itemId of reward.itemIds || []) {
-            delete items[itemId];
-            items[`-=${itemId}`] = null;
+            items[itemId] = new foundry.data.operators.ForcedDeletion();
         }
         await this.document.setFlag('monks-enhanced-journal', 'items', items);
 
@@ -570,9 +563,9 @@ export class QuestSheet extends EnhancedJournalSheet {
 
         const dragData = { from: 'monks-enhanced-journal' };
 
-        if (li.dataset.document == 'Item') {
-            let id = li.dataset.id;
+        let id = li.dataset.id;
 
+        if (li.dataset.document == 'Item') {
             let reward = this.getReward();
             if (reward == undefined)
                 return;
@@ -614,22 +607,38 @@ export class QuestSheet extends EnhancedJournalSheet {
                 this.addItem(data);
         } else if (data.type == 'Objective') {
             //re-order objectives
-            let objectives = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.objectives || []);
+            // Objectives are persisted as an object keyed by id (see _prepareBodyContext's
+            // array->object migration and Objectives#save), not an array, so reorder by key order.
+            let objectives = foundry.utils.duplicate(this.document.flags['monks-enhanced-journal']?.objectives || {});
+            let ids = Object.keys(objectives);
 
-            let from = objectives.findIndex(a => a.id == data.id);
-            let to = objectives.length - 1;
-            if (!$(event.target).hasClass('objectives')) {
-                const target = event.target.closest(".item") || null;
+            let from = ids.indexOf(data.id);
+            let to = ids.length - 1;
+            const target = event.target.closest(".item");
+            if (target) {
                 if (data.id === target.dataset.id) return; // Don't drop on yourself
-                to = objectives.findIndex(a => a.id == target.dataset.id);
+                to = ids.indexOf(target.dataset.id);
             }
-            if (from == to)
+            if (from == to || from == -1 || to == -1)
                 return;
 
-            objectives.splice(to, 0, objectives.splice(from, 1)[0]);
+            ids.splice(to, 0, ids.splice(from, 1)[0]);
 
-            this.document.flags['monks-enhanced-journal'].objectives = objectives;
-            this.document.setFlag('monks-enhanced-journal', 'objectives', objectives);
+            let reordered = {};
+            for (let id of ids)
+                reordered[id] = objectives[id];
+
+            // setFlag/update diff & merge by value, not key order: a same-key same-value reorder diffs
+            // to "no change" and is silently dropped. ForcedReplacement is always retained by diffObject
+            // and committed without inner recursion, so the new key order lands verbatim in ONE write —
+            // no intermediate deleted-flag state (which used to blank the tab and the Quests HUD).
+            try {
+                await this.document.setFlag('monks-enhanced-journal', 'objectives',
+                    new foundry.data.operators.ForcedReplacement(reordered));
+            } catch (err) {
+                console.error("Monk's Enhanced Journal | failed to persist objective reorder", err);
+                ui.notifications.error("Failed to reorder objectives — original order unchanged");
+            }
         } else if (data.type == 'Folder') {
             if (!this.document.isOwner)
                 return false;
@@ -799,8 +808,7 @@ export class QuestSheet extends EnhancedJournalSheet {
         reward.itemIds = assignedIds;
         for (let key of Object.keys(rewardItems)) {
             if (!assignedIds.includes(key)) {
-                delete items[key];
-                items[`-=${key}`] = null;
+                items[key] = new foundry.data.operators.ForcedDeletion();
             }
         }
         this.setFlag('monks-enhanced-journal', 'items', items);

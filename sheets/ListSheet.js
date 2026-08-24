@@ -58,7 +58,7 @@ export class ListSheet extends EnhancedJournalSheet {
     }
 
     get subtype() {
-        return this.document.getFlag("monks-enhanced-journal", "subtype", "basic");
+        return this.document.getFlag("monks-enhanced-journal", "subtype") ?? "basic";
     }
 
     static get defaultObject() {
@@ -179,12 +179,6 @@ export class ListSheet extends EnhancedJournalSheet {
         this.entries = (this.document?.flags['monks-enhanced-journal']?.entries || []).map(i => { return { id: i.id, document: i, sort: idx++ }; });
         // Build Tree
         this.tree = this.constructor.setupFolders(this.folders, this.entries);
-    }
-
-    async _render(force = false, options = {}) {
-        if (options.reload)
-            this.initialize();
-        super._render(force, options);
     }
 
     _documentControls() {
@@ -662,10 +656,10 @@ export class ListSheet extends EnhancedJournalSheet {
         let that = this;
         return [
             {
-                name: "FOLDER.Edit",
+                label: "FOLDER.Edit",
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM || this.document.isOwner,
-                callback: header => {
+                visible: game.user.isGM || this.document.isOwner,
+                onClick: (event, header) => {
                     const li = header.parentNode;
                     const folder = that.folders.find(i => i.id == li.dataset.folderId);
                     if (!folder) return;
@@ -674,10 +668,10 @@ export class ListSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "FOLDER.Remove",
+                label: "FOLDER.Remove",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: game.user.isGM || this.document.isOwner,
-                callback: header => {
+                visible: game.user.isGM || this.document.isOwner,
+                onClick: (event, header) => {
                     const li = header.parentNode;
                     const folder = that.folders.find(f => f.id == li.dataset.folderId);
                     return foundry.applications.api.DialogV2.confirm({
@@ -697,10 +691,10 @@ export class ListSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "FOLDER.Delete",
+                label: "FOLDER.Delete",
                 icon: '<i class="fas fa-dumpster"></i>',
-                condition: game.user.isGM || this.document.isOwner,
-                callback: header => {
+                visible: game.user.isGM || this.document.isOwner,
+                onClick: (event, header) => {
                     const li = header.parentNode;
                     const folder = that.folders.find(f => f.id == li.data("folderId"));
                     return foundry.applications.api.DialogV2.confirm({
@@ -726,10 +720,10 @@ export class ListSheet extends EnhancedJournalSheet {
         let that = this;
         return [
             {
-                name: i18n("MonksEnhancedJournal.EditItem"),
+                label: i18n("MonksEnhancedJournal.EditItem"),
                 icon: '<i class="fas fa-edit"></i>',
-                condition: game.user.isGM || this.document.isOwner,
-                callback: async (li) => {
+                visible: game.user.isGM || this.document.isOwner,
+                onClick: async (event, li) => {
                     const entry = that.entries.find(i => i.id == li.dataset.documentId);
                     if (!entry) return;
 
@@ -737,10 +731,10 @@ export class ListSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Delete",
+                label: "SIDEBAR.Delete",
                 icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM || this.document.isOwner,
-                callback: li => {
+                visible: () => game.user.isGM || this.document.isOwner,
+                onClick: (event, li) => {
                     const entry = that.entries.find(i => i.id == li.dataset.documentId);
                     if (!entry) return;
                     return foundry.applications.api.DialogV2.confirm({
@@ -764,10 +758,10 @@ export class ListSheet extends EnhancedJournalSheet {
                 }
             },
             {
-                name: "SIDEBAR.Duplicate",
+                label: "SIDEBAR.Duplicate",
                 icon: '<i class="far fa-copy"></i>',
-                condition: () => game.user.isGM || this.document.isOwner,
-                callback: li => {
+                visible: () => game.user.isGM || this.document.isOwner,
+                onClick: (event, li) => {
                     let entries = (that.document.flags['monks-enhanced-journal'].entries || []);
                     const original = entries.find(i => i.id == li.dataset.documentId);
                     let newEntry = foundry.utils.duplicate(original);

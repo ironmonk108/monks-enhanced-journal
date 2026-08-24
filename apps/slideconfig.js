@@ -174,6 +174,7 @@ export class SlideConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             this.document.id = makeid();
             foundry.utils.mergeObject(this.document, submitData);
             slides.push(this.document);
+            this.options.journalentry._thumbnails ??= {};
             this.options.journalentry._thumbnails[this.slideid] = this.options.journalentry._thumbnails.new;
             delete this.options.journalentry._thumbnails.new;
         } else {
@@ -289,6 +290,7 @@ export class SlideConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async updateImage() {
         let src = $('[name="img"] > input', this.element).val()
+        this.options.journalentry._thumbnails ??= {};
         this.options.journalentry._thumbnails[this.slideid] = await createSlideThumbnail(src);
         let thumbnail = this.options.journalentry._thumbnails[this.slideid] || src;
 

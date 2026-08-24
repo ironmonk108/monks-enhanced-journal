@@ -111,12 +111,12 @@ export class PlaceSheet extends EnhancedJournalSheet {
             let attributes = {};
             let sheetSettings = {};
             let flags = foundry.utils.getProperty(context, "data.flags.monks-enhanced-journal") || {};
-            let defaultSettings = this.document.constructor.sheetSettings() || {};
+            let defaultSettings = this.sheetSettings() || {};
 
             for (let attr of Object.keys(defaultSettings.attributes)) {
                 attributes[attr] = flags[attr] || "";
                 if (fields[attr] != undefined)
-                    sheetSettings[attr].shown = !!fields[attr]?.value;
+                    sheetSettings[attr] = { shown: !!fields[attr]?.value };
             }
             foundry.utils.setProperty(context, "data.flags.monks-enhanced-journal.attributes", attributes);
             foundry.utils.setProperty(context, "data.flags.monks-enhanced-journal.sheet-settings.attributes", sheetSettings);

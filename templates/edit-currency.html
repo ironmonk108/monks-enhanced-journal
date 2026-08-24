@@ -13,7 +13,7 @@
 
             <ol class="item-list">
                 {{#each currency}}
-                <li class="item flexrow" data-id="{{this.id}}">
+                <li class="item flexrow" data-id="{{this.id}}" data-idx="{{@index}}">
                     <div class="item-detail" style="text-align:left;">
                         <input type="text" name="id" autocomplete="off" value="{{this.id}}" />
                     </div>

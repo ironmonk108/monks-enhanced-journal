@@ -5,7 +5,7 @@ export class SlideText extends HandlebarsApplicationMixin(ApplicationV2) {
     constructor(object, config, options = {}) {
         super(object, options);
         this.config = config;
-        this.tempdata = foundry.utils.duplicate(object);
+        this.tempdata = foundry.utils.duplicate(object.document);
     }
 
     static DEFAULT_OPTIONS = {
