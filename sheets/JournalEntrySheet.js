@@ -1047,7 +1047,7 @@ export class JournalEntrySheet extends EnhancedJournalSheet {
 
     callCloseHooks(pageId) {
         if (foundry.utils.isEmpty(this._pages)) return;
-        const pages = pageId ? [this._pages["test"]].filter(p => !!p) : Object.values(this._pages);
+        const pages = pageId ? (pageId in this._pages ? [this._pages[pageId]] : []) : Object.values(this._pages);
         for (const page of pages) {
             const sheet = this.getPageSheet(page.id);
             if (sheet.isV2 || sheet.DEFAULT_OPTIONS) sheet._doEvent(sheet._onCloseView, { eventName: "closeView", hookName: "closeView" });
