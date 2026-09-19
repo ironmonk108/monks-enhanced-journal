@@ -1726,7 +1726,8 @@ body[inline-roll-styling="true"] a.tile-trigger-link i {
 .adjust-price .items-list header,
 .edit-currency .items-list header,
 #list-item-edit .items-list header {
-    height: 30px;
+    height: auto;
+    min-height: 30px;
     margin: 2px 0;
     padding: 0;
     align-items: center;

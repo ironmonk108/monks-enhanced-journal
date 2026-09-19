@@ -805,7 +805,7 @@ body:not(.system-pf2e) .monks-journal-sheet .sheet-container .tag {
     font-size: var(--font-size-14);
     /*text-align: center;*/
     display: grid;
-    height: 30px;
+    height: auto;
     min-height: 30px;
     margin: 2px 0;
     margin-left: 1px;
@@ -1715,8 +1715,8 @@ body:not(.system-pf2e) .monks-journal-sheet .sheet-container .tag {
 }
 
 .monks-journal-sheet.sheet .loot-container .loot-characters header {
-    height: 30px;
-    line-height: 30px;
+    height: auto;
+    min-height: 30px;
     font-size: var(--font-size-14);
     font-family: var(--mej-font-family);
     text-align: center;
