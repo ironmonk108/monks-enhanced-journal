@@ -2428,7 +2428,7 @@ export class MonksEnhancedJournal {
 					shareable: false,
 					editable: false
 				});
-				img._render(true);
+				img.render({ force: true });
 			} else
 				ui.notifications.warn(format("MonksEnhancedJournal.msg.YouDontHaveDocumentPermissions", { documentName: doc.documentName} ));
 			return true;
