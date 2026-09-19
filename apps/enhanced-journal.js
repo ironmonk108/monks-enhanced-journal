@@ -1111,7 +1111,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             // There were duplicates, so we need to make sure the active tab is still active after removing duplicates
             // and update the tabs.
             if (tabs.find(t => t.active) == undefined) {
-                let activeEntityId = this.tabs.active(true)?.entityId;
+                // this.tabs.active() is not defined yet when _preFirstRender calls us
+                let activeEntityId = (this.tabs.find(t => t.active) ?? this.tabs[0])?.entityId;
                 if (activeEntityId) {
                     let activeTab = tabs.find(t => t.entityId === activeEntityId);
                     if (activeTab) {
