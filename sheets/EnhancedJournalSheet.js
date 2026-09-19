@@ -156,7 +156,8 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
     }
 
     get allowedRelationships() {
-        return ["encounter", "loot", "organization", "person", "place", "poi", "event", "quest", "shop"];
+        return ["encounter", "loot", "organization", "person", "place", "poi", "event", "quest", "shop",
+            ...(game.MonksEnhancedJournal?.externalRelationshipTypes?.(this.constructor.type) ?? [])];
     }
 
     _canUserView(user) {

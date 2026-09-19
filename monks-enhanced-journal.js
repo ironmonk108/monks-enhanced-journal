@@ -102,11 +102,63 @@ export class MonksEnhancedJournal {
 
 	static includedTypes = ["armor", "consumable", "backpack", "equipment", "kit", "treasure", "weapon", "tool", "loot"];
 
+	static externalTypes = {};
+	static shellPages = {};
+
+	static getApi() {
+		return {
+			registerSheetType: ({ key, moduleId, sheetClass, label, icon, relationships = [] }) => {
+				if (!key || !moduleId || !sheetClass)
+					throw new Error("registerSheetType requires key, moduleId and sheetClass");
+				if (MonksEnhancedJournal.getDocumentTypes()[key])
+					throw new Error(`Journal type '${key}' is already registered`);
+				MonksEnhancedJournal.externalTypes[key] = { moduleId, sheetClass, label, icon, relationships };
+				foundry.applications.apps.DocumentSheetConfig.registerSheet(JournalEntryPage, moduleId, sheetClass, {
+					types: [key, `${moduleId}.${key}`],
+					makeDefault: true,
+					label: i18n(label)
+				});
+				CONFIG.JournalEntryPage.typeLabels = foundry.utils.mergeObject(
+					(CONFIG.JournalEntryPage.typeLabels || {}), { [key]: label });
+			},
+			registerShellPage: ({ id, label, icon, appClass }) => {
+				if (!id || !appClass)
+					throw new Error("registerShellPage requires id and appClass");
+				MonksEnhancedJournal.shellPages[id] = { label, icon, appClass };
+			}
+		};
+	}
+
+	/**
+	 * Open (or activate, if already open) a tab hosting a registered shell page.
+	 * Mirrors the create-if-missing / open incantation used by openJournalEntry.
+	 */
+	static async openShellPage(id, options = {}) {
+		let page = MonksEnhancedJournal.shellPages[id];
+		if (!page)
+			return false;
+
+		if (!MonksEnhancedJournal.journal)
+			MonksEnhancedJournal.journal = await (new EnhancedJournal(options)).render(true, options);
+
+		let entity = await MonksEnhancedJournal.journal.findEntity(`shellpage:${id}`, i18n(page.label));
+		MonksEnhancedJournal.journal.open(entity, options.newtab, options);
+
+		return true;
+	}
+
+	/** External type keys allowed to relate to the given built-in type. */
+	static externalRelationshipTypes(type) {
+		return Object.entries(MonksEnhancedJournal.externalTypes)
+			.filter(([k, v]) => (v.relationships || []).includes(type))
+			.map(([k, v]) => k);
+	}
+
 	constructor() {
 	}
 
 	static getDocumentTypes() {
-		return {
+		let types = {
 			list: ListSheet,
 			encounter: EncounterSheet,
 			event: EventSheet,
@@ -121,10 +173,13 @@ export class MonksEnhancedJournal {
 			slideshow: SlideshowSheet,
 			journalentry: TextImageEntrySheet
 		};
+		for (let [k, v] of Object.entries(MonksEnhancedJournal.externalTypes))
+			types[k] = v.sheetClass;
+		return types;
 	}
 
 	static getTypeLabels() {
-		return {
+		let labels = {
 			slideshow: "MonksEnhancedJournal.sheettype.slideshow",
 			picture: "MonksEnhancedJournal.sheettype.picture",
 			person: "MonksEnhancedJournal.sheettype.person",
@@ -139,6 +194,9 @@ export class MonksEnhancedJournal {
 			list: "MonksEnhancedJournal.sheettype.list",
 			journalentry: "MonksEnhancedJournal.sheettype.journalentry"
 		};
+		for (let [k, v] of Object.entries(MonksEnhancedJournal.externalTypes))
+			labels[k] = v.label;
+		return labels;
 	}
 
 	static get effectTypes() {
@@ -270,6 +328,8 @@ export class MonksEnhancedJournal {
 		}
 
 		game.MonksEnhancedJournal = this;
+
+		Hooks.callAll("setupMonksEnhancedJournal", MonksEnhancedJournal.getApi());
 
 		MonksEnhancedJournal.SOCKET = "module.monks-enhanced-journal";
 
@@ -951,15 +1011,38 @@ export class MonksEnhancedJournal {
 					let pageData = { type: type, name: data.name };
 					let types = MonksEnhancedJournal.getDocumentTypes();
 					if (type == "base" || type == "oldentry") type = "journalentry";
+					// Built-in types are all native `type: "text"` pages with the real
+					// type carried in the monks-enhanced-journal.type flag. Externally
+					// registered types (api.registerSheetType) can be a genuine
+					// module-declared JournalEntryPage subtype instead (e.g. a system
+					// field like campaign companion's Session type, which isn't
+					// text-content-shaped at all) - their real runtime `type` is the
+					// prefixed `<moduleId>.<key>` form (Foundry's module-subtype
+					// convention), not "text". Forcing "text" here would create a page
+					// whose native type doesn't match what the module's own document
+					// schema (and sheet registration, which already listens for both
+					// the bare key and this prefixed form - see getApi's
+					// registerSheetType) expects.
+					let externalType = MonksEnhancedJournal.externalTypes[type];
 					if (types[type]) {
 						foundry.utils.setProperty(pageData, "flags.monks-enhanced-journal.type", type);
 						if (subtype)
 							foundry.utils.setProperty(pageData, "flags.monks-enhanced-journal.subtype", subtype);
-						pageData.type = "text";
+						pageData.type = externalType ? `${externalType.moduleId}.${type}` : "text";
 					}
-					await document.setFlag("monks-enhanced-journal", "img", `modules/monks-enhanced-journal/assets/${type}.png`);
+					// The built-in asset path below only exists for MEJ's own types;
+					// an external type has no such asset and setting it would just
+					// point `img` at a 404.
+					if (types[type] && !externalType)
+						await document.setFlag("monks-enhanced-journal", "img", `modules/monks-enhanced-journal/assets/${type}.png`);
 					let page = await JournalEntryPage.create(pageData, { parent: document });
-					if (types[type]) {
+					// Only the built-in "text"-with-a-type-flag pages need this
+					// in-memory patch (their real `type` came back as "text"); an
+					// external type's created `page.type` is already the correct
+					// prefixed real type from pageData.type above - overwriting it
+					// with the bare key here would put it right back out of sync with
+					// what was actually created server-side.
+					if (types[type] && !externalType) {
 						page.type = type;
 					}
 				} else {
@@ -2840,6 +2923,8 @@ export class MonksEnhancedJournal {
 			case 'poi': return 'fa-map-marker-alt';
 			case 'list': return 'fa-list';
 			default:
+				if (MonksEnhancedJournal.externalTypes[type]?.icon)
+					return MonksEnhancedJournal.externalTypes[type].icon;
 				return 'fa-book-open';
 		}
 	}
@@ -4155,8 +4240,12 @@ export class MonksEnhancedJournal {
 			type = type || object.type;
 			if (types[type])
 				object.type = type;
-			else if (game.user.isGM)
-				object.unsetFlag("monks-enhanced-journal", "type");
+			else if (game.user.isGM) {
+				let sourceType = object._source?.type ?? "";
+				let foreignSubtype = sourceType.includes(".") && !sourceType.startsWith("monks-enhanced-journal.");
+				if (!foreignSubtype)
+					object.unsetFlag("monks-enhanced-journal", "type");
+			}
 
 			return type;
 		} else if (["blank", "folder"].includes(foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type"))) {
@@ -4397,7 +4486,12 @@ Hooks.on("createJournalEntryPage", (entry, options, userId) => {
 Hooks.on("preCreateJournalEntry", (document, data, options, userId) => {
 	let type = foundry.utils.getProperty(data, "flags.monks-enhanced-journal.pagetype");
 	let types = MonksEnhancedJournal.getDocumentTypes();
-	if (types[type]) {
+	// The built-in asset path below only exists for MEJ's own types; an
+	// externally-registered type (api.registerSheetType) has no such asset,
+	// and stamping it would just point `img` at a 404 - same guard as the
+	// _onCreate site above (fix 1437846).
+	let externalType = MonksEnhancedJournal.externalTypes[type];
+	if (types[type] && !externalType) {
 		let flags = foundry.utils.getProperty(data, "flags.monks-enhanced-journal") || {};
 		flags.img = `modules/monks-enhanced-journal/assets/${type}.png`;
 
@@ -5119,7 +5213,12 @@ Hooks.on("renderCompendium", async (app, html, data) => {
 		for (let index of app.collection.index) {
 			let img = $(`li[data-document-id="${index._id}"] > img.thumbnail`, html);
 			let pagetype = foundry.utils.getProperty(index, "flags.monks-enhanced-journal.pagetype");
-			let imgFile = index.img || foundry.utils.getProperty(index, "flags.monks-enhanced-journal.img") || (pagetype && types[pagetype] != undefined ? `modules/monks-enhanced-journal/assets/${pagetype}.png` : "icons/svg/book.svg");
+			// The built-in asset path below only exists for MEJ's own types; an
+			// externally-registered type (api.registerSheetType) has no such
+			// asset, and pointing img at it would just 404 - same guard as the
+			// preCreateJournalEntry/_onCreate sites (fixes 1437846, f24cbac).
+			let externalType = pagetype && MonksEnhancedJournal.externalTypes[pagetype];
+			let imgFile = index.img || foundry.utils.getProperty(index, "flags.monks-enhanced-journal.img") || (pagetype && types[pagetype] != undefined && !externalType ? `modules/monks-enhanced-journal/assets/${pagetype}.png` : "icons/svg/book.svg");
 			if (img.length) {
 				img.attr("src", imgFile)
 			} else {

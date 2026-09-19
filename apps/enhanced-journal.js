@@ -5,6 +5,12 @@ import { JournalEntrySheet } from "../sheets/JournalEntrySheet.js"
 import { ApplicationSheetConfig } from "./sheet-configure.js";
 const { ApplicationV2, DocumentSheetV2, HandlebarsApplicationMixin } = foundry.applications.api
 
+// Types that don't correspond to a real, persisted document: the built-in "blank"/"folder"
+// placeholder tabs, plus any externally-registered shell page (game.MonksEnhancedJournal may not
+// exist yet during early init, so this always has to be accessed defensively).
+function isSyntheticType(type) {
+    return ["blank", "folder"].includes(type) || (game.MonksEnhancedJournal?.shellPages || {})[type] != undefined;
+}
 
 class BlankJournal extends foundry.abstract.Document {
     constructor(options) {
@@ -36,6 +42,42 @@ class BlankJournal extends foundry.abstract.Document {
 
     get documentName() {
         return "JournalEntryPage";
+    }
+
+    // Only a registered shell page reports ownership (so its subsheet gets constructed with
+    // editable:true, like any other GM view, instead of inheriting undefined from a missing isOwner —
+    // ClientDocumentMixin isn't in play here). The plain "blank"/"folder" placeholders must NOT
+    // report ownership: EnhancedJournal.isEditable (~line 329) reads document.isOwner directly for
+    // every tab, including blank ones, and that result gates _toggleDisabled at ~line 754 — reporting
+    // true unconditionally would silently re-enable currently-disabled fields on every blank tab.
+    get isOwner() {
+        return !!(game.MonksEnhancedJournal?.shellPages || {})[this.type];
+    }
+
+    // For a registered shell page (this.type set to its bare id), resolve the subsheet class the
+    // caller supplied to registerShellPage. Returns undefined for the plain "blank"/"folder"
+    // placeholders so they keep falling back to BlankSheet exactly as before.
+    _getSheetClass() {
+        return (game.MonksEnhancedJournal?.shellPages || {})[this.type]?.appClass;
+    }
+
+    // foundry.abstract.Document#compendium is @abstract and throws if not overridden; a real
+    // (non-compendium) document's compendium is null (see ClientDocument#compendium), so returning
+    // null here - never a compendium pack - matches that and keeps callers like
+    // EnhancedJournalSheet#_canUserView's `this.document.compendium` check from throwing.
+    get compendium() {
+        return null;
+    }
+
+    // A registered shell page must remain viewable by non-GM users across re-renders. Document#testUserPermission
+    // (the inherited default) resolves via this.ownership, which BlankJournal's schema doesn't define, so it
+    // always returns NONE - failing the OBSERVER check in EnhancedJournal#_render (~line 494) and causing the
+    // hub (and any other shell page) to be replaced with the "no permission" placeholder for every non-GM on
+    // any non-forced render. Only registered shell pages get this bypass; the plain "blank"/"folder"
+    // placeholders fall through to the inherited (always-NONE) behavior.
+    testUserPermission(user, permission, options) {
+        if (Object.hasOwn(game.MonksEnhancedJournal?.shellPages ?? {}, this.type)) return true;
+        return super.testUserPermission(user, permission, options);
     }
 }
 export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -265,6 +307,13 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         event.stopPropagation(); // Don't trigger other events
         if (event.detail > 1) return; // Ignore repeated clicks
 
+        // A synthetic tab's document is the BlankJournal placeholder - the built-in
+        // blank/folder tabs and every registered shell page. Core's DocumentSheetConfig
+        // reads CONFIG.JournalEntry.sheetClasses[subtype] for it and throws "Cannot
+        // convert undefined or null to object" on those types - there is no document
+        // to configure, so do nothing.
+        if (isSyntheticType(this.document?.type)) return;
+
         const docSheetConfigWidth = foundry.applications.apps.DocumentSheetConfig.DEFAULT_OPTIONS.position.width;
         this.renderChild(new foundry.applications.apps.DocumentSheetConfig({
             document: this.document,
@@ -277,7 +326,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _getHeaderControls() {
         let controls = super._getHeaderControls();
-        if (!!MonksEnhancedJournal.getMEJType(this.document)) {
+        // ... and don't offer the control at all on a synthetic tab.
+        if (!!MonksEnhancedJournal.getMEJType(this.document) || isSyntheticType(this.document?.type)) {
             controls = controls.filter(c => c.action != "configureSheet");
         }
         let sub_controls = this.subsheet?._getHeaderControls?.() || [];
@@ -337,7 +387,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _replaceHTML(result, content, options) {
         
-        if (this.subsheet && this.subsheet.document?.id && !["blank", "folder"].includes(this.document.type) && !(this.document instanceof Actor))
+        if (this.subsheet && this.subsheet.document?.id && !isSyntheticType(this.document.type) && !(this.document instanceof Actor))
         {
             let subsheetState = { type: this.subsheet.constructor.type };
             const priorElement = this.subsheetElement;
@@ -430,7 +480,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 else
                     currentTab = await this.addTab();
             }
-            if (!currentTab.entity && !["blank", "folder"].includes(foundry.utils.getProperty(currentTab, "flags.monks-enhanced-journal.type")))
+            if (!currentTab.entity && !isSyntheticType(foundry.utils.getProperty(currentTab, "flags.monks-enhanced-journal.type")))
                 currentTab.entity = await this.findEntity(currentTab.entityId);
             if (this.document?.id != currentTab.entity?.id || currentTab.entity instanceof Promise || currentTab.entity?.id == "blank-journal-entry")
                 this.document = currentTab.entity;
@@ -453,7 +503,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             }
 
-            if (!["blank", "folder"].includes(this.document.type))
+            if (!isSyntheticType(this.document.type))
                 MonksEnhancedJournal.fixType(this.document);
 
             let force = options.force || this.tempOwnership;
@@ -476,7 +526,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                         content: `${i18n("MonksEnhancedJournal.DoNotHavePermission")}: ${this.document.name}`
                     });
                 }
-            } else if (!["blank", "folder"].includes(this.document.type) && this.document.testUserPermission) {
+            } else if (!isSyntheticType(this.document.type) && this.document.testUserPermission) {
                 if (!this.document.testUserPermission(game.user, "OBSERVER") || (this.document.parent && !this.document.parent.testUserPermission(game.user, "OBSERVER"))) {
                     this.document.ownership[game.user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
                     if (this.document.parent)
@@ -635,7 +685,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 $('button[type="submit"]', subsheetElement).attr('type', 'button').on("click", subsheet.constructor.onSubmit.bind(subsheet));
             $('form.journal-header', subsheetElement).on("submit", () => { return false; });
 
-            if (!["blank", "folder"].includes(this.document.type))
+            if (!isSyntheticType(this.document.type))
                 subsheet.constructor.updateStyle.call(subsheet, null, subsheetElement);
 
             if (game.modules.get("polyglot")?.active && subsheet.renderPolyglot)
@@ -643,7 +693,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
             this.document._sheet = null;  // Adding this to prevent Quick Encounters from automatically opening
 
-            if (!["blank", "folder"].includes(this.document.type)) {
+            if (!isSyntheticType(this.document.type)) {
                 //Hooks.callAll('renderJournalSheet', { document: subsheet.parent }, subsheetElement, subsheetContext); //this.document);
                 if (this.document._source.type == "text")
                     Hooks.callAll('renderJournalTextPageSheet', subsheet, subsheetElement, subsheetContext);
@@ -663,7 +713,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                     });
                 }
                 // if the new entry has a sound file, that autoplays, then start the sound file playing
-                if (!["blank", "folder"].includes(this.document.type)) {
+                if (!isSyntheticType(this.document.type)) {
                     let sound = this.document.getFlag("monks-enhanced-journal", "sound");
                     if (sound?.audiofile && sound?.autoplay && subsheet?.canPlaySound) {
                         subsheet._playSound(sound).then((soundfile) => {
@@ -814,7 +864,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
     get getDocumentTypes() {
         return foundry.utils.mergeObject(MonksEnhancedJournal.getDocumentTypes(), {
-            blank: EnhancedJournalSheet
+            blank: EnhancedJournalSheet,
+            ...Object.fromEntries(Object.entries(game.MonksEnhancedJournal?.shellPages || {})
+                .map(([k, v]) => [k, v.appClass]))
         });
     }
 
@@ -871,6 +923,23 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async findEntity(entityId, text) {
+        if (typeof entityId == "string" && entityId.startsWith("shellpage:")) {
+            let pageId = entityId.slice("shellpage:".length);
+            let page = (game.MonksEnhancedJournal?.shellPages || {})[pageId];
+            if (page) {
+                let entity = new BlankJournal({
+                    name: i18n(page.label),
+                    type: pageId,
+                    flags: { 'monks-enhanced-journal': { type: pageId } },
+                    content: ""
+                });
+                // BlankJournal's id/uuid getters are fixed to "blank-journal-entry", so the tab
+                // machinery special-cases this marker to derive/persist the "shellpage:<id>" entityId.
+                entity.shellPageId = pageId;
+                return entity;
+            }
+        }
+
         if (entityId == undefined)
             return new BlankJournal({ flags: { 'monks-enhanced-journal': { type: 'blank' } }, content: "" });
         else {
@@ -924,7 +993,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             id: makeid(),
             text: entity?.name || i18n("MonksEnhancedJournal.NewTab"),
             active: false,
-            entityId: entity?.uuid,
+            entityId: entity?.shellPageId ? `shellpage:${entity.shellPageId}` : entity?.uuid,
             entity: entity || new BlankJournal({ flags: { 'monks-enhanced-journal': { type: 'blank' }, content: i18n("MonksEnhancedJournal.NewTab") } }),
             pageId: options.pageId,
             anchor: options.anchor,
@@ -1032,9 +1101,10 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         if (tab != undefined) {
-            if (tab.entityId != entity.uuid) {
+            let entityId = entity.shellPageId ? `shellpage:${entity.shellPageId}` : entity.uuid;
+            if (tab.entityId != entityId) {
                 tab.text = entity.name;
-                tab.entityId = entity.uuid;
+                tab.entityId = entityId;
                 tab.entity = entity;
                 tab.pageId = options.pageId;
                 tab.anchor = options.anchor;
@@ -1300,7 +1370,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             if (newtab === true) {
                 //the journal is getting created
                 //lets see if we can find  tab with this entity?
-                let tab = this.tabs.find(t => t.entityId?.includes(entity.id));
+                // BlankJournal's id is a fixed placeholder, so a shell-page entity has to be matched
+                // by its "shellpage:<id>" entityId instead of the (indistinguishable) document id.
+                let tab = this.tabs.find(t => entity.shellPageId ? t.entityId == `shellpage:${entity.shellPageId}` : t.entityId?.includes(entity.id));
                 if (tab != undefined)
                     await this.activateTab(tab, null, options);
                 else
@@ -1308,7 +1380,9 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
             } else {
                 if (await this?.subsheet?.close() !== false) {
                     // Check to see if this entity already exists in the tab list
-                    let tab = this.tabs.find(t => t.entityId?.includes(entity.id));
+                    // BlankJournal's id is a fixed placeholder, so a shell-page entity has to be matched
+                    // by its "shellpage:<id>" entityId instead of the (indistinguishable) document id.
+                    let tab = this.tabs.find(t => entity.shellPageId ? t.entityId == `shellpage:${entity.shellPageId}` : t.entityId?.includes(entity.id));
                     if (tab != undefined)
                         await this.activateTab(tab, null, options);
                     else
@@ -1646,7 +1720,7 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 visible: (li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
                     if (!tab) return false;
-                    return !["blank", "folder"].includes(tab.entity?.type);
+                    return !isSyntheticType(tab.entity?.type);
                 },
                 onClick: async (event, li) => {
                     let tab = this.tabs.find(t => t.id == this.contextTab);
@@ -1833,8 +1907,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
 
         let prev = (idx > 0 ? documents[idx - 1] : null);
         let next = (idx < documents.length - 1 ? documents[idx + 1] : null);
-        $('.navigate-prev', html).toggle(!["blank", "folder"].includes(this.document.type)).toggleClass('disabled', !prev).attr("data-tooltip", prev?.name);
-        $('.navigate-next', html).toggle(!["blank", "folder"].includes(this.document.type)).toggleClass('disabled', !next).attr("data-tooltip", next?.name);
+        $('.navigate-prev', html).toggle(!isSyntheticType(this.document.type)).toggleClass('disabled', !prev).attr("data-tooltip", prev?.name);
+        $('.navigate-next', html).toggle(!isSyntheticType(this.document.type)).toggleClass('disabled', !next).attr("data-tooltip", next?.name);
 
         $('.page-prev', html).toggle(this.document instanceof JournalEntry);
         $('.page-next', html).toggle(this.document instanceof JournalEntry);
