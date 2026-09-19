@@ -715,7 +715,7 @@ export class MonksEnhancedJournal {
 		}
 		*/
 		Actor.prototype._onClickDocumentLink = async function (event) {
-			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: event.ctrlKey && !setting("open-new-tab") })) {
+			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab") })) {
 				return this.sheet.render(true);
 			}
 		}
@@ -733,7 +733,7 @@ export class MonksEnhancedJournal {
 			const target = event.currentTarget;
 
 			//|| ["SFDialog", "forge-compendium-browser"].includes(app?.id)
-			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: event.ctrlKey && !setting("open-new-tab"), anchor: target.dataset.hash })) {
+			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab"), anchor: target.dataset.hash })) {
 				if (this.pages.size == 1) {
 					let page = this.pages.contents[0];
 					let type = foundry.utils.getProperty(page, "flags.monks-enhanced-journal.type");
@@ -755,7 +755,7 @@ export class MonksEnhancedJournal {
 			if (target.closest("#MonksEnhancedJournal") == null)
 				return wrapper(...args);
 
-			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this.parent, { newtab: event.ctrlKey && !setting("open-new-tab"), pageId: this.id, anchor: target.dataset.hash })) {
+			if (event.altKey || setting('open-outside') || ! await MonksEnhancedJournal.openJournalEntry(this.parent, { newtab: (event.ctrlKey || event.metaKey) && !setting("open-new-tab"), pageId: this.id, anchor: target.dataset.hash })) {
 				let type = foundry.utils.getProperty(this, "flags.monks-enhanced-journal.type");
 				if (type == "base" || type == "oldentry") type = "journalentry";
 
@@ -1205,7 +1205,7 @@ export class MonksEnhancedJournal {
 
 			let entity = this.page || this.entry;
 			if (allowed && this.entry) {
-				if (! await MonksEnhancedJournal.openJournalEntry(this.entry, options)) {
+				if (wrapped?.altKey || ! await MonksEnhancedJournal.openJournalEntry(this.entry, options)) {
 					let page = this.page;
 					if (this.entry.pages.size == 1) {
 						page = this.entry.pages.contents[0];
@@ -1236,9 +1236,8 @@ export class MonksEnhancedJournal {
 		if (game.modules.get("lib-wrapper")?.active) {
 			libWrapper.register("monks-enhanced-journal", "foundry.canvas.placeables.Note.prototype._onClickLeft2", clickNote2, "OVERRIDE");
 		} else {
-			const oldClickNote = foundry.canvas.placeables.Note.prototype._onClickLeft2;
 			foundry.canvas.placeables.Note.prototype._onClickLeft2 = function (event) {
-				return clickNote2.call(this, oldClickNote.bind(this));
+				return clickNote2.call(this, event);
 			}
 		}
 
