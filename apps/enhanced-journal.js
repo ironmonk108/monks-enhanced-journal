@@ -638,8 +638,8 @@ export class EnhancedJournal extends HandlebarsApplicationMixin(ApplicationV2) {
                 $('button[type="submit"]', subsheetElement).attr('type', 'button').on("click", subsheet.constructor.onSubmit.bind(subsheet));
             $('form.journal-header', subsheetElement).on("submit", () => { return false; });
 
-            //if (!["blank", "folder"].includes(this.document.type))
-            //    subsheet.constructor.updateStyle.call(subsheet, null, subsheetElement);
+            if (!["blank", "folder"].includes(this.document.type) && subsheet.constructor.updateStyle)
+                subsheet.constructor.updateStyle.call(subsheet, null, subsheetElement);
 
             if (game.modules.get("polyglot")?.active && subsheet.renderPolyglot)
                 subsheet.renderPolyglot(subsheetElement);

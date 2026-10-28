@@ -4151,8 +4151,12 @@ export class MonksEnhancedJournal {
 				object.unsetFlag("monks-enhanced-journal", "type");
 
 			return type;
-		} else { // if (["blank", "folder"].includes(foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type") ?? foundry.utils.getProperty(object, "flags.monks-enhanced-journal.pagetype"))) {
-			object.type = foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type") ?? foundry.utils.getProperty(object, "flags.monks-enhanced-journal.pagetype");
+		} else {
+			// Only blank and folder belong on the entry itself. Any other type (person, text, ...) has no
+			// JournalEntry sheet registered, so Foundry throws whenever it looks up the entry's sheet.
+			let type = foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type") ?? foundry.utils.getProperty(object, "flags.monks-enhanced-journal.pagetype");
+			if (["blank", "folder"].includes(type))
+				object.type = type;
 		}
 	}
 
