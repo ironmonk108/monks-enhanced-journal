@@ -357,10 +357,12 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
                 this.document.parent.ownership[game.user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER;
             this.tempOwnership = true;
         }
+        // Return the render promise: core's JournalEntrySheet awaits a page sheet's render() and then
+        // reads sheet.element, so an MEJ page shown inside a multi-page journal came up blank without it.
         if (this.enhancedjournal)
-            this.enhancedjournal.render(options);
+            return this.enhancedjournal.render(options);
         else {
-            super.render(options);
+            return super.render(options);
         }
     }
 

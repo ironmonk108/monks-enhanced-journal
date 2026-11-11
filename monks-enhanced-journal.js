@@ -1168,7 +1168,9 @@ export class MonksEnhancedJournal {
 				}
 			}
 
-			MonksEnhancedJournal.fixType(this.object);
+			// No fixType() here: `this` is the CompendiumCollection, which has no `object`. In 14.02 the
+			// resulting fixType(undefined) threw, so dropping an Actor or Journal into a compendium
+			// silently did nothing.
 			return oldImportDocument.call(this, document, options);
 		}
 
@@ -2207,22 +2209,18 @@ export class MonksEnhancedJournal {
 		let types = MonksEnhancedJournal.getDocumentTypes();
 		let labels = MonksEnhancedJournal.getTypeLabels();
 
-		game.documentTypes.JournalEntryPage
-
+		// Register only the namespaced sub-types declared in module.json. Foundry 14.369+ drops any
+		// registration for a sub-type missing from game.documentTypes (foundryvtt/foundryvtt#14842), and
+		// initializeSheets() rebuilds CONFIG.JournalEntryPage.sheetClasses, so bare keys ("person",
+		// "journalentry", ...) can be neither pre-created nor registered. monks-enhanced-journal.journalentry
+		// already gets TextImageEntrySheet from this loop.
 		for (let [k, v] of Object.entries(labels)) {
-			if (CONFIG.JournalEntryPage.sheetClasses[k] == undefined)
-				CONFIG.JournalEntryPage.sheetClasses[k] = {};
 			foundry.applications.apps.DocumentSheetConfig.registerSheet(JournalEntryPage, "monks-enhanced-journal", types[k] || foundry.appv1.sheets.JournalPageSheet, {
 				types: [`monks-enhanced-journal.${k}`],
 				makeDefault: true,
 				label: i18n(v)
 			});
 		}
-		foundry.applications.apps.DocumentSheetConfig.registerSheet(JournalEntryPage, "monks-enhanced-journal", TextImageEntrySheet, {
-			types: ["journalentry"],
-			makeDefault: false,
-			label: "Text and Image"
-		});
 		/*
 		foundry.applications.apps.DocumentSheetConfig.registerSheet(JournalEntryPage, "monks-enhanced-journal", CheckListSheet, {
 			types: ["list"],
@@ -2245,6 +2243,11 @@ export class MonksEnhancedJournal {
 			CONFIG.JournalEntryPage.dataModels = {};
 		//game.system.documentTypes.JournalEntryPage = game.system.documentTypes.JournalEntryPage.concat(Object.keys(types)).sort();
 		CONFIG.JournalEntryPage.typeLabels = foundry.utils.mergeObject((CONFIG.JournalEntryPage.typeLabels || {}), labels);
+		// Name the namespaced sub-types for core's page-type lists (Add Page, Configure Sheet); without this
+		// core falls back to TYPES.JournalEntryPage.monks-enhanced-journal.*, which MEJ's language files don't
+		// define. Set after the merge above: mergeObject() would expand these dotted keys into a nested object.
+		for (let [k, v] of Object.entries(labels))
+			CONFIG.JournalEntryPage.typeLabels[`monks-enhanced-journal.${k}`] = v;
 	}
 
 	static showAsChatBubble(object, journal, pageId) {
@@ -4120,7 +4123,8 @@ export class MonksEnhancedJournal {
 	}
 
 	static fixType(object, settype) {
-		if (object?.documentName == 'JournalEntryPage') {
+		if (!object) return;
+		if (object.documentName == 'JournalEntryPage') {
 			let types = MonksEnhancedJournal.getDocumentTypes();
 
 			let type = settype || object?.flags['monks-enhanced-journal']?.type;
@@ -4151,9 +4155,72 @@ export class MonksEnhancedJournal {
 				object.unsetFlag("monks-enhanced-journal", "type");
 
 			return type;
-		} else { // if (["blank", "folder"].includes(foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type") ?? foundry.utils.getProperty(object, "flags.monks-enhanced-journal.pagetype"))) {
-			object.type = foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type") ?? foundry.utils.getProperty(object, "flags.monks-enhanced-journal.pagetype");
+		} else {
+			// Only blank and folder belong on the entry itself. Any other type (person, text, ...) has no
+			// JournalEntry sheet registered, so Foundry throws whenever it looks up the entry's sheet.
+			let type = foundry.utils.getProperty(object, "flags.monks-enhanced-journal.type") ?? foundry.utils.getProperty(object, "flags.monks-enhanced-journal.pagetype");
+			if (["blank", "folder"].includes(type))
+				object.type = type;
 		}
+	}
+
+	/**
+	 * Persist MEJ page sub-types for world journal pages still stored in a legacy form: a core "text"
+	 * page, "base", or the bare short key ("person"), carrying an MEJ type flag. Foundry asks modules to
+	 * migrate such data rather than relabel it in memory (foundryvtt/foundryvtt#14842); a page stored
+	 * with a bare key no longer even validates on 14.369+, so it never reaches fixType().
+	 *
+	 * Only the page's own flag counts: a type inherited from the parent entry is left to fixType(),
+	 * because those entries can mix an MEJ page with ordinary image or PDF pages. Runs on the active
+	 * GM at every ready, so pages imported later from older compendiums are picked up too.
+	 */
+	static async migratePageTypes() {
+		if (!game.user.isActiveGM) return;
+		const types = MonksEnhancedJournal.getDocumentTypes();
+		const normalize = (t) => (t == "base" || t == "oldentry" ? "journalentry" : (t == "checklist" ? "list" : t));
+		const ForcedReplacement = foundry.data.operators.ForcedReplacement;
+		const target = (source) => {
+			const type = normalize(source?.flags?.["monks-enhanced-journal"]?.type);
+			if (!type || !types[type]) return null;
+			const namespaced = `monks-enhanced-journal.${type}`;
+			const stored = source.type;
+			if (stored == namespaced) return null;
+			if (!["text", "base", type, source?.flags?.["monks-enhanced-journal"]?.type].includes(stored)) return null;
+			return namespaced;
+		};
+
+		let migrated = 0, failed = 0;
+		for (const entry of game.journal) {
+			const updates = [];
+			for (const page of entry.pages) {
+				const type = target(page._source);
+				if (type) updates.push({ _id: page.id, type, system: ForcedReplacement.create({}) });
+			}
+			// A page whose stored type no longer validates is not in entry.pages, and core cannot apply an
+			// embedded update to it on the client. Rewrite the entry's page list instead: the entry itself
+			// is valid, so the client rebuilds its pages from the corrected source.
+			const invalid = [...(entry.pages.invalidDocumentIds ?? [])].filter((id) => target(entry.pages.getInvalid(id, { strict: false })?._source));
+			try {
+				if (updates.length)
+					await entry.updateEmbeddedDocuments("JournalEntryPage", updates, { diff: false, render: false });
+				if (invalid.length) {
+					const pages = entry.toObject().pages;
+					for (const page of pages) {
+						if (!invalid.includes(page._id)) continue;
+						page.type = target(page);
+						page.system = {};
+					}
+					await entry.update({ pages }, { diff: false, recursive: false, render: false });
+					for (const id of invalid) entry.pages.invalidDocumentIds.delete(id);
+				}
+				migrated += updates.length + invalid.length;
+			} catch (err) {
+				failed += updates.length + invalid.length;
+				error(`Could not migrate the page types of journal "${entry.name}" (${entry.id})`, err);
+			}
+		}
+		if (migrated || failed)
+			log(`Migrated ${migrated} journal page(s) to namespaced MEJ types${failed ? `, ${failed} failed` : ""}.`);
 	}
 
 	static getLootSheetOptions(lootType) {
@@ -4342,6 +4409,7 @@ Hooks.once("init", async function () {
 
 Hooks.once("ready", async function () {
 	MonksEnhancedJournal.ready();
+	MonksEnhancedJournal.migratePageTypes();
 });
 
 Hooks.on("preCreateJournalEntryPage", (entry, data, options, userId) => {
