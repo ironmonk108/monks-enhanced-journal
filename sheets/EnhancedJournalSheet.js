@@ -972,7 +972,13 @@ export class EnhancedJournalSheet extends HandlebarsApplicationMixin(foundry.app
         }
         for (const input of form.querySelectorAll("input[type=image]")) input.disabled = disabled;
         for (const img of form.querySelectorAll("img[data-edit]")) img.classList.toggle("disabled", disabled);
-        for (const a of element.querySelectorAll(".item-controls a[data-action]")) a.classList.toggle("disabled", disabled);
+        // Links a player uses on a sheet they can't edit (buying from a shop, making or cancelling an offering)
+        // stay live; the rest of the item controls are owner actions.
+        const playerActions = ["requestItem", "makeOffering", "cancelOffer"];
+        for (const a of element.querySelectorAll(".item-controls a[data-action]")) {
+            if (playerActions.includes(a.dataset.action)) continue;
+            a.classList.toggle("disabled", disabled);
+        }
     }
 
     _disableFields(form) {
